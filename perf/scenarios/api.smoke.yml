@@ -1,0 +1,38 @@
+config:
+  target: "https://automationexercise.com/api"
+  processor: "../processors/common.processor.js"
+  payload:
+    path: "../data/searchTerms.csv"
+    fields:
+      - search_term
+  phases:
+    - duration: 60
+      arrivalRate: 2
+      name: smoke-baseline
+  defaults:
+    headers:
+      Accept: application/json
+      Content-Type: application/x-www-form-urlencoded
+  plugins:
+    ensure: {}
+  ensure:
+    thresholds:
+      - http.response_time.p95: 1000
+      - http.response_time.p99: 2000
+    conditions:
+      - expression: "http.codes.200 / http.requests >= 0.98"
+
+scenarios:
+  - name: API smoke browse and search
+    beforeScenario: setRunContext
+    flow:
+      - get:
+          url: "{{ targetApi }}{{ endpointProductsList }}"
+      - function: buildSearchBody
+      - post:
+          url: "{{ targetApi }}{{ endpointSearchProduct }}"
+          body: "{{ searchBody }}"
+      - function: buildLoginBody
+      - post:
+          url: "{{ targetApi }}{{ endpointVerifyLogin }}"
+          body: "{{ loginBody }}"

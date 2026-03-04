@@ -1,0 +1,23 @@
+config:
+  target: "https://automationexercise.com"
+  processor: "../processors/common.processor.js"
+  engines:
+    playwright: {}
+  phases:
+    - duration: 180
+      arrivalRate: 2
+      name: ui-critical-light
+  plugins:
+    ensure: {}
+  ensure:
+    thresholds:
+      - browser.page.TTFB.p95: 2000
+    conditions:
+      - expression: "vusers.failed / vusers.created <= 0.05"
+
+scenarios:
+  - name: Critical UI browse and search
+    engine: playwright
+    beforeScenario: setRunContext
+    testFunction: criticalJourney
+    processor: "../processors/ui.processor.js"

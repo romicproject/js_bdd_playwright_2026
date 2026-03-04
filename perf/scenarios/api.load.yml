@@ -1,0 +1,56 @@
+config:
+  target: "https://automationexercise.com/api"
+  processor: "../processors/common.processor.js"
+  payload:
+    - path: "../data/searchTerms.csv"
+      fields:
+        - search_term
+    - path: "../data/users.csv"
+      fields:
+        - email
+        - password
+  phases:
+    - duration: 120
+      arrivalRate: 5
+      name: warm-up
+    - duration: 420
+      arrivalRate: 20
+      rampTo: 35
+      name: sustained-ramp
+    - duration: 120
+      arrivalRate: 8
+      name: cool-down
+  defaults:
+    headers:
+      Accept: application/json
+      Content-Type: application/x-www-form-urlencoded
+  plugins:
+    ensure: {}
+  ensure:
+    thresholds:
+      - http.response_time.p95: 900
+      - http.response_time.p99: 1800
+      - http.request_rate: 15
+    conditions:
+      - expression: "http.codes.200 / http.requests >= 0.99"
+
+scenarios:
+  - name: Browse products and search
+    weight: 60
+    beforeScenario: setRunContext
+    flow:
+      - get:
+          url: "{{ targetApi }}{{ endpointProductsList }}"
+      - function: buildSearchBody
+      - post:
+          url: "{{ targetApi }}{{ endpointSearchProduct }}"
+          body: "{{ searchBody }}"
+
+  - name: Login verification flow
+    weight: 40
+    beforeScenario: setRunContext
+    flow:
+      - function: buildLoginBody
+      - post:
+          url: "{{ targetApi }}{{ endpointVerifyLogin }}"
+          body: "{{ loginBody }}"

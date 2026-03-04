@@ -1,0 +1,39 @@
+services:
+  # Serviciul de bază - nu va fi rulat niciodată direct
+  # Acesta servește drept "template" pentru celelalte
+  base-test:
+    image: lrnapi-tests:latest
+    build:
+      context: .
+      dockerfile: Dockerfile
+    profiles: ["base-template"] # Nu va fi rulat direct
+    volumes:
+      - ./out/playwright-report:/app/out/playwright-report
+      - ./out/test-results:/app/out/test-results
+
+  tests-dev:
+    extends: base-test
+    environment:
+      - ENV=dev
+    env_file:
+      - config/env/dev.env
+    command: sh -lc "npm run bdd:generate && npm run test:dev"
+    profiles: ["dev"]
+
+  tests-staging:
+    extends: base-test
+    environment:
+      - ENV=staging
+    env_file:
+      - config/env/staging.env
+    command: sh -lc "npm run bdd:generate && npm run test:staging"
+    profiles: ["staging"]
+
+  tests-prod:
+    extends: base-test
+    environment:
+      - ENV=prod
+    env_file:
+      - config/env/prod.env
+    command: sh -lc "npm run bdd:generate && npm run test:prod"
+    profiles: ["prod"]
