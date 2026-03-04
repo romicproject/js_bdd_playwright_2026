@@ -1,0 +1,132 @@
+name: Playwright (BDD) CI
+
+on:
+  pull_request:
+  push:
+    branches: [ main ]
+  workflow_dispatch:
+    inputs:
+      env:
+        description: "Target ENV (loads config/env/<ENV>.env)"
+        required: true
+        default: "dev"
+        type: choice
+        options: [ dev, staging, prod ]
+      suite:
+        description: "Test suite"
+        required: true
+        default: "ui-smoke"
+        type: choice
+        options: [ ui-smoke, all, api-only, ui-only ]
+
+concurrency:
+  group: pw-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  test:
+    runs-on: ubuntu-latest
+    timeout-minutes: 45
+
+    env:
+      CI: true
+      # This is the only mandatory env for your envConfig loader.
+      ENV: ${{ inputs.env || 'dev' }}
+
+      # Secrets (set these in GitHub → Settings → Secrets and variables → Actions)
+      API_KEY: ${{ secrets.API_KEY }}
+      TEST_USER_EMAIL: ${{ secrets.TEST_USER_EMAIL }}
+      TEST_USER_PASSWORD: ${{ secrets.TEST_USER_PASSWORD }}
+
+      # Optional debugging toggles (if you use them)
+      DEBUG_MODE: ${{ secrets.DEBUG_MODE }}
+      VERBOSE_LOGGING: ${{ secrets.VERBOSE_LOGGING }}
+
+      # Your logging run id (optional)
+      LOG_RUN_ID: ${{ github.run_id }}
+
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Setup Node
+        uses: actions/setup-node@v4
+        with:
+          node-version: 20
+          cache: npm
+
+      - name: Install dependencies
+        run: npm ci
+
+      - name: Install Playwright browsers (with OS deps)
+        run: npx playwright install --with-deps chromium
+
+      - name: Prepare artifacts folder
+        run: mkdir -p artifacts
+
+      - name: Sanity check env files exist
+        run: |
+          set -euo pipefail
+          echo "ENV=$ENV"
+          test -f "config/env/${ENV}.env" || (echo "Missing config/env/${ENV}.env" && exit 2)
+
+      - name: Run tests (PR/push default: UI smoke)
+        if: ${{ github.event_name != 'workflow_dispatch' }}
+        run: |
+          set -euo pipefail
+          npm run test:ui:smoke:ci 2>&1 | tee artifacts/test-output.txt
+
+      - name: Run tests (manual selection)
+        if: ${{ github.event_name == 'workflow_dispatch' }}
+        run: |
+          set -euo pipefail
+          echo "ENV=$ENV" | tee artifacts/selected.txt
+          echo "SUITE=${{ inputs.suite }}" | tee -a artifacts/selected.txt
+
+          case "${{ inputs.suite }}" in
+            ui-smoke)
+              npm run test:ui:smoke:ci 2>&1 | tee artifacts/test-output.txt
+              ;;
+            all)
+              npm run "test:$ENV" 2>&1 | tee artifacts/test-output.txt
+              ;;
+            api-only)
+              cross-env ENV=$ENV playwright test --project "API Tests - Chromium" 2>&1 | tee artifacts/test-output.txt
+              ;;
+            ui-only)
+              cross-env ENV=$ENV playwright test --project "UI Tests - Chromium" 2>&1 | tee artifacts/test-output.txt
+              ;;
+            *)
+              echo "Unknown suite: ${{ inputs.suite }}"
+              exit 2
+              ;;
+          esac
+
+      - name: CI Summary
+        if: always()
+        run: |
+          {
+            echo "## Playwright CI summary"
+            echo ""
+            echo "- Repo: \`$GITHUB_REPOSITORY\`"
+            echo "- Ref: \`$GITHUB_REF\`"
+            echo "- SHA: \`$GITHUB_SHA\`"
+            echo "- ENV: \`$ENV\` (loads \`config/env/$ENV.env\`)"
+            echo "- Node: \`$(node -v)\`"
+            echo "- NPM: \`$(npm -v)\`"
+            echo ""
+            echo "Artifacts (downloadable):"
+            echo "- \`artifacts/test-output.txt\`"
+            echo "- \`out/playwright-report/\`"
+            echo "- \`out/test-results/\` (junit.xml, results.json, attachments)"
+          } >> "$GITHUB_STEP_SUMMARY"
+
+      - name: Upload reports + logs
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: playwright-artifacts
+          path: |
+            artifacts/
+            out/playwright-report/
+            out/test-results/
+            out/perf/
