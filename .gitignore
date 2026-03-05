@@ -16,6 +16,9 @@ test-results/
 playwright/.cache/
 blob-report/
 
+# Yaml
+*copy.yml
+
 # Allure
 .allure-results/
 allure-results/
