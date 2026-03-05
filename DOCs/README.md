@@ -64,4 +64,4 @@ Add new methods at `createProductsHelpers`, `createUsersHelpers`, or `createBran
   - `npm run perf:report:load`
   - `npm run perf:report:ui`
 - Reports are generated locally from Artillery JSON via `perf/reporters/generate-report.js`.
-- Trend mode compares the current run against `*.prev.json` baseline files.
+- Trend mode compares the current run against `*.prev.json` baseline files. 
