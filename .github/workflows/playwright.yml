@@ -20,12 +20,12 @@ jobs:
       ENV: dev
       LOG_RUN_ID: ${{ github.run_id }}
 
-      # secrets
+      # Secrets (GitHub repo secrets)
       API_KEY: ${{ secrets.DEV_API_KEY }}
       TEST_USER_EMAIL: ${{ secrets.DEV_TEST_USER_EMAIL }}
       TEST_USER_PASSWORD: ${{ secrets.DEV_TEST_USER_PASSWORD }}
 
-      # vars (or make these secrets if vars aren't available)
+      # Variables (GitHub repo variables). If you don't have vars, move these to secrets.
       BASE_URL: ${{ vars.DEV_BASE_URL }}
       API_BASE_URL: ${{ vars.DEV_API_BASE_URL }}
 
@@ -49,8 +49,8 @@ jobs:
           set -euo pipefail
           mkdir -p config/env
 
-          # Hard fail early if required values are missing
-          test -n "${API_BASE_URL:-}" || (echo "Missing API_BASE_URL" && exit 2)
+          # Fail early if required config missing
+          test -n "${API_BASE_URL:-}" || (echo "Missing DEV_API_BASE_URL (vars) / API_BASE_URL" && exit 2)
 
           cat > "config/env/dev.env" <<EOF
           BASE_URL=${BASE_URL:-}
@@ -66,13 +66,57 @@ jobs:
           TEST_USER_PASSWORD=${TEST_USER_PASSWORD:-}
           EOF
 
+          # Non-secret sanity check
+          echo "ENV=$ENV"
+          echo "BASE_URL set: $([ -n "${BASE_URL:-}" ] && echo yes || echo no)"
+          echo "API_BASE_URL set: $([ -n "${API_BASE_URL:-}" ] && echo yes || echo no)"
+
       - name: Prepare artifacts folder
         run: mkdir -p artifacts
+
+      - name: Generate BDD specs
+        run: |
+          set -euo pipefail
+          npm run bdd:generate
+
+      - name: Validate generated specs exist
+        run: |
+          set -euo pipefail
+          echo "Looking for generated *.spec.js files..."
+          COUNT="$(find . -type f -name "*.spec.js" | wc -l | tr -d ' ')"
+          echo "Found spec files: $COUNT"
+          if [ "$COUNT" -eq 0 ]; then
+            echo "No *.spec.js files found after bdd:generate."
+            echo "Check playwright-bdd generation output folder (e.g. .features-gen) and config."
+            exit 3
+          fi
 
       - name: Run tests (UI smoke CI)
         run: |
           set -euo pipefail
           npm run test:ui:smoke:ci 2>&1 | tee artifacts/test-output.txt
+
+      - name: CI Summary
+        if: always()
+        run: |
+          {
+            echo "## Playwright CI summary"
+            echo ""
+            echo "- Repo: \`$GITHUB_REPOSITORY\`"
+            echo "- Ref: \`$GITHUB_REF\`"
+            echo "- SHA: \`$GITHUB_SHA\`"
+            echo "- ENV: \`$ENV\` (generated \`config/env/dev.env\` at runtime)"
+            echo "- Node: \`$(node -v)\`"
+            echo "- NPM: \`$(npm -v)\`"
+            echo ""
+            echo "Generated specs:"
+            echo "\`find . -name \"*.spec.js\" | wc -l\` = $(find . -type f -name "*.spec.js" | wc -l | tr -d ' ')"
+            echo ""
+            echo "Artifacts:"
+            echo "- \`artifacts/test-output.txt\`"
+            echo "- \`out/playwright-report/\`"
+            echo "- \`out/test-results/\` (junit.xml, results.json, attachments)"
+          } >> "$GITHUB_STEP_SUMMARY"
 
       - name: Upload reports + logs
         if: always()
