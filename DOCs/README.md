@@ -38,7 +38,7 @@ Add new methods at `createProductsHelpers`, `createUsersHelpers`, or `createBran
 
 - `option '-g, --grep <grep>' argument missing`
   - Cause: shell split removed the grep value.
-  - Fix: use `--grep=@tag` format.
+  - Fix: use `--grep=@tag` format..
 
 - Command works in CMD but fails in PowerShell
   - Use the same syntax with equals (`--grep=@tag`) and avoid extra quotes unless needed.
