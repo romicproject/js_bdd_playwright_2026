@@ -191,6 +191,8 @@ jobs:
       - name: CI Summary
         if: always()
         run: |
+          set -euo pipefail
+          COUNT=$(find . -type f -name '*.spec.js' | wc -l | tr -d ' ')
           {
             echo "## Playwright CI summary"
             echo ""
@@ -201,7 +203,11 @@ jobs:
             echo "- Node: \`$(node -v)\`"
             echo "- NPM: \`$(npm -v)\`"
             echo ""
+<<<<<<< romicproject-patch-2
             echo "Generated specs: $(find . -type f -name "*.spec.js" | wc -l | tr -d ' ')"
+=======
+            echo "Generated specs: $COUNT"
+>>>>>>> main
             echo ""
             echo "Artifacts:"
             echo "- \`artifacts/test-output.txt\`"
