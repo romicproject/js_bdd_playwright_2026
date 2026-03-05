@@ -39,7 +39,7 @@ jobs:
           cache: npm
 
       - name: Install dependencies
-        run: npm DOES_NOT_EXIST # INtentional error
+        run: npm ci
 
       - name: Install Playwright browsers
         run: npx playwright install --with-deps chromium
