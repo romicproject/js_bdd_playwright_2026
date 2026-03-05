@@ -1,13 +1,13 @@
-name: Hello CI
+#name: Hello CI
 
-on:
-  push:
-  pull_request:
-  workflow_dispatch:
+#on:
+  # push:
+  # pull_request:
+  # workflow_dispatch:
 
-jobs:
-  hello:
-    runs-on: ubuntu-latest
-    steps:
-      - name: Print hello
-        run: echo "Hello from GitHub Actions!"
+#jobs:
+ # hello:
+  #  runs-on: ubuntu-latest
+   # steps:
+   #   - name: Print hello
+   #     run: echo "Hello from GitHub Actions!"
