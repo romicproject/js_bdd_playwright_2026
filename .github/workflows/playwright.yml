@@ -64,10 +64,8 @@ jobs:
         run: |
           set -euo pipefail
           mkdir -p config/env
-
           # Fail early if required config missing
           test -n "${API_BASE_URL:-}" || (echo "Missing DEV_API_BASE_URL (vars) / API_BASE_URL" && exit 2)
-
           cat > "config/env/dev.env" <<EOF
           BASE_URL=${BASE_URL:-}
           API_BASE_URL=${API_BASE_URL:-}
@@ -81,7 +79,6 @@ jobs:
           TEST_USER_EMAIL=${TEST_USER_EMAIL:-}
           TEST_USER_PASSWORD=${TEST_USER_PASSWORD:-}
           EOF
-
           # Non-secret sanity check
           echo "ENV=$ENV"
           echo "BASE_URL set: $([ -n "${BASE_URL:-}" ] && echo yes || echo no)"
@@ -115,15 +112,12 @@ jobs:
         if: ${{ github.event_name == 'workflow_dispatch' }}
         run: |
           set -euo pipefail
-
           SUITE="${{ inputs.suite }}"
           PROJECT_INPUT="${{ inputs.project }}"
           GREP_INPUT="${{ inputs.grep }}"
-
           echo "SUITE=$SUITE" | tee artifacts/selected.txt
           echo "PROJECT_INPUT=$PROJECT_INPUT" | tee -a artifacts/selected.txt
           echo "GREP_INPUT=$GREP_INPUT" | tee -a artifacts/selected.txt
-
           PROJECT=""
           if [ "$PROJECT_INPUT" = "auto" ]; then
             case "$SUITE" in
@@ -133,12 +127,10 @@ jobs:
           else
             PROJECT="$PROJECT_INPUT"
           fi
-
           GREP_ARGS=""
           if [ -n "$GREP_INPUT" ]; then
             GREP_ARGS="--grep=$GREP_INPUT"
           fi
-
           case "$SUITE" in
             ui-smoke)
               if [ -n "$GREP_INPUT" ]; then
