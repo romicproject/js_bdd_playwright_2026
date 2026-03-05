@@ -102,14 +102,14 @@ jobs:
             exit 3
           fi
 
-      - name: Run tests (PR/push default: UI smoke)
-        if: ${{ github.event_name != 'workflow_dispatch' }}
+      - name: Run tests (PR/push default - UI smoke)
+        if: github.event_name != 'workflow_dispatch'
         run: |
           set -euo pipefail
           npm run test:ui:smoke:ci 2>&1 | tee artifacts/test-output.txt
 
       - name: Run tests (manual)
-        if: ${{ github.event_name == 'workflow_dispatch' }}
+        if: github.event_name == 'workflow_dispatch'
         run: |
           set -euo pipefail
           SUITE="${{ inputs.suite }}"
