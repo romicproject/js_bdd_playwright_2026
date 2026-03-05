@@ -2,11 +2,11 @@ name: Playwright (DEV) CI
 
 on:
   pull_request:
-    branches: 
-      - main 
+    branches:
+      - main
   push:
-    branches: 
-      - main 
+    branches:
+      - main
   workflow_dispatch:
     inputs:
       suite:
@@ -57,28 +57,44 @@ jobs:
       - name: Install dependencies
         run: npm ci
 
+      # FIX 1: Cache Playwright browsers — evita re-descarcarea la fiecare rulare
+      - name: Cache Playwright browsers
+        id: playwright-cache
+        uses: actions/cache@v4
+        with:
+          path: ~/.cache/ms-playwright
+          key: playwright-chromium-${{ runner.os }}-${{ hashFiles('package-lock.json') }}
+          restore-keys: |
+            playwright-chromium-${{ runner.os }}-
+
       - name: Install Playwright browsers
+        if: steps.playwright-cache.outputs.cache-hit != 'true'
         run: npx playwright install --with-deps chromium
 
+      - name: Install Playwright system deps (cache hit)
+        if: steps.playwright-cache.outputs.cache-hit == 'true'
+        run: npx playwright install-deps chromium
+
+      # FIX 2: heredoc fara indentare — valorile din dev.env nu vor mai avea spatii in fata
       - name: Create DEV env file (do not print values)
         run: |
           set -euo pipefail
           mkdir -p config/env
           # Fail early if required config missing
           test -n "${API_BASE_URL:-}" || (echo "Missing DEV_API_BASE_URL (vars) / API_BASE_URL" && exit 2)
-          cat > "config/env/dev.env" <<EOF
-          BASE_URL=${BASE_URL:-}
-          API_BASE_URL=${API_BASE_URL:-}
-          REQUEST_TIMEOUT=10000
-          GLOBAL_TIMEOUT=30000
-          RETRY_FAILED_TESTS=0
-          MAX_RETRIES=2
-          DEBUG_MODE=false
-          VERBOSE_LOGGING=false
-          API_KEY=${API_KEY:-}
-          TEST_USER_EMAIL=${TEST_USER_EMAIL:-}
-          TEST_USER_PASSWORD=${TEST_USER_PASSWORD:-}
-          EOF
+          {
+            printf 'BASE_URL=%s\n'            "${BASE_URL:-}"
+            printf 'API_BASE_URL=%s\n'        "${API_BASE_URL:-}"
+            printf 'REQUEST_TIMEOUT=%s\n'     "10000"
+            printf 'GLOBAL_TIMEOUT=%s\n'      "30000"
+            printf 'RETRY_FAILED_TESTS=%s\n'  "0"
+            printf 'MAX_RETRIES=%s\n'         "2"
+            printf 'DEBUG_MODE=%s\n'          "false"
+            printf 'VERBOSE_LOGGING=%s\n'     "false"
+            printf 'API_KEY=%s\n'             "${API_KEY:-}"
+            printf 'TEST_USER_EMAIL=%s\n'     "${TEST_USER_EMAIL:-}"
+            printf 'TEST_USER_PASSWORD=%s\n'  "${TEST_USER_PASSWORD:-}"
+          } > "config/env/dev.env"
           # Non-secret sanity check
           echo "ENV=$ENV"
           echo "BASE_URL set: $([ -n "${BASE_URL:-}" ] && echo yes || echo no)"
@@ -102,14 +118,17 @@ jobs:
             exit 3
           fi
 
-      - name: Run tests (PR/push default - UI smoke)
-        if: github.event_name != 'workflow_dispatch'
+      # FIX 3: timeout-minutes per step — previne blocarea intregului job
+      - name: "Run tests (PR/push default: UI smoke)"
+        if: ${{ github.event_name != 'workflow_dispatch' }}
+        timeout-minutes: 30
         run: |
           set -euo pipefail
           npm run test:ui:smoke:ci 2>&1 | tee artifacts/test-output.txt
 
       - name: Run tests (manual)
-        if: github.event_name == 'workflow_dispatch'
+        if: ${{ github.event_name == 'workflow_dispatch' }}
+        timeout-minutes: 45
         run: |
           set -euo pipefail
           SUITE="${{ inputs.suite }}"
@@ -166,6 +185,13 @@ jobs:
               exit 2
               ;;
           esac
+
+      # FIX 4: Notificare explicita la esec
+      - name: Notify on failure
+        if: failure()
+        run: |
+          echo "::error::❌ Playwright tests FAILED on ${{ github.ref }} (run: ${{ github.run_id }})"
+          echo "::error::Commit: ${{ github.sha }}"
 
       - name: CI Summary
         if: always()
