@@ -27,203 +27,87 @@ concurrency:
   cancel-in-progress: true
 
 jobs:
-  test:
-    runs-on: ubuntu-latest
-    timeout-minutes: 60
-
-    env:
-      CI: true
-      ENV: dev
-      LOG_RUN_ID: ${{ github.run_id }}
-
-      # Secrets (GitHub repo secrets)
-      API_KEY: ${{ secrets.DEV_API_KEY }}
-      TEST_USER_EMAIL: ${{ secrets.DEV_TEST_USER_EMAIL }}
-      TEST_USER_PASSWORD: ${{ secrets.DEV_TEST_USER_PASSWORD }}
-
-      # Variables (GitHub repo variables). If you don't have vars, move these to secrets.
-      BASE_URL: ${{ vars.DEV_BASE_URL }}
-      API_BASE_URL: ${{ vars.DEV_API_BASE_URL }}
-
-    steps:
-      - uses: actions/checkout@v4
-
-      - name: Setup Node
-        uses: actions/setup-node@v4
-        with:
-          node-version: 20
-          cache: npm
-
-      - name: Install dependencies
-        run: npm ci
-
-      # FIX 1: Cache Playwright browsers — evita re-descarcarea la fiecare rulare
-      - name: Cache Playwright browsers
-        id: playwright-cache
-        uses: actions/cache@v4
-        with:
-          path: ~/.cache/ms-playwright
-          key: playwright-chromium-${{ runner.os }}-${{ hashFiles('package-lock.json') }}
-          restore-keys: |
-            playwright-chromium-${{ runner.os }}-
-
-      - name: Install Playwright browsers
-        if: steps.playwright-cache.outputs.cache-hit != 'true'
-        run: npx playwright install --with-deps chromium
-
-      - name: Install Playwright system deps (cache hit)
-        if: steps.playwright-cache.outputs.cache-hit == 'true'
-        run: npx playwright install-deps chromium
-
-      # FIX 2: heredoc fara indentare — valorile din dev.env nu vor mai avea spatii in fata
-      - name: Create DEV env file (do not print values)
-        run: |
-          set -euo pipefail
-          mkdir -p env
-          # Fail early if required config missing
-          test -n "${API_BASE_URL:-}" || (echo "Missing DEV_API_BASE_URL (vars) / API_BASE_URL" && exit 2)
-          {
-            printf 'BASE_URL=%s\n'            "${BASE_URL:-}"
-            printf 'API_BASE_URL=%s\n'        "${API_BASE_URL:-}"
-            printf 'REQUEST_TIMEOUT=%s\n'     "10000"
-            printf 'GLOBAL_TIMEOUT=%s\n'      "30000"
-            printf 'RETRY_FAILED_TESTS=%s\n'  "0"
-            printf 'MAX_RETRIES=%s\n'         "2"
-            printf 'DEBUG_MODE=%s\n'          "false"
-            printf 'VERBOSE_LOGGING=%s\n'     "false"
-            printf 'API_KEY=%s\n'             "${API_KEY:-}"
-            printf 'TEST_USER_EMAIL=%s\n'     "${TEST_USER_EMAIL:-}"
-            printf 'TEST_USER_PASSWORD=%s\n'  "${TEST_USER_PASSWORD:-}"
-          } > "env/dev.env"
-          # Non-secret sanity check
-          echo "ENV=$ENV"
-          echo "BASE_URL set: $([ -n "${BASE_URL:-}" ] && echo yes || echo no)"
-          echo "API_BASE_URL set: $([ -n "${API_BASE_URL:-}" ] && echo yes || echo no)"
-
-      - name: Prepare artifacts folder
-        run: mkdir -p artifacts
-
-      - name: Generate BDD specs
-        run: |
-          set -euo pipefail
-          npm run bdd:generate
-
-      - name: Validate generated specs exist
-        run: |
-          set -euo pipefail
-          COUNT="$(find . -type f -name "*.spec.js" | wc -l | tr -d ' ')"
-          echo "Found spec files: $COUNT"
-          if [ "$COUNT" -eq 0 ]; then
-            echo "No *.spec.js files found after bdd:generate."
-            exit 3
-          fi
-
-      # FIX 3: timeout-minutes per step — previne blocarea intregului job
-      - name: "Run tests (PR/push default: UI smoke)"
-        if: ${{ github.event_name != 'workflow_dispatch' }}
-        timeout-minutes: 30
-        run: |
-          set -euo pipefail
+  smoke:
+    if: ${{ github.event_name != 'workflow_dispatch' }}
+    strategy:
+      fail-fast: false
+      matrix:
+        suite: [api, ui]
+    uses: ./.github/workflows/playwright-reusable.yml
+    secrets: inherit
+    with:
+      summary_title: smoke-${{ matrix.suite }}
+      artifact_name: playwright-artifacts-${{ matrix.suite }}
+      test_timeout_minutes: 30
+      run_command: |
+        set -euo pipefail
+        if [ "${{ matrix.suite }}" = "api" ]; then
+          cross-env ENV=dev playwright test --project "API Tests - Chromium" --grep @smoke --workers=3 2>&1 | tee artifacts/test-output.txt
+        else
           npm run test:ui:smoke:ci 2>&1 | tee artifacts/test-output.txt
+        fi
 
-      - name: Run tests (manual)
-        if: ${{ github.event_name == 'workflow_dispatch' }}
-        timeout-minutes: 45
-        run: |
-          set -euo pipefail
-          SUITE="${{ inputs.suite }}"
-          PROJECT_INPUT="${{ inputs.project }}"
-          GREP_INPUT="${{ inputs.grep }}"
-          echo "SUITE=$SUITE" | tee artifacts/selected.txt
-          echo "PROJECT_INPUT=$PROJECT_INPUT" | tee -a artifacts/selected.txt
-          echo "GREP_INPUT=$GREP_INPUT" | tee -a artifacts/selected.txt
-          PROJECT=""
-          if [ "$PROJECT_INPUT" = "auto" ]; then
-            case "$SUITE" in
-              api-only) PROJECT="API Tests - Chromium" ;;
-              *) PROJECT="UI Tests - Chromium" ;;
-            esac
-          else
-            PROJECT="$PROJECT_INPUT"
-          fi
-          GREP_ARGS=""
-          if [ -n "$GREP_INPUT" ]; then
-            GREP_ARGS="--grep=$GREP_INPUT"
-          fi
+  workflow-dispatch:
+    if: ${{ github.event_name == 'workflow_dispatch' }}
+    uses: ./.github/workflows/playwright-reusable.yml
+    secrets: inherit
+    with:
+      summary_title: manual-dispatch
+      artifact_name: playwright-artifacts-manual
+      test_timeout_minutes: 45
+      run_command: |
+        set -euo pipefail
+        SUITE="${{ inputs.suite }}"
+        PROJECT_INPUT="${{ inputs.project }}"
+        GREP_INPUT="${{ inputs.grep }}"
+        echo "SUITE=$SUITE" | tee artifacts/selected.txt
+        echo "PROJECT_INPUT=$PROJECT_INPUT" | tee -a artifacts/selected.txt
+        echo "GREP_INPUT=$GREP_INPUT" | tee -a artifacts/selected.txt
+        PROJECT=""
+        if [ "$PROJECT_INPUT" = "auto" ]; then
           case "$SUITE" in
-            ui-smoke)
-              if [ -n "$GREP_INPUT" ]; then
-                cross-env ENV=dev playwright test --project "UI Tests - Chromium" $GREP_ARGS --workers=3 2>&1 | tee artifacts/test-output.txt
-              else
-                npm run test:ui:smoke:ci 2>&1 | tee artifacts/test-output.txt
-              fi
-              ;;
-            ui-only)
-              cross-env ENV=dev playwright test --project "${PROJECT:-UI Tests - Chromium}" $GREP_ARGS 2>&1 | tee artifacts/test-output.txt
-              ;;
-            api-only)
-              cross-env ENV=dev playwright test --project "${PROJECT:-API Tests - Chromium}" $GREP_ARGS 2>&1 | tee artifacts/test-output.txt
-              ;;
-            all)
-              if [ -n "$GREP_INPUT" ]; then
-                cross-env ENV=dev playwright test $GREP_ARGS 2>&1 | tee artifacts/test-output.txt
-              else
-                npm run test:dev 2>&1 | tee artifacts/test-output.txt
-              fi
-              ;;
-            perf-smoke)
-              npm run perf:smoke 2>&1 | tee artifacts/test-output.txt
-              ;;
-            perf-load)
-              npm run perf:load 2>&1 | tee artifacts/test-output.txt
-              ;;
-            perf-ui)
-              npm run perf:ui 2>&1 | tee artifacts/test-output.txt
-              ;;
-            *)
-              echo "Unknown suite: $SUITE"
-              exit 2
-              ;;
+            api-only) PROJECT="API Tests - Chromium" ;;
+            *) PROJECT="UI Tests - Chromium" ;;
           esac
-
-      # FIX 4: Notificare explicita la esec
-      - name: Notify on failure
-        if: failure()
-        run: |
-          echo "::error::❌ Playwright tests FAILED on ${{ github.ref }} (run: ${{ github.run_id }})"
-          echo "::error::Commit: ${{ github.sha }}"
-
-      - name: CI Summary
-        if: always()
-        run: |
-          set -euo pipefail
-          COUNT=$(find . -type f -name '*.spec.js' | wc -l | tr -d ' ')
-          {
-            echo "## Playwright CI summary"
-            echo ""
-            echo "- Repo: \`$GITHUB_REPOSITORY\`"
-            echo "- Ref: \`$GITHUB_REF\`"
-            echo "- SHA: \`$GITHUB_SHA\`"
-            echo "- ENV: \`$ENV\` (generated \`env/dev.env\` at runtime)"
-            echo "- Node: \`$(node -v)\`"
-            echo "- NPM: \`$(npm -v)\`"
-            echo ""
-            echo "Generated specs: $COUNT"
-            echo ""
-            echo "Artifacts:"
-            echo "- \`artifacts/test-output.txt\`"
-            echo "- \`out/playwright-report/\`"
-            echo "- \`out/test-results/\` (junit.xml, results.json, attachments)"
-            echo "- \`out/perf/\` (if perf was run)"
-          } >> "$GITHUB_STEP_SUMMARY"
-
-      - name: Upload reports + logs
-        if: always()
-        uses: actions/upload-artifact@v4
-        with:
-          name: playwright-artifacts
-          path: |
-            artifacts/
-            out/playwright-report/
-            out/test-results/
-            out/perf/
+        else
+          PROJECT="$PROJECT_INPUT"
+        fi
+        GREP_ARGS=""
+        if [ -n "$GREP_INPUT" ]; then
+          GREP_ARGS="--grep=$GREP_INPUT"
+        fi
+        case "$SUITE" in
+          ui-smoke)
+            if [ -n "$GREP_INPUT" ]; then
+              cross-env ENV=dev playwright test --project "UI Tests - Chromium" $GREP_ARGS --workers=3 2>&1 | tee artifacts/test-output.txt
+            else
+              npm run test:ui:smoke:ci 2>&1 | tee artifacts/test-output.txt
+            fi
+            ;;
+          ui-only)
+            cross-env ENV=dev playwright test --project "${PROJECT:-UI Tests - Chromium}" $GREP_ARGS 2>&1 | tee artifacts/test-output.txt
+            ;;
+          api-only)
+            cross-env ENV=dev playwright test --project "${PROJECT:-API Tests - Chromium}" $GREP_ARGS 2>&1 | tee artifacts/test-output.txt
+            ;;
+          all)
+            if [ -n "$GREP_INPUT" ]; then
+              cross-env ENV=dev playwright test $GREP_ARGS 2>&1 | tee artifacts/test-output.txt
+            else
+              npm run test:dev 2>&1 | tee artifacts/test-output.txt
+            fi
+            ;;
+          perf-smoke)
+            npm run perf:smoke 2>&1 | tee artifacts/test-output.txt
+            ;;
+          perf-load)
+            npm run perf:load 2>&1 | tee artifacts/test-output.txt
+            ;;
+          perf-ui)
+            npm run perf:ui 2>&1 | tee artifacts/test-output.txt
+            ;;
+          *)
+            echo "Unknown suite: $SUITE"
+            exit 2
+            ;;
+        esac
