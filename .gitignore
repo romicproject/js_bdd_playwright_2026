@@ -10,6 +10,7 @@ env/*.env
 !env/*.env.example
 
 # Playwright
+out/
 playwright-report/
 test-results/
 .playwright/
