@@ -106,7 +106,7 @@ jobs:
         run: |
           set -euo pipefail
           if [ "${{ matrix.suite }}" = "api" ]; then
-            cross-env ENV=dev playwright test --project "API Tests - Chromium" --grep @smoke --workers=3 2>&1 | tee artifacts/test-output.txt
+            npx playwright test --project "API Tests - Chromium" --grep @smoke --workers=3 2>&1 | tee artifacts/test-output.txt
           else
             npm run test:ui:smoke:ci 2>&1 | tee artifacts/test-output.txt
           fi
@@ -209,20 +209,20 @@ jobs:
           case "$SUITE" in
             ui-smoke)
               if [ -n "$GREP_INPUT" ]; then
-                cross-env ENV=dev playwright test --project "UI Tests - Chromium" $GREP_ARGS --workers=3 2>&1 | tee artifacts/test-output.txt
+                npx playwright test --project "UI Tests - Chromium" $GREP_ARGS --workers=3 2>&1 | tee artifacts/test-output.txt
               else
                 npm run test:ui:smoke:ci 2>&1 | tee artifacts/test-output.txt
               fi
               ;;
             ui-only)
-              cross-env ENV=dev playwright test --project "$PROJECT" $GREP_ARGS 2>&1 | tee artifacts/test-output.txt
+              npx playwright test --project "$PROJECT" $GREP_ARGS 2>&1 | tee artifacts/test-output.txt
               ;;
             api-only)
-              cross-env ENV=dev playwright test --project "$PROJECT" $GREP_ARGS 2>&1 | tee artifacts/test-output.txt
+              npx playwright test --project "$PROJECT" $GREP_ARGS 2>&1 | tee artifacts/test-output.txt
               ;;
             all)
               if [ -n "$GREP_INPUT" ]; then
-                cross-env ENV=dev playwright test $GREP_ARGS 2>&1 | tee artifacts/test-output.txt
+                npx playwright test $GREP_ARGS 2>&1 | tee artifacts/test-output.txt
               else
                 npm run test:dev 2>&1 | tee artifacts/test-output.txt
               fi
