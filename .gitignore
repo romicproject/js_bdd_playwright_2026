@@ -44,3 +44,9 @@ Thumbs.db
 *.log
 logs/
 
+# GitHub metadata: keep only workflows tracked
+.github/*
+!.github/workflows/
+!.github/workflows/**
+.github/workflows/*copy.yml
+
