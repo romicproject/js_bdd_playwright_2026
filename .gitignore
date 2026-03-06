@@ -43,9 +43,9 @@ Thumbs.db
 *.log
 logs/
 
-# GitHub metadata: track workflows and local composite actions
+# GitHub metadata: keep only workflows and actions tracked
 .github/*
-!.github/actions/
+.github/actions/
 !.github/actions/**
 !.github/workflows/
 !.github/workflows/**
