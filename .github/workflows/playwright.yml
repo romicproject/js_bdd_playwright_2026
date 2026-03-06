@@ -1,5 +1,5 @@
 name: Playwright CI
-
+# This workflow runs Playwright tests on pull requests and pushes to main, with a manual trigger option.
 on:
   pull_request:
     branches: [main]
