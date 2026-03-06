@@ -1,7 +1,7 @@
 // support/steps/api/common.steps.js
 import { createBdd } from 'playwright-bdd';
 import { test } from '../../fixtures/api/api.fixtures.js';
-import { validateSchema } from '../../schemas/utils/schemaValidator.js';
+import { validateSchema } from '../../framework/validation/schemaValidator.js';
 import { productListSchema } from '../../schemas/productList.schema.js';
 import {
   expectEffectiveStatus,

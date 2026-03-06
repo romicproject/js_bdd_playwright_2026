@@ -5,10 +5,10 @@ import {
   redactHeaders,
   redactBodyForLogs,
   limitBody
-} from './client/redact.js';
+} from '../../framework/http/redact.js';
 import { shouldLog, attachJson, getLogger } from './client/reporter.js';
-import { joinUrl } from './client/url.js';
-import { hasHeader, isFormLike } from './client/headers.js';
+import { joinUrl } from '../../framework/http/url.js';
+import { hasHeader, isFormLike } from '../../framework/http/headers.js';
 
 function envNum(name, fallback) {
   const n = Number(process.env[name]);

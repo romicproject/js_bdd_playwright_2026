@@ -1,5 +1,5 @@
 // reporters/configReporter.js
-import { config } from '../../config/envConfig.js';
+import { config } from '../framework/config/envConfig.js';
 
 function buildConfigSummary() {
     return (

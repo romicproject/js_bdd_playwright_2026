@@ -5,9 +5,9 @@ yarn-debug.log*
 yarn-error.log*
 
 # Environment files cu credențiale
-config/env/*.env
+env/*.env
 # Păstrează template-urile
-!config/env/*.env.example
+!env/*.env.example
 
 # Playwright
 playwright-report/

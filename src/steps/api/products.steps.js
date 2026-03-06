@@ -2,7 +2,7 @@
 import { createBdd } from 'playwright-bdd';
 import { expect } from '@playwright/test';
 import { test } from '../../fixtures/api/api.fixtures.js';
-import { validateSchema } from '../../schemas/utils/schemaValidator.js';
+import { validateSchema } from '../../framework/validation/schemaValidator.js';
 import { brandListSchema } from '../../schemas/brandList.schema.js';
 import { assertSchema } from './stepUtils.js';
 
