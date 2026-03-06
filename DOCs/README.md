@@ -49,9 +49,9 @@ Add new methods at `createProductsHelpers`, `createUsersHelpers`, or `createBran
 ## Secret handling policy
 
 - Do not commit real credentials or API keys in tracked `.env` files.
-- Keep [config/env/dev.env](../config/env/dev.env) with local placeholders only.
+- Keep [env/dev.env](../env/dev.env) with local placeholders only.
 - Provide real sensitive values via local environment variables or CI secret stores.
-- Use [config/env/dev.env.example](../config/env/dev.env.example) as the template for required keys.
+- Use [env/dev.env.example](../env/dev.env.example) as the template for required keys.
 
 ## Performance load testing
 

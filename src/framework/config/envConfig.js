@@ -1,11 +1,5 @@
-// config/envConfig.js
 import dotenv from 'dotenv';
 import path from 'path';
-import { fileURLToPath } from 'url';
-
-// ES modules workaround for __dirname
-const __filename = fileURLToPath(import.meta.url);
-const __dirname = path.dirname(__filename);
 
 // Determine environment (default: dev)
 const ENV = process.env.ENV || 'dev';
@@ -18,8 +12,8 @@ if (!validEnvironments.includes(ENV)) {
   );
 }
 
-// Load the corresponding .env file
-const envPath = path.resolve(__dirname, `env/${ENV}.env`);
+// Load the corresponding .env file from repository env/
+const envPath = path.resolve(process.cwd(), `env/${ENV}.env`);
 const result = dotenv.config({ path: envPath, quiet: true });
 
 if (result.error) {

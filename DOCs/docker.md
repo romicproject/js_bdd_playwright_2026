@@ -12,8 +12,8 @@ The project now ships with a Docker runner that mirrors `npm run test:*`.
    ```
    Reports land in `out/playwright-report`/`out/test-results` on the host thanks to the mounted volumes.
 3. Switch environments by selecting the matching profile + env file:
-   * `--profile staging` + `config/env/staging.env` → runs `npm run test:staging`
-   * `--profile prod` + `config/env/prod.env` → runs `npm run test:prod`
+   * `--profile staging` + `env/staging.env` -> runs `npm run test:staging`
+   * `--profile prod` + `env/prod.env` -> runs `npm run test:prod`
 4. Tear down:
    ```sh
    docker compose down --remove-orphans
@@ -21,7 +21,7 @@ The project now ships with a Docker runner that mirrors `npm run test:*`.
 
 The accompanying `Dockerfile` is based on `mcr.microsoft.com/playwright:v1.58.2-jammy`, copies the sources, installs dependencies, generates `.features-gen`, and finally dispatches `npm run test:dev` (overridable via the Compose service).
 
-Use the `config/env/*.env` files to set `ENV` and other secrets (`--env-file` on compose). In CI, publish `playwright-report` and `test-results` as artifacts after the compose service finishes.
+Use the `env/*.env` files to set `ENV` and other secrets (`--env-file` on compose). In CI, publish `playwright-report` and `test-results` as artifacts after the compose service finishes.
 
 ## Report output locations
 

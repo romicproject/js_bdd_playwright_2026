@@ -1,11 +1,11 @@
 // fixtures/api/api.fixtures.js
 import { test as base } from 'playwright-bdd';
-import { config } from '../../../config/envConfig.js';
+import { config } from '../../framework/config/envConfig.js';
 import { createApiContext } from './apiContext.js';
 import { createApiClient } from './apiClient.js';
 import { createApiHelpers } from './helpers/index.js';
 
-import { createLogger, getAttachAllureEnabled } from '../../logging/logger.js';
+import { createLogger, getAttachAllureEnabled } from '../../framework/logging/logger.js';
 import { buildTestLogPath, inferFeatureFromTestInfo } from '../../logging/paths.js';
 
 function env(name, fallback) {

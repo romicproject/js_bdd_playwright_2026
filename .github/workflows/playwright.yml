@@ -1,4 +1,4 @@
-name: Playwright (DEV) CI
+name: Playwright (DEV) CI 
 
 on:
   pull_request:
@@ -79,7 +79,7 @@ jobs:
       - name: Create DEV env file (do not print values)
         run: |
           set -euo pipefail
-          mkdir -p config/env
+          mkdir -p env
           # Fail early if required config missing
           test -n "${API_BASE_URL:-}" || (echo "Missing DEV_API_BASE_URL (vars) / API_BASE_URL" && exit 2)
           {
@@ -94,7 +94,7 @@ jobs:
             printf 'API_KEY=%s\n'             "${API_KEY:-}"
             printf 'TEST_USER_EMAIL=%s\n'     "${TEST_USER_EMAIL:-}"
             printf 'TEST_USER_PASSWORD=%s\n'  "${TEST_USER_PASSWORD:-}"
-          } > "config/env/dev.env"
+          } > "env/dev.env"
           # Non-secret sanity check
           echo "ENV=$ENV"
           echo "BASE_URL set: $([ -n "${BASE_URL:-}" ] && echo yes || echo no)"
@@ -204,7 +204,7 @@ jobs:
             echo "- Repo: \`$GITHUB_REPOSITORY\`"
             echo "- Ref: \`$GITHUB_REF\`"
             echo "- SHA: \`$GITHUB_SHA\`"
-            echo "- ENV: \`$ENV\` (generated \`config/env/dev.env\` at runtime)"
+            echo "- ENV: \`$ENV\` (generated \`env/dev.env\` at runtime)"
             echo "- Node: \`$(node -v)\`"
             echo "- NPM: \`$(npm -v)\`"
             echo ""

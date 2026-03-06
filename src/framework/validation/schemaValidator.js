@@ -1,5 +1,3 @@
-// utils/schemaValidator.js
-
 const SENSITIVE_KEYS = new Set([
   'password',
   'pass',

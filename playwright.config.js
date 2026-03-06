@@ -1,7 +1,7 @@
 // playwright.config.js
 import { defineConfig, devices } from '@playwright/test';
 import { defineBddConfig } from 'playwright-bdd';
-import { config as envConfig } from './config/envConfig.js';
+import { config as envConfig } from './src/framework/config/envConfig.js';
 
 function hhmmssSSS(d = new Date()) {
   const hh = String(d.getHours()).padStart(2, '0');
