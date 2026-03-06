@@ -1,0 +1,83 @@
+name: Playwright Setup
+description: "Node install + Playwright cache + env file + BDD generate"
+
+inputs:
+  api-base-url:
+    required: true
+  base-url:
+    required: false
+    default: ""
+  api-key:
+    required: false
+    default: ""
+  test-user-email:
+    required: false
+    default: ""
+  test-user-password:
+    required: false
+    default: ""
+  node-version:
+    required: false
+    default: "20"
+
+runs:
+  using: composite
+  steps:
+    - uses: actions/setup-node@v4
+      with:
+        node-version: ${{ inputs.node-version }}
+        cache: npm
+
+    - run: npm ci
+      shell: bash
+
+    - name: Cache Playwright browsers
+      id: pw-cache
+      uses: actions/cache@v4
+      with:
+        path: ~/.cache/ms-playwright
+        key: pw-chromium-${{ runner.os }}-${{ hashFiles('package-lock.json') }}
+        restore-keys: pw-chromium-${{ runner.os }}-
+
+    - run: npx playwright install --with-deps chromium
+      if: steps.pw-cache.outputs.cache-hit != 'true'
+      shell: bash
+
+    - run: npx playwright install-deps chromium
+      if: steps.pw-cache.outputs.cache-hit == 'true'
+      shell: bash
+
+    - name: Create env file
+      shell: bash
+      env:
+        API_BASE_URL: ${{ inputs.api-base-url }}
+        BASE_URL: ${{ inputs.base-url }}
+        API_KEY: ${{ inputs.api-key }}
+        TEST_USER_EMAIL: ${{ inputs.test-user-email }}
+        TEST_USER_PASSWORD: ${{ inputs.test-user-password }}
+      run: |
+        set -euo pipefail
+        mkdir -p env artifacts
+        : "${API_BASE_URL:?Missing api-base-url}"
+        cat > env/dev.env <<EOF
+        BASE_URL=${BASE_URL:-}
+        API_BASE_URL=${API_BASE_URL}
+        REQUEST_TIMEOUT=10000
+        GLOBAL_TIMEOUT=30000
+        RETRY_FAILED_TESTS=0
+        MAX_RETRIES=2
+        DEBUG_MODE=false
+        VERBOSE_LOGGING=false
+        API_KEY=${API_KEY:-}
+        TEST_USER_EMAIL=${TEST_USER_EMAIL:-}
+        TEST_USER_PASSWORD=${TEST_USER_PASSWORD:-}
+        EOF
+
+    - name: Generate BDD specs
+      shell: bash
+      run: |
+        set -euo pipefail
+        npm run bdd:generate
+        COUNT=$(find . -type f -name "*.spec.js" | wc -l | tr -d ' ')
+        echo "Spec files found: $COUNT"
+        [[ "$COUNT" -gt 0 ]] || { echo "No spec files generated!"; exit 1; }
