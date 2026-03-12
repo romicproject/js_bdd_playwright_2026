@@ -41,10 +41,14 @@ scenarios:
     flow:
       - get:
           url: "{{ targetApi }}{{ endpointProductsList }}"
+          beforeRequest: metricsByEndpoint_beforeRequest
+          afterResponse: metricsByEndpoint_afterResponse
       - function: buildSearchBody
       - post:
           url: "{{ targetApi }}{{ endpointSearchProduct }}"
           body: "{{ searchBody }}"
+          beforeRequest: metricsByEndpoint_beforeRequest
+          afterResponse: metricsByEndpoint_afterResponse
 
   - name: Login verification flow
     weight: 40
@@ -54,3 +58,5 @@ scenarios:
       - post:
           url: "{{ targetApi }}{{ endpointVerifyLogin }}"
           body: "{{ loginBody }}"
+          beforeRequest: metricsByEndpoint_beforeRequest
+          afterResponse: metricsByEndpoint_afterResponse

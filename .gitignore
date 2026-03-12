@@ -17,6 +17,7 @@ playwright/.cache/
 blob-report/
 out/playwright-report/
 out/test-results/
+out/perf/
 
 # Yaml
 *copy.yml

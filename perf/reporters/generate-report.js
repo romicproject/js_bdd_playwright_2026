@@ -121,7 +121,54 @@ function readPreviousAggregate(inputPath) {
   }
 }
 
-function buildHtml({ title, inputPath, aggregate, previous, generatedAt }) {
+function inferGateDefaultsFromInput(inputPath) {
+  const file = String(inputPath || '').toLowerCase();
+
+  if (file.endsWith('api-smoke.json')) {
+    return {
+      profile: 'api-smoke',
+      p95MaxMs: 1000,
+      p99MaxMs: 2000,
+      minSuccessRate: 0.98
+    };
+  }
+
+  if (file.endsWith('api-load.json')) {
+    return {
+      profile: 'api-load',
+      p95MaxMs: 900,
+      p99MaxMs: 1800,
+      minSuccessRate: 0.99
+    };
+  }
+
+  return {
+    profile: 'default',
+    p95MaxMs: 900,
+    p99MaxMs: 1800,
+    minSuccessRate: 0.99
+  };
+}
+
+function resolveGates(args, inferredGates) {
+  const hasCli = args.p95 != null || args.p99 != null || args.minSuccessRate != null || args['min-success-rate'] != null;
+  const hasEnv = process.env.PERF_P95_MS != null || process.env.PERF_P99_MS != null || process.env.PERF_MIN_SUCCESS_RATE != null;
+
+  const source = hasCli ? 'cli' : hasEnv ? 'env' : 'inferred';
+
+  return {
+    p95MaxMs: number(args.p95 ?? process.env.PERF_P95_MS, inferredGates.p95MaxMs),
+    p99MaxMs: number(args.p99 ?? process.env.PERF_P99_MS, inferredGates.p99MaxMs),
+    minSuccessRate: number(
+      args.minSuccessRate ?? args['min-success-rate'] ?? process.env.PERF_MIN_SUCCESS_RATE,
+      inferredGates.minSuccessRate
+    ),
+    profile: inferredGates.profile,
+    source
+  };
+}
+
+function buildHtml({ title, inputPath, aggregate, previous, generatedAt, gates }) {
   const counters = aggregate?.counters || {};
   const rates = aggregate?.rates || {};
   const summaries = aggregate?.summaries || aggregate?.histograms || {};
@@ -142,12 +189,6 @@ function buildHtml({ title, inputPath, aggregate, previous, generatedAt }) {
   const previousOk200 = number(previousCounters['http.codes.200']);
   const previousSuccessRate = previousRequests > 0 ? previousOk200 / previousRequests : 0;
   const previousHttpRt = previousSummaries['http.response_time'] || null;
-
-  const gates = {
-    p95MaxMs: number(process.env.PERF_P95_MS, 900),
-    p99MaxMs: number(process.env.PERF_P99_MS, 1800),
-    minSuccessRate: number(process.env.PERF_MIN_SUCCESS_RATE, 0.99)
-  };
 
   const gateChecks = {
     p95: number(httpRt.p95) <= gates.p95MaxMs,
@@ -201,7 +242,8 @@ function buildHtml({ title, inputPath, aggregate, previous, generatedAt }) {
     }
     body { font-family: Segoe UI, Arial, sans-serif; margin: 24px; line-height: 1.45; }
     h1, h2 { margin: 0 0 12px 0; }
-    .meta { color: var(--muted); margin-bottom: 20px; }
+    .meta { color: var(--muted); margin: 0; }
+    .meta-row { display: flex; align-items: center; justify-content: space-between; gap: 12px; flex-wrap: wrap; margin-bottom: 20px; }
     .header-row { display: flex; align-items: center; justify-content: space-between; gap: 12px; flex-wrap: wrap; }
     .badge { padding: 8px 14px; border-radius: 999px; font-weight: 700; font-size: 13px; border: 1px solid transparent; }
     .badge.pass { background: var(--ok-bg); color: var(--ok); border-color: #86efac; }
@@ -215,6 +257,8 @@ function buildHtml({ title, inputPath, aggregate, previous, generatedAt }) {
     .warn { background: var(--warn-bg); color: var(--warn); }
     .bad { background: var(--bad-bg); color: var(--bad); }
     .section { margin-top: 14px; margin-bottom: 18px; }
+    .section-head { display: flex; align-items: baseline; justify-content: space-between; gap: 12px; flex-wrap: wrap; }
+    .section-head h2 { margin: 0; }
     .trend-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; }
     .trend-card { border: 1px solid var(--border); border-radius: 10px; padding: 10px; }
     .trend-label { font-size: 12px; color: var(--muted); text-transform: uppercase; }
@@ -230,11 +274,16 @@ function buildHtml({ title, inputPath, aggregate, previous, generatedAt }) {
     <h1>${escapeHtml(title)}</h1>
     <div class="${gateBadgeClass}">Quality Gate: ${gateBadgeText}</div>
   </div>
-  <div class="meta">Generated at ${escapeHtml(generatedAt)} from ${escapeHtml(inputPath)}</div>
+  <div class="meta-row">
+    <div class="meta">Generated at ${escapeHtml(generatedAt)} from ${escapeHtml(inputPath)}</div>
+    <div class="meta">Gate profile: ${escapeHtml(gates.profile)} | source: ${escapeHtml(gates.source)}</div>
+  </div>
 
   <div class="section">
-    <h2>Trend vs previous run</h2>
-    <div class="meta">Baseline: ${escapeHtml(previous?.path || 'not available yet')}</div>
+    <div class="section-head">
+      <h2>Trend vs previous run</h2>
+      <div class="meta">Baseline: ${escapeHtml(previous?.path || 'not available yet')}</div>
+    </div>
     <div class="trend-grid">
       <div class="trend-card">
         <div class="trend-label">Trend Status</div>
@@ -350,6 +399,8 @@ function main() {
   const report = readJson(absoluteInput);
   const aggregate = report?.aggregate || {};
   const previous = readPreviousAggregate(absoluteInput);
+  const inferredGates = inferGateDefaultsFromInput(absoluteInput);
+  const gates = resolveGates(args, inferredGates);
 
   fs.mkdirSync(path.dirname(absoluteOutput), { recursive: true });
   const html = buildHtml({
@@ -357,6 +408,7 @@ function main() {
     inputPath,
     aggregate,
     previous,
+    gates,
     generatedAt: new Date().toISOString()
   });
   fs.writeFileSync(absoluteOutput, html, 'utf8');
