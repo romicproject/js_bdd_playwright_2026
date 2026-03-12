@@ -1,4 +1,4 @@
-// support/steps/api/products.steps.js
+// src/steps/api/products.steps.js
 import { createBdd } from 'playwright-bdd';
 import { expect } from '@playwright/test';
 import { test } from '../../fixtures/api/api.fixtures.js';
@@ -35,7 +35,6 @@ Then('each product should have required fields', async ({ apiContext }) => {
 // Products - Search
 When('I search for product {string}', async ({ apiContext, apiHelpers }, searchTerm) => {
   apiContext.response = await apiHelpers.searchProduct(searchTerm);
-  apiContext.searchTerm = searchTerm;
 });
 
 Then('the response should contain products matching {string}', async ({ apiContext }, searchTerm) => {

@@ -30,15 +30,15 @@ pipeline {
       }
     }
 
-    stage('Build Image') {
+    stage('Build Info') {
       steps {
-        sh "docker compose --profile ${params.TEST_ENV} build"
+        echo 'Docker image build is included in npm docker:test:* scripts via --build'
       }
     }
 
     stage('Run Tests') {
       steps {
-        sh "docker compose --profile ${params.TEST_ENV} up --build --abort-on-container-exit --exit-code-from tests-${params.TEST_ENV} --remove-orphans"
+        sh "npm run docker:test:${params.TEST_ENV}"
       }
     }
   }

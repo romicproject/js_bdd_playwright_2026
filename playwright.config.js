@@ -40,7 +40,7 @@ export default defineConfig({
   timeout: envConfig.timeout.global,
   fullyParallel: true,
   forbidOnly: !!process.env.CI,
-  retries: envConfig.retry.enabled,
+  retries: envConfig.retry.retries,
   workers: process.env.CI ? 3 : undefined,
 
   reporter: [

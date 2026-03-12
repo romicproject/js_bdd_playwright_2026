@@ -15,6 +15,8 @@ test-results/
 .playwright/
 playwright/.cache/
 blob-report/
+out/playwright-report/
+out/test-results/
 
 # Yaml
 *copy.yml

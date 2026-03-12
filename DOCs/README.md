@@ -50,8 +50,10 @@ Add new methods at `createProductsHelpers`, `createUsersHelpers`, or `createBran
 
 - Do not commit real credentials or API keys in tracked `.env` files.
 - Keep [env/dev.env](../env/dev.env) with local placeholders only.
+- Keep [env/staging.env](../env/staging.env) and [env/prod.env](../env/prod.env) placeholder-only in git.
 - Provide real sensitive values via local environment variables or CI secret stores.
 - Use [env/dev.env.example](../env/dev.env.example) as the template for required keys.
+- Recommended CI secrets: `TEST_USER_EMAIL`, `TEST_USER_PASSWORD`, `API_KEY`, `BASE_URL`, `API_BASE_URL`.
 
 ## Performance load testing
 
