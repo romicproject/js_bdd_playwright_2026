@@ -29,11 +29,6 @@ export function resolvePerfConfig() {
       productsList: '/productsList',
       searchProduct: '/searchProduct',
       verifyLogin: '/verifyLogin'
-    },
-    slo: {
-      p95Ms: Number(process.env.PERF_P95_MS || 900),
-      p99Ms: Number(process.env.PERF_P99_MS || 1800),
-      minSuccessRate: Number(process.env.PERF_MIN_SUCCESS_RATE || 0.99)
     }
   };
 }

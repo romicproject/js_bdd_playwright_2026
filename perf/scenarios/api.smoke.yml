@@ -28,11 +28,17 @@ scenarios:
     flow:
       - get:
           url: "{{ targetApi }}{{ endpointProductsList }}"
+          beforeRequest: metricsByEndpoint_beforeRequest
+          afterResponse: metricsByEndpoint_afterResponse
       - function: buildSearchBody
       - post:
           url: "{{ targetApi }}{{ endpointSearchProduct }}"
           body: "{{ searchBody }}"
+          beforeRequest: metricsByEndpoint_beforeRequest
+          afterResponse: metricsByEndpoint_afterResponse
       - function: buildLoginBody
       - post:
           url: "{{ targetApi }}{{ endpointVerifyLogin }}"
           body: "{{ loginBody }}"
+          beforeRequest: metricsByEndpoint_beforeRequest
+          afterResponse: metricsByEndpoint_afterResponse
