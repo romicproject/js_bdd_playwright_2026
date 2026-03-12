@@ -22,13 +22,6 @@ export function createApiContext(request, config) {
     // Stable timestamp per scenario (set once in api.fixtures.js)
     scenarioTimestamp: null,
 
-    // Search context
-    searchTerm: null,
-
-    // Created entities (optional)
-    createdUsers: [],
-    createdProducts: [],
-
     // Test metadata
     startTime: null,
     scenarioName: null,
@@ -84,28 +77,6 @@ export function createApiContext(request, config) {
       this.savedUserPassword = null;
 
       // keep scenarioTimestamp stable for scenario; do not reset here
-      this.searchTerm = null;
-
-      this.createdUsers = [];
-      this.createdProducts = [];
-    },
-
-    addCreatedUser(email, password) {
-      this.createdUsers.push({ email, password });
-    },
-
-    getLastCreatedUser() {
-      return this.createdUsers[this.createdUsers.length - 1];
-    },
-
-    markSavedUser(email, password) {
-      this.savedUserEmail = email;
-      this.savedUserPassword = password;
-    },
-
-    getSavedUser() {
-      if (!this.savedUserEmail) return null;
-      return { email: this.savedUserEmail, password: this.savedUserPassword };
     }
   };
 }

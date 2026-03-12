@@ -27,11 +27,29 @@ export class LoginPage extends BasePage {
   }
 
   signupEmailExistsError() {
-    return this.signupForm().locator('p');
+    return this.page.getByText(/email address already exist/i).first();
   }
 
   async assertOnLoginPage() {
-    await this.expectUrl(/\/login$/);
+    for (let attempt = 0; attempt < 2; attempt += 1) {
+      if (attempt > 0) {
+        await this.goto('/login');
+      }
+
+      await this.recoverFromVignette('/login');
+      const forbidden = await this.isForbiddenPage();
+      if (forbidden) {
+        continue;
+      }
+
+      await this.expectUrl(/\/login(?:\?|$)/);
+      await expect(this.heading()).toBeVisible();
+      await expect(this.newUserSignupHeading()).toBeVisible();
+      return;
+    }
+
+    await this.ensureNotForbidden('open login page');
+    await this.expectUrl(/\/login(?:\?|$)/);
     await expect(this.heading()).toBeVisible();
     await expect(this.newUserSignupHeading()).toBeVisible();
   }

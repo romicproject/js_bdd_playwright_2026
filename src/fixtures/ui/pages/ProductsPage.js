@@ -31,6 +31,10 @@ export class ProductsPage extends BasePage {
     return this.page.locator('#submit_search');
   }
 
+  searchButton() {
+    return this.searchButtonByRole().or(this.searchButtonFallback()).first();
+  }
+
   searchedProductsHeading() {
     return this.getByRole('heading', { name: /searched products/i });
   }
@@ -52,11 +56,8 @@ export class ProductsPage extends BasePage {
   async searchProduct(term) {
     await this.assertOnProductsPage();
     await this.searchInput().fill(term);
-    try {
-      await this.searchButtonByRole().click();
-    } catch (e) {
-      await this.searchButtonFallback().click();
-    }
+    await expect(this.searchButton()).toBeVisible();
+    await this.searchButton().click();
   }
 
   async assertSearchResultsContain(term) {

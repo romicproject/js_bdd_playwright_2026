@@ -1,4 +1,4 @@
-// support/steps/api/common.steps.js
+// src/steps/api/common.steps.js
 import { createBdd } from 'playwright-bdd';
 import { test } from '../../fixtures/api/api.fixtures.js';
 import { validateSchema } from '../../framework/validation/schemaValidator.js';
