@@ -39,14 +39,19 @@ runs:
         key: pw-chromium-${{ runner.os }}-${{ hashFiles('package-lock.json') }}
         restore-keys: pw-chromium-${{ runner.os }}-
 
-    - run: npx playwright install --with-deps chromium
-      if: steps.pw-cache.outputs.cache-hit != 'true'
+    # FIX #2: consolidated into one step — clearer intent, same behaviour.
+    # cache-hit=true  → binaries restored by actions/cache; only system deps needed.
+    # cache-hit=false → full install (binaries + system deps).
+    - name: Install Playwright browser
       shell: bash
+      run: |
+        if [ "${{ steps.pw-cache.outputs.cache-hit }}" = "true" ]; then
+          npx playwright install-deps chromium
+        else
+          npx playwright install --with-deps chromium
+        fi
 
-    - run: npx playwright install-deps chromium
-      if: steps.pw-cache.outputs.cache-hit == 'true'
-      shell: bash
-
+    # FIX #1: printf per-line — no heredoc indentation bleed into the .env file.
     - name: Create env file
       shell: bash
       env:
@@ -57,21 +62,21 @@ runs:
         TEST_USER_PASSWORD: ${{ inputs.test-user-password }}
       run: |
         set -euo pipefail
-        mkdir -p env artifacts
         : "${API_BASE_URL:?Missing api-base-url}"
-        cat > env/dev.env <<EOF
-        BASE_URL=${BASE_URL:-}
-        API_BASE_URL=${API_BASE_URL}
-        REQUEST_TIMEOUT=10000
-        GLOBAL_TIMEOUT=30000
-        RETRY_FAILED_TESTS=0
-        MAX_RETRIES=2
-        DEBUG_MODE=false
-        VERBOSE_LOGGING=false
-        API_KEY=${API_KEY:-}
-        TEST_USER_EMAIL=${TEST_USER_EMAIL:-}
-        TEST_USER_PASSWORD=${TEST_USER_PASSWORD:-}
-        EOF
+        mkdir -p env artifacts
+        {
+          printf 'BASE_URL=%s\n'              "${BASE_URL:-}"
+          printf 'API_BASE_URL=%s\n'          "${API_BASE_URL}"
+          printf 'REQUEST_TIMEOUT=%s\n'       "10000"
+          printf 'GLOBAL_TIMEOUT=%s\n'        "30000"
+          printf 'RETRY_FAILED_TESTS=%s\n'    "0"
+          printf 'MAX_RETRIES=%s\n'           "2"
+          printf 'DEBUG_MODE=%s\n'            "false"
+          printf 'VERBOSE_LOGGING=%s\n'       "false"
+          printf 'API_KEY=%s\n'              "${API_KEY:-}"
+          printf 'TEST_USER_EMAIL=%s\n'       "${TEST_USER_EMAIL:-}"
+          printf 'TEST_USER_PASSWORD=%s\n'    "${TEST_USER_PASSWORD:-}"
+        } > env/dev.env
 
     - name: Generate BDD specs
       shell: bash
