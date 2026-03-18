@@ -27,10 +27,6 @@ concurrency:
 env:
   CI: true
 
-# FIX #3: secrets defined once here, not duplicated as action inputs.
-# The action receives them explicitly so the composite stays self-contained,
-# but the source of truth is a single env block per workflow.
-
 jobs:
   smoke:
     name: Smoke (${{ matrix.suite }})
@@ -101,49 +97,26 @@ jobs:
         env:
           SUITE: ${{ inputs.suite }}
           GREP_PATTERN: ${{ inputs.grep }}
-          # FIX #4: project input now wired into PROJECT_ARGS and used in every
-          # relevant branch of the case statement.
           MANUAL_PROJECT: ${{ inputs.project }}
         run: |
           set -euo pipefail
-
-          # Build optional flag arrays
           GREP_ARGS=()
           [ -n "$GREP_PATTERN" ] && GREP_ARGS=(--grep "$GREP_PATTERN")
-
           PROJECT_ARGS=()
           [ "$MANUAL_PROJECT" != "auto" ] && PROJECT_ARGS=(--project "$MANUAL_PROJECT")
 
           case "$SUITE" in
             ui-smoke)
-              if [ -n "$GREP_PATTERN" ] || [ "${#PROJECT_ARGS[@]}" -gt 0 ]; then
-                # Custom project or grep: run through test:dev so flags are respected
-                npm run test:dev -- \
-                  "${PROJECT_ARGS[@]:-"--project" "UI Tests - Chromium"}" \
-                  "${GREP_ARGS[@]}"
-              else
-                npm run test:ui:smoke:ci
-              fi
-              ;;
-            ui-only)
-              npm run test:dev -- \
-                "${PROJECT_ARGS[@]:-"--project" "UI Tests - Chromium"}" \
-                "${GREP_ARGS[@]}"
-              ;;
-            api-only)
-              npm run test:dev -- \
-                "${PROJECT_ARGS[@]:-"--project" "API Tests - Chromium"}" \
-                "${GREP_ARGS[@]}"
-              ;;
-            all)
-              npm run test:dev -- "${PROJECT_ARGS[@]}" "${GREP_ARGS[@]}"
-              ;;
+              [ -n "$GREP_PATTERN" ] \
+                && npm run test:dev -- --project "UI Tests - Chromium" "${GREP_ARGS[@]}" \
+                || npm run test:ui:smoke:ci ;;
+            ui-only)  npm run test:dev -- "${PROJECT_ARGS[@]:-"--project" "UI Tests - Chromium"}" "${GREP_ARGS[@]}" ;;
+            api-only) npm run test:dev -- "${PROJECT_ARGS[@]:-"--project" "API Tests - Chromium"}" "${GREP_ARGS[@]}" ;;
+            all)      npm run test:dev -- "${PROJECT_ARGS[@]}" "${GREP_ARGS[@]}" ;;
             perf-smoke) npm run perf:smoke ;;
             perf-load)  npm run perf:load  ;;
             perf-ui)    npm run perf:ui    ;;
-            *)
-              echo "Unknown suite: $SUITE"; exit 2
-              ;;
+            *) echo "Unknown suite: $SUITE"; exit 2 ;;
           esac
 
       - uses: actions/upload-artifact@v4
@@ -156,15 +129,3 @@ jobs:
             out/test-results/
             out/perf/
           retention-days: 7
-
-  # FIX #5: gate for manual runs — workflow fails visibly if the suite fails.
-  # Remove this job if manual runs are purely exploratory and result is irrelevant.
-  manual-gate:
-    name: Manual Gate
-    if: always() && github.event_name == 'workflow_dispatch'
-    needs: manual
-    runs-on: ubuntu-latest
-    steps:
-      - name: Assert manual run passed
-        if: needs.manual.result != 'success'
-        run: exit 1
