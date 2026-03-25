@@ -1,18 +1,17 @@
+x-test-base: &test-base
+  image: lrnapi-tests:${TEST_IMAGE_TAG:-latest}
+  build:
+    context: .
+    dockerfile: Dockerfile
+  init: true
+  volumes:
+    - ./out/playwright-report:/app/out/playwright-report
+    - ./out/test-results:/app/out/test-results
+
 services:
-  # Serviciul de bază - nu va fi rulat niciodată direct
-  # Acesta servește drept "template" pentru celelalte
-  base-test:
-    image: lrnapi-tests:latest
-    build:
-      context: .
-      dockerfile: Dockerfile
-    profiles: ["base-template"] # Nu va fi rulat direct
-    volumes:
-      - ./out/playwright-report:/app/out/playwright-report
-      - ./out/test-results:/app/out/test-results
 
   tests-dev:
-    extends: base-test
+    <<: *test-base
     environment:
       - ENV=dev
     env_file:
@@ -21,7 +20,7 @@ services:
     profiles: ["dev"]
 
   tests-staging:
-    extends: base-test
+    <<: *test-base
     environment:
       - ENV=staging
     env_file:
@@ -30,7 +29,7 @@ services:
     profiles: ["staging"]
 
   tests-prod:
-    extends: base-test
+    <<: *test-base
     environment:
       - ENV=prod
     env_file:

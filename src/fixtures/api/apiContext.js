@@ -1,5 +1,7 @@
 // fixtures/api/apiContext.js
 export function createApiContext(request, config) {
+  const defaultMockProfile = config?.apiMock?.profile || '';
+
   return {
     request,
     config,
@@ -25,6 +27,12 @@ export function createApiContext(request, config) {
     // Test metadata
     startTime: null,
     scenarioName: null,
+
+    // API mock controls (per scenario)
+    mock: {
+      enabled: Boolean(config?.apiMock?.enabled),
+      profile: defaultMockProfile
+    },
 
     resolveTemplate(value) {
       if (value === null || value === undefined) return value;
@@ -75,6 +83,9 @@ export function createApiContext(request, config) {
       this.existingUserPassword = null;
       this.savedUserEmail = null;
       this.savedUserPassword = null;
+
+      this.mock.enabled = Boolean(this.config?.apiMock?.enabled);
+      this.mock.profile = this.config?.apiMock?.profile || '';
 
       // keep scenarioTimestamp stable for scenario; do not reset here
     }

@@ -10,7 +10,19 @@ import {
   assertSchema
 } from './stepUtils.js';
 
-const { Given, Then } = createBdd(test);
+const { Before, Given, Then } = createBdd(test);
+
+Before({ tags: '@mock' }, async ({ apiContext }) => {
+  apiContext.mock.enabled = true;
+  if (!apiContext.mock.profile) {
+    apiContext.mock.profile = 'products-happy';
+  }
+});
+
+Given('API mock profile {string} is enabled', async ({ apiContext }, profile) => {
+  apiContext.mock.enabled = true;
+  apiContext.mock.profile = profile;
+});
 
 Given('the API is available', async ({ apiClient }) => {
   await apiClient.healthCheck({ path: '/productsList' });

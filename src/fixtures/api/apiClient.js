@@ -9,6 +9,7 @@ import {
 import { shouldLog, attachJson, getLogger } from './client/reporter.js';
 import { joinUrl } from '../../framework/http/url.js';
 import { hasHeader, isFormLike } from '../../framework/http/headers.js';
+import { resolveApiMockResponse } from './mocks/index.js';
 
 function envNum(name, fallback) {
   const n = Number(process.env[name]);
@@ -77,6 +78,36 @@ export function createApiClient(apiContext, testInfo) {
     if (shouldLog()) {
       log.info(`→ ${method} ${safeUrl}`);
       if (reqBodySnapshot !== undefined) log.debug(`  Body: ${safeJson(reqBodySnapshot)}`);
+    }
+
+    const mockResponse = resolveApiMockResponse({ method, fullUrl, apiContext });
+    if (mockResponse) {
+      const httpStatus = Number(mockResponse.status ?? 200);
+      const resHeaders = mockResponse.headers || { 'content-type': 'application/json' };
+      const body = mockResponse.body ?? {};
+
+      const rawRc = body && typeof body === 'object' ? body.responseCode : undefined;
+      const bodyResponseCode = Number.isFinite(Number(rawRc)) ? Number(rawRc) : undefined;
+      const hasBodyCode = typeof bodyResponseCode === 'number';
+      const effectiveStatus = hasBodyCode ? bodyResponseCode : httpStatus;
+      const duration = Date.now() - start;
+
+      if (shouldLog()) {
+        const statusLog = hasBodyCode ? `${httpStatus} (body:${bodyResponseCode})` : `${httpStatus}`;
+        log.info(`↺ MOCK ${statusLog} (${duration}ms) profile=${apiContext.mock.profile}`);
+      }
+
+      const result = {
+        status: httpStatus,
+        bodyResponseCode,
+        body,
+        headers: resHeaders,
+        ok: effectiveStatus >= 200 && effectiveStatus < 300,
+        duration,
+      };
+
+      if (storeResponse) apiContext.response = result;
+      return result;
     }
 
     let response;

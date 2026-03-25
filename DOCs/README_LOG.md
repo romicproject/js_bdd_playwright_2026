@@ -37,7 +37,7 @@ Legend: `debug+` means `debug, info, warn, error` (all levels at or above that t
 
 ### Recommended profiles
 
-**Local development (`.env.dev`)**
+**Local development (`env/dev.env`)**
 ```ini
 LOG_LEVEL=debug
 LOG_FORMAT=pretty
@@ -61,3 +61,4 @@ LOG_CONSOLE_LEVEL=warn
 
 LOG_ATTACH_ALLURE=true
 LOG_API_MAX_BODY=50000
+```

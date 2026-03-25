@@ -20,11 +20,11 @@ export const test = base.extend({
     context.scenarioName = testInfo.title;
     context.scenarioTimestamp = Date.now();
 
-    // kind din project.name
+    // derive kind from project.name
     const projectName = testInfo.project?.name || '';
     const kind = /api/i.test(projectName) ? 'API' : 'UI';
 
-    // feature derivat din spec-ul generat de playwright-bdd (stabil)
+    // derive feature from the playwright-bdd generated spec (stable)
     const feature = inferFeatureFromTestInfo(testInfo);
 
     const baseDir = String(env('LOG_DIR', 'logs'));
@@ -40,15 +40,23 @@ export const test = base.extend({
       testId: testInfo.testId,
     });
 
-    // expune logger/path în context
+    // expose logger/path on context
     context.logger = logger;
     context.logFilePath = logFilePath;
 
     logger.info(`Starting: ${testInfo.title}`);
     logger.debug(`Environment: ${config.env}`);
     logger.debug(`Base URL: ${config.apiBaseUrl}`);
+    logger.debug(`API mock enabled: ${context.mock.enabled}`);
+    logger.debug(`API mock profile: ${context.mock.profile || 'none'}`);
 
     await use(context);
+
+    testInfo.annotations.push({
+      type: 'api-mock',
+      description: `enabled=${context.mock.enabled} profile=${context.mock.profile || 'none'}`
+    });
+
 
     const duration = Date.now() - context.startTime;
     logger.info(`Completed in ${duration}ms | status=${testInfo.status}`);

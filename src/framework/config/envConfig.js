@@ -66,6 +66,12 @@ export const config = {
   // API Keys
   apiKey: process.env.API_KEY,
 
+  // API mock mode (opt-in)
+  apiMock: {
+    enabled: parseBoolean(process.env.API_MOCK_ENABLED),
+    profile: process.env.API_MOCK_PROFILE || ''
+  },
+
   // Retry settings
   retry: {
     retries: parseIntSafe(process.env.RETRY_FAILED_TESTS, 0),

@@ -4,9 +4,9 @@ npm-debug.log*
 yarn-debug.log*
 yarn-error.log*
 
-# Environment files cu credențiale
+# Environment files with credentials
 env/*.env
-# Păstrează template-urile
+# Keep template files
 !env/*.env.example
 
 # Playwright

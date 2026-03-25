@@ -6,11 +6,13 @@ import { buildTestLogPath, inferFeatureFromTestInfo } from '../../logging/paths.
 
 import { applyNetworkBlocking } from './helpers/networkBlocker.js';
 
-import { HomePage } from './pages/HomePage.js';
-import { LoginPage } from './pages/LoginPage.js';
-import { ContactUsPage } from './pages/ContactUsPage.js';
-import { ProductsPage } from './pages/ProductsPage.js';
-import { RegisterPage } from './pages/RegisterPage.js';
+import {
+  ContactUsPage,
+  HomePage,
+  LoginPage,
+  ProductsPage,
+  RegisterPage,
+} from '../../ui/pages/index.js';
 
 function env(name, fallback) {
   return process.env[name] ?? fallback;

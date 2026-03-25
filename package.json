@@ -44,7 +44,7 @@
     "report:open": "playwright show-report out/playwright-report",
     "bdd:generate": "bddgen",
     "clean": "rimraf out/test-results out/playwright-report .playwright",
-    "clean:light": "rimraf out/test-results/**/attachments out/playwright-report/data",
+    "clean:light": "rimraf --glob \"out/test-results/**/attachments\" out/playwright-report/data",
     "clean:all": "npm run clean && rimraf node_modules package-lock.json"
   },
   "keywords": [

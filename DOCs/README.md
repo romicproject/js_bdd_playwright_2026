@@ -1,5 +1,8 @@
 # Playwright API BDD helpers overview
 
+## Architecture
+- For folder responsibilities and dependency boundaries, see [ARCHITECTURE.md](./ARCHITECTURE.md).
+
 ## Helper architecture
 - `fixtures/api/api.fixtures.js` injects `apiHelpers` into steps via Playwright fixtures.
 - `fixtures/api/helpers/index.js` aggregates product, brand, and user helper groups + exposes flat methods plus namespaced objects for convenience.
@@ -23,6 +26,16 @@ test('rewind response', async ({ apiHelpers, apiContext }) => {
 
 ## Extending helpers
 Add new methods at `createProductsHelpers`, `createUsersHelpers`, or `createBrandsHelpers` and expose them either directly in the returned object or via the namespaced property. Existing steps already consume `apiHelpers.*`, so keep the flat exports stable.
+
+## API mock mode (example)
+- API mocks are opt-in and scenario-safe.
+- Use tag `@mock` and step `Given API mock profile "products-happy" is enabled` in API features.
+- Run only mock scenarios:
+  - `npm run test:dev -- --project="API Tests - Chromium" --grep=@mock`
+
+- Optional ENV fallback:
+  - `API_MOCK_ENABLED=true`
+  - `API_MOCK_PROFILE=products-happy`
 
 ## Windows run tips (PowerShell/CMD)
 
