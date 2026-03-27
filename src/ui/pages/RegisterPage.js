@@ -2,6 +2,14 @@ import { expect } from "@playwright/test";
 import { BasePage } from "./BasePage.js";
 
 export class RegisterPage extends BasePage {
+  titleMrRadio() {
+    return this.page.locator("#id_gender1");
+  }
+
+  titleMrOption() {
+    return this.page.getByRole("radio", { name: /^mr\.$/i });
+  }
+
   accountInfoHeading() {
     return this.getByRole("heading", { name: /enter account information/i });
   }
@@ -67,15 +75,29 @@ export class RegisterPage extends BasePage {
   }
 
   continueButton() {
-    return this.getByRole("button", { name: /continue/i })
-      .or(this.page.locator('[data-qa="continue-button"]'))
-      .first();
+    return this.page.locator('[data-qa="continue-button"]').first();
   }
 
   loggedInAsLink(name) {
     return this.getByRole("link", {
       name: new RegExp(`logged in as\\s*${name}`, "i"),
     });
+  }
+
+  async ensureMrTitleSelected() {
+    const titleRadio = this.titleMrRadio();
+    if (await titleRadio.isChecked().catch(() => false)) return;
+
+    const titleOption = this.titleMrOption();
+    await expect(titleOption).toBeVisible();
+
+    try {
+      await titleOption.check();
+    } catch {
+      await titleOption.click({ force: true });
+    }
+
+    await expect(titleRadio).toBeChecked();
   }
 
   async assertOnAccountInfoPage() {
@@ -86,7 +108,7 @@ export class RegisterPage extends BasePage {
   async fillRequiredAccountDetails(user) {
     await this.assertOnAccountInfoPage();
 
-    await this.getByLabel(/mr\./i).check();
+    await this.ensureMrTitleSelected();
     await this.passwordInput().fill(user.password);
     await this.daysSelect().selectOption("10");
     await this.monthsSelect().selectOption("5");
@@ -126,9 +148,29 @@ export class RegisterPage extends BasePage {
   }
 
   async continueAfterAccountCreated() {
-    await this.continueButton().click();
+    const continueButton = this.continueButton();
+    await expect(continueButton).toBeVisible();
+
+    try {
+      await continueButton.click({ timeout: 3000, force: true });
+    } catch {
+      await continueButton.evaluate((node) => node.click());
+    }
+
     await this.recoverFromVignette("/");
-    await expect(this.getByRole("link", { name: /logout/i })).toBeVisible();
+
+    const logoutLink = this.logoutLink();
+    const loggedInVisible = await this.loggedInAsAnyLink()
+      .isVisible({ timeout: 3000 })
+      .catch(() => false);
+    if (loggedInVisible) {
+      await expect(logoutLink).toBeVisible();
+      return;
+    }
+
+    await this.goto("/");
+    await this.recoverFromVignette("/");
+    await expect(logoutLink).toBeVisible();
   }
 
   logoutLink() {

@@ -64,7 +64,15 @@ export class LoginPage extends BasePage {
       await expect(this.newUserSignupHeading()).toBeVisible();
       await this.signupNameInput().fill(name);
       await this.signupEmailInput().fill(email);
-      await this.signupButton().click();
+      const signupButton = this.signupButton();
+      await expect(signupButton).toBeVisible();
+      await signupButton.scrollIntoViewIfNeeded();
+
+      try {
+        await signupButton.click({ timeout: 3000 });
+      } catch {
+        await signupButton.evaluate((node) => node.click());
+      }
 
       await this.recoverFromVignette("/login");
       const forbidden = await this.isForbiddenPage();
