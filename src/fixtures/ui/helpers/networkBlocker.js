@@ -1,13 +1,13 @@
 // src/fixtures/ui/helpers/networkBlocker.js
 function isTruthy(v) {
-  return String(v ?? '').toLowerCase() === 'true' || String(v ?? '') === '1';
+  return String(v ?? "").toLowerCase() === "true" || String(v ?? "") === "1";
 }
 
 function env(name, fallback) {
   return process.env[name] ?? fallback;
 }
 
-const DEFAULT_ALLOWED_HOSTS = ['automationexercise.com'];
+const DEFAULT_ALLOWED_HOSTS = ["automationexercise.com"];
 
 const DEFAULT_AD_HOST_PATTERNS = [
   /doubleclick\.net/i,
@@ -43,15 +43,17 @@ function shouldBlockByHost(urlStr, allowedHostsSet, patterns) {
  * Keep this pure-ish: no testInfo, no logger dependencies.
  */
 export async function applyNetworkBlocking(context, options = {}) {
-  const enabled = options.enabled ?? isTruthy(env('UI_BLOCK_ADS', 'true'));
-  const blockResources = options.blockResources ?? isTruthy(env('UI_BLOCK_RESOURCES', 'false'));
+  const enabled = options.enabled ?? isTruthy(env("UI_BLOCK_ADS", "true"));
+  const blockResources =
+    options.blockResources ?? isTruthy(env("UI_BLOCK_RESOURCES", "false"));
 
-  if (!enabled && !blockResources) return { enabled: false, blockResources: false };
+  if (!enabled && !blockResources)
+    return { enabled: false, blockResources: false };
 
   const allowedHosts = new Set(options.allowedHosts ?? DEFAULT_ALLOWED_HOSTS);
   const adHostPatterns = options.adHostPatterns ?? DEFAULT_AD_HOST_PATTERNS;
 
-  await context.route('**/*', async (route) => {
+  await context.route("**/*", async (route) => {
     const req = route.request();
     const url = req.url();
 
@@ -62,7 +64,7 @@ export async function applyNetworkBlocking(context, options = {}) {
 
     if (blockResources) {
       const rt = req.resourceType();
-      if (rt === 'font' || rt === 'media') {
+      if (rt === "font" || rt === "media") {
         await route.abort();
         return;
       }

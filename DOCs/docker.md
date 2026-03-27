@@ -12,8 +12,8 @@ The project now ships with a Docker runner that mirrors `npm run test:*`.
    ```
    Reports land in `out/playwright-report`/`out/test-results` on the host thanks to the mounted volumes.
 3. Switch environments by selecting the matching profile + env file:
-   * `--profile staging` + `env/staging.env` -> runs `npm run test:staging`
-   * `--profile prod` + `env/prod.env` -> runs `npm run test:prod`
+   - `--profile staging` + `env/staging.env` -> runs `npm run test:staging`
+   - `--profile prod` + `env/prod.env` -> runs `npm run test:prod`
 4. Tear down:
    ```sh
    docker compose down --remove-orphans
@@ -26,19 +26,22 @@ Use the `env/*.env` files to set `ENV` and other secrets (`--env-file` on compos
 ## Report output locations
 
 The compose services mount two folders from the repo root into the container:
- - `./out/playwright-report` → `/app/out/playwright-report`
- - `./out/test-results` → `/app/out/test-results`
+
+- `./out/playwright-report` → `/app/out/playwright-report`
+- `./out/test-results` → `/app/out/test-results`
 
 Anything the Playwright run writes in those directories (reports, attachments, traces) appears immediately on the host so you can inspect the report via `npm run report` or publish the folders as artifacts.
 
 ## Jenkins CI usage
 
 The project includes a top-level `Jenkinsfile` that runs Docker Compose tests with a parameterized environment:
- - `TEST_ENV=dev` uses `tests-dev`
- - `TEST_ENV=staging` uses `tests-staging`
- - `TEST_ENV=prod` uses `tests-prod`
+
+- `TEST_ENV=dev` uses `tests-dev`
+- `TEST_ENV=staging` uses `tests-staging`
+- `TEST_ENV=prod` uses `tests-prod`
 
 Pipeline flow:
+
 1. Checkout repository
 2. Verify Docker / Compose availability on agent
 3. Build image with `docker compose --profile <env> build`

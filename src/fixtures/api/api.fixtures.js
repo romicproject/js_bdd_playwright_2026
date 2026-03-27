@@ -1,12 +1,18 @@
 // fixtures/api/api.fixtures.js
-import { test as base } from 'playwright-bdd';
-import { config } from '../../framework/config/envConfig.js';
-import { createApiContext } from './apiContext.js';
-import { createApiClient } from './apiClient.js';
-import { createApiHelpers } from './helpers/index.js';
+import { test as base } from "playwright-bdd";
+import { config } from "../../framework/config/envConfig.js";
+import { createApiContext } from "./apiContext.js";
+import { createApiClient } from "./apiClient.js";
+import { createApiHelpers } from "./helpers/index.js";
 
-import { createLogger, getAttachAllureEnabled } from '../../framework/logging/logger.js';
-import { buildTestLogPath, inferFeatureFromTestInfo } from '../../logging/paths.js';
+import {
+  createLogger,
+  getAttachAllureEnabled,
+} from "../../framework/logging/logger.js";
+import {
+  buildTestLogPath,
+  inferFeatureFromTestInfo,
+} from "../../logging/paths.js";
 
 function env(name, fallback) {
   return process.env[name] ?? fallback;
@@ -20,14 +26,14 @@ export const test = base.extend({
     context.scenarioName = testInfo.title;
     context.scenarioTimestamp = Date.now();
 
-    // kind din project.name
-    const projectName = testInfo.project?.name || '';
-    const kind = /api/i.test(projectName) ? 'API' : 'UI';
+    // derive kind from project.name
+    const projectName = testInfo.project?.name || "";
+    const kind = /api/i.test(projectName) ? "API" : "UI";
 
-    // feature derivat din spec-ul generat de playwright-bdd (stabil)
+    // derive feature from the playwright-bdd generated spec (stable)
     const feature = inferFeatureFromTestInfo(testInfo);
 
-    const baseDir = String(env('LOG_DIR', 'logs'));
+    const baseDir = String(env("LOG_DIR", "logs"));
     const logFilePath = buildTestLogPath({
       baseDir,
       kind,
@@ -40,23 +46,43 @@ export const test = base.extend({
       testId: testInfo.testId,
     });
 
-    // expune logger/path în context
+    // expose logger/path on context
     context.logger = logger;
     context.logFilePath = logFilePath;
+
+    testInfo.annotations.push({
+      type: "feature",
+      description: feature,
+    });
+    testInfo.annotations.push({
+      type: "log-file",
+      description: logFilePath,
+    });
+    testInfo.annotations.push({
+      type: "project",
+      description: projectName || "unknown",
+    });
 
     logger.info(`Starting: ${testInfo.title}`);
     logger.debug(`Environment: ${config.env}`);
     logger.debug(`Base URL: ${config.apiBaseUrl}`);
+    logger.debug(`API mock enabled: ${context.mock.enabled}`);
+    logger.debug(`API mock profile: ${context.mock.profile || "none"}`);
 
     await use(context);
+
+    testInfo.annotations.push({
+      type: "api-mock",
+      description: `enabled=${context.mock.enabled} profile=${context.mock.profile || "none"}`,
+    });
 
     const duration = Date.now() - context.startTime;
     logger.info(`Completed in ${duration}ms | status=${testInfo.status}`);
 
     if (getAttachAllureEnabled()) {
-      await testInfo.attach('execution.log', {
+      await testInfo.attach("execution.log", {
         path: logFilePath,
-        contentType: 'text/plain',
+        contentType: "text/plain",
       });
     }
   },

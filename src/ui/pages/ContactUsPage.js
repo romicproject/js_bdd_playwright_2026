@@ -1,13 +1,13 @@
-import { expect } from '@playwright/test';
-import { BasePage } from './BasePage.js';
+import { expect } from "@playwright/test";
+import { BasePage } from "./BasePage.js";
 
 export class ContactUsPage extends BasePage {
   heading() {
-    return this.getByRole('heading', { name: /get in touch/i });
+    return this.getByRole("heading", { name: /get in touch/i });
   }
 
   submitButton() {
-    return this.getByRole('button', { name: /submit/i });
+    return this.getByRole("button", { name: /submit/i });
   }
 
   async assertOnContactUsPage() {

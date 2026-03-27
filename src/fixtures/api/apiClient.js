@@ -1,14 +1,15 @@
 // fixtures/api/apiClient.js
-import { expect } from '@playwright/test';
+import { expect } from "@playwright/test";
 import {
   redactUrl,
   redactHeaders,
   redactBodyForLogs,
-  limitBody
-} from '../../framework/http/redact.js';
-import { shouldLog, attachJson, getLogger } from './client/reporter.js';
-import { joinUrl } from '../../framework/http/url.js';
-import { hasHeader, isFormLike } from '../../framework/http/headers.js';
+  limitBody,
+} from "../../framework/http/redact.js";
+import { shouldLog, attachJson, getLogger } from "./client/reporter.js";
+import { joinUrl } from "../../framework/http/url.js";
+import { hasHeader, isFormLike } from "../../framework/http/headers.js";
+import { resolveApiMockResponse } from "./mocks/index.js";
 
 function envNum(name, fallback) {
   const n = Number(process.env[name]);
@@ -17,7 +18,7 @@ function envNum(name, fallback) {
 
 function safeJson(v) {
   try {
-    return typeof v === 'string' ? v : JSON.stringify(v, null, 2);
+    return typeof v === "string" ? v : JSON.stringify(v, null, 2);
   } catch {
     return String(v);
   }
@@ -27,7 +28,7 @@ export function createApiClient(apiContext, testInfo) {
   const { request, config } = apiContext;
   const log = getLogger(apiContext);
 
-  const MAX_BODY = envNum('LOG_API_MAX_BODY', 50_000);
+  const MAX_BODY = envNum("LOG_API_MAX_BODY", 50_000);
 
   async function _makeRequest(method, url, options = {}) {
     const start = Date.now();
@@ -41,25 +42,32 @@ export function createApiClient(apiContext, testInfo) {
     } = options;
 
     // normalize body -> data (Playwright uses `data`)
-    if (method === 'GET') {
+    if (method === "GET") {
       delete requestOptions.data;
       delete requestOptions.body;
-    } else if (requestOptions.body !== undefined && requestOptions.data === undefined) {
+    } else if (
+      requestOptions.body !== undefined &&
+      requestOptions.data === undefined
+    ) {
       requestOptions.data = requestOptions.body;
       delete requestOptions.body;
     }
 
     // headers: don't force JSON if caller set Content-Type or data is form-like
     const providedHeaders = requestOptions.headers || {};
-    const callerHasContentType = hasHeader(providedHeaders, 'Content-Type');
+    const callerHasContentType = hasHeader(providedHeaders, "Content-Type");
 
     const shouldSetJsonContentType =
-      method !== 'GET' && !callerHasContentType && !isFormLike(requestOptions.data);
+      method !== "GET" &&
+      !callerHasContentType &&
+      !isFormLike(requestOptions.data);
 
     requestOptions.headers = {
-      Accept: 'application/json',
-      ...(shouldSetJsonContentType ? { 'Content-Type': 'application/json' } : {}),
-      ...providedHeaders
+      Accept: "application/json",
+      ...(shouldSetJsonContentType
+        ? { "Content-Type": "application/json" }
+        : {}),
+      ...providedHeaders,
     };
 
     requestOptions.timeout = timeout;
@@ -76,25 +84,69 @@ export function createApiClient(apiContext, testInfo) {
 
     if (shouldLog()) {
       log.info(`→ ${method} ${safeUrl}`);
-      if (reqBodySnapshot !== undefined) log.debug(`  Body: ${safeJson(reqBodySnapshot)}`);
+      if (reqBodySnapshot !== undefined)
+        log.debug(`  Body: ${safeJson(reqBodySnapshot)}`);
+    }
+
+    const mockResponse = resolveApiMockResponse({
+      method,
+      fullUrl,
+      apiContext,
+    });
+    if (mockResponse) {
+      const httpStatus = Number(mockResponse.status ?? 200);
+      const resHeaders = mockResponse.headers || {
+        "content-type": "application/json",
+      };
+      const body = mockResponse.body ?? {};
+
+      const rawRc =
+        body && typeof body === "object" ? body.responseCode : undefined;
+      const bodyResponseCode = Number.isFinite(Number(rawRc))
+        ? Number(rawRc)
+        : undefined;
+      const hasBodyCode = typeof bodyResponseCode === "number";
+      const effectiveStatus = hasBodyCode ? bodyResponseCode : httpStatus;
+      const duration = Date.now() - start;
+
+      if (shouldLog()) {
+        const statusLog = hasBodyCode
+          ? `${httpStatus} (body:${bodyResponseCode})`
+          : `${httpStatus}`;
+        log.info(
+          `↺ MOCK ${statusLog} (${duration}ms) profile=${apiContext.mock.profile}`,
+        );
+      }
+
+      const result = {
+        status: httpStatus,
+        bodyResponseCode,
+        body,
+        headers: resHeaders,
+        ok: effectiveStatus >= 200 && effectiveStatus < 300,
+        duration,
+      };
+
+      if (storeResponse) apiContext.response = result;
+      return result;
     }
 
     let response;
     try {
       switch (method) {
-        case 'GET':
+        case "GET":
           response = await request.get(fullUrl, requestOptions);
           break;
-        case 'POST':
+        case "POST":
           response = await request.post(fullUrl, requestOptions);
           break;
-        case 'PUT':
+        case "PUT":
           response = await request.put(fullUrl, requestOptions);
           break;
-        case 'DELETE':
+        case "DELETE":
           response = await request.delete(fullUrl, requestOptions);
           break;
-        case 'PATCH':
+        case "PATCH":
           response = await request.patch(fullUrl, requestOptions);
           break;
         default:
@@ -105,16 +157,16 @@ export function createApiClient(apiContext, testInfo) {
       const duration = Date.now() - start;
 
       log.error(
-        `✗✗✗ ${method} ${safeUrl} failed after ${duration}ms: ${String(e?.message || e)}`
+        `✗✗✗ ${method} ${safeUrl} failed after ${duration}ms: ${String(e?.message || e)}`,
       );
 
       await attachJson(testInfo, `api-exception-${method}.json`, {
-        kind: 'exception',
+        kind: "exception",
         method,
         url: safeUrl,
         duration,
         request: { headers: reqHeadersSnapshot, body: reqBodySnapshot },
-        error: String(e?.message || e)
+        error: String(e?.message || e),
       });
 
       throw new Error(`API request failed: ${method} ${safeUrl}`, { cause: e });
@@ -131,19 +183,25 @@ export function createApiClient(apiContext, testInfo) {
     }
 
     // accept numeric OR numeric-string
-    const rawRc = body && typeof body === 'object' ? body.responseCode : undefined;
-    const bodyResponseCode = Number.isFinite(Number(rawRc)) ? Number(rawRc) : undefined;
+    const rawRc =
+      body && typeof body === "object" ? body.responseCode : undefined;
+    const bodyResponseCode = Number.isFinite(Number(rawRc))
+      ? Number(rawRc)
+      : undefined;
 
-    const hasBodyCode = typeof bodyResponseCode === 'number';
+    const hasBodyCode = typeof bodyResponseCode === "number";
     const effectiveStatus = hasBodyCode ? bodyResponseCode : httpStatus;
 
     const duration = Date.now() - start;
 
-    const statusLog = hasBodyCode ? `${httpStatus} (body:${bodyResponseCode})` : `${httpStatus}`;
+    const statusLog = hasBodyCode
+      ? `${httpStatus} (body:${bodyResponseCode})`
+      : `${httpStatus}`;
 
     // classify "HTTP ok but business code fail" as WARN (mixed fail)
     const isHttpOk = httpStatus >= 200 && httpStatus < 300;
-    const isBodyOk = !hasBodyCode || (bodyResponseCode >= 200 && bodyResponseCode < 300);
+    const isBodyOk =
+      !hasBodyCode || (bodyResponseCode >= 200 && bodyResponseCode < 300);
     const isMixedFail = isHttpOk && hasBodyCode && !isBodyOk;
 
     if (shouldLog()) log.info(`← ${statusLog} (${duration}ms)`);
@@ -154,7 +212,7 @@ export function createApiClient(apiContext, testInfo) {
       body,
       headers: resHeaders,
       ok: effectiveStatus >= 200 && effectiveStatus < 300,
-      duration
+      duration,
     };
 
     if (!result.ok) {
@@ -163,7 +221,7 @@ export function createApiClient(apiContext, testInfo) {
       failLog(`API FAIL ${method} ${safeUrl} -> ${statusLog} (${duration}ms)`);
 
       await attachJson(testInfo, `api-fail-${method}-${httpStatus}.json`, {
-        kind: isMixedFail ? 'business-fail' : 'http-fail',
+        kind: isMixedFail ? "business-fail" : "http-fail",
         method,
         url: safeUrl,
         duration,
@@ -172,8 +230,8 @@ export function createApiClient(apiContext, testInfo) {
         request: { headers: reqHeadersSnapshot, body: reqBodySnapshot },
         response: {
           headers: redactHeaders(resHeaders),
-          body: limitBody(body, MAX_BODY, safeJson)
-        }
+          body: limitBody(body, MAX_BODY, safeJson),
+        },
       });
     }
 
@@ -181,18 +239,25 @@ export function createApiClient(apiContext, testInfo) {
     return result;
   }
 
-  async function healthCheck({ path = '/productsList' } = {}) {
-    const res = await _makeRequest('GET', path, { storeResponse: true });
-    expect(res.ok, `Health check failed for ${path}. Status: ${res.status}`).toBeTruthy();
+  async function healthCheck({ path = "/productsList" } = {}) {
+    const res = await _makeRequest("GET", path, { storeResponse: true });
+    expect(
+      res.ok,
+      `Health check failed for ${path}. Status: ${res.status}`,
+    ).toBeTruthy();
     return res;
   }
 
   return {
-    get: (url, options = {}) => _makeRequest('GET', url, options),
-    post: (url, body = {}, options = {}) => _makeRequest('POST', url, { ...options, data: body }),
-    put: (url, body = {}, options = {}) => _makeRequest('PUT', url, { ...options, data: body }),
-    delete: (url, body = {}, options = {}) => _makeRequest('DELETE', url, { ...options, data: body }),
-    patch: (url, body = {}, options = {}) => _makeRequest('PATCH', url, { ...options, data: body }),
-    healthCheck
+    get: (url, options = {}) => _makeRequest("GET", url, options),
+    post: (url, body = {}, options = {}) =>
+      _makeRequest("POST", url, { ...options, data: body }),
+    put: (url, body = {}, options = {}) =>
+      _makeRequest("PUT", url, { ...options, data: body }),
+    delete: (url, body = {}, options = {}) =>
+      _makeRequest("DELETE", url, { ...options, data: body }),
+    patch: (url, body = {}, options = {}) =>
+      _makeRequest("PATCH", url, { ...options, data: body }),
+    healthCheck,
   };
 }

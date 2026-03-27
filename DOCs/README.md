@@ -1,28 +1,87 @@
 # Playwright API BDD helpers overview
 
+## Repository positioning
+
+- This repository serves two purposes at the same time:
+  - a learning/playground space for Playwright + BDD + performance experimentation
+  - a reusable framework starter with patterns mature enough for team adoption
+- Treat `tests/**`, `perf/**`, and some docs/backlog items as the learning and experimentation surface.
+- Treat `src/framework/**`, `src/fixtures/**`, `src/ui/pages/**`, `src/support/**`, CI setup, and environment conventions as the reusable framework core.
+- When adding new material, be explicit about which category it belongs to so the repo does not drift into a mixed, hard-to-maintain state.
+
+## Recommended use
+
+- Safe to reuse as framework baseline:
+  - fixture wiring
+  - API client/logging/redaction
+  - page object structure
+  - schema validation patterns
+  - Docker/Jenkins/GitHub CI scaffolding
+- Keep clearly marked as examples or learning assets:
+  - demo scenarios tied to third-party public apps
+  - exploratory perf scenarios
+  - one-off experiments or temporary feature drafts
+
+## Architecture
+
+- For folder responsibilities and dependency boundaries, see [ARCHITECTURE.md](./ARCHITECTURE.md).
+
 ## Helper architecture
+
 - `fixtures/api/api.fixtures.js` injects `apiHelpers` into steps via Playwright fixtures.
 - `fixtures/api/helpers/index.js` aggregates product, brand, and user helper groups + exposes flat methods plus namespaced objects for convenience.
 - Each helper wraps `apiClient` to handle POST/DELETE/PUT payloads, form encoding, and responseCode fallback.
 
 ## How to use in tests
-```js
-import { test } from '../fixtures/api/api.fixtures.js';
 
-test('rewind response', async ({ apiHelpers, apiContext }) => {
-  const response = await apiHelpers.searchProduct('jeans');
+```js
+import { test } from "../fixtures/api/api.fixtures.js";
+
+test("rewind response", async ({ apiHelpers, apiContext }) => {
+  const response = await apiHelpers.searchProduct("jeans");
   expect(response.body.products).toBeDefined();
 });
 ```
+
 - Use the top-level methods for common operations (`apiHelpers.createUser`, `apiHelpers.getAllBrands`, etc.).
 - To access helper-specific APIs or extensions, use the namespaces (`apiHelpers.products`, `apiHelpers.brands`, `apiHelpers.users`). This keeps helper code organized as the suite grows.
 
 ## Helper utils
+
 - `fixtures/api/helpers/utils.js` provides `buildForm`, `formBody`, `FORM_HEADERS`, and `buildSearchParams` so helpers reuse consistent form encoding and headers.
 - When you add new helpers, reuse these utilities to keep payload formatting uniform and avoid duplication.
 
 ## Extending helpers
+
 Add new methods at `createProductsHelpers`, `createUsersHelpers`, or `createBrandsHelpers` and expose them either directly in the returned object or via the namespaced property. Existing steps already consume `apiHelpers.*`, so keep the flat exports stable.
+
+## API mock mode (example)
+
+- API mocks are opt-in and scenario-safe.
+- Use tag `@mock` and step `Given API mock profile "products-happy" is enabled` in API features.
+- Run only mock scenarios:
+  - `npm run test:dev -- --project="API Tests - Chromium" --grep=@mock`
+
+- Optional ENV fallback:
+  - `API_MOCK_ENABLED=true`
+  - `API_MOCK_PROFILE=products-happy`
+
+## Tagging and naming conventions
+
+- Use one layer tag on every scenario:
+  - `@api` for API scenarios
+  - `@ui` for UI scenarios
+- Use one intent tag when relevant:
+  - `@smoke` for fast confidence checks
+  - `@regression` for broader functional coverage
+  - `@workflow` for cross-step or end-to-end flows
+  - `@mock` for scenario-safe API mock runs
+- Use one outcome tag when relevant:
+  - `@positive` for success paths
+  - `@negative` for validation/error paths
+- Prefer feature names that describe business capability, not endpoint names alone.
+- Prefer scenario names in the form `Action + expected outcome`.
+- Reuse existing tags before inventing new ones. If a new tag is needed, document it here first.
 
 ## Windows run tips (PowerShell/CMD)
 
@@ -49,10 +108,10 @@ Add new methods at `createProductsHelpers`, `createUsersHelpers`, or `createBran
 ## Secret handling policy
 
 - Do not commit real credentials or API keys in tracked `.env` files.
-- Keep [env/dev.env](../env/dev.env) with local placeholders only.
-- Keep [env/staging.env](../env/staging.env) and [env/prod.env](../env/prod.env) placeholder-only in git.
-- Provide real sensitive values via local environment variables or CI secret stores.
-- Use [env/dev.env.example](../env/dev.env.example) as the template for required keys.
+- Local runtime files such as `env/dev.env`, `env/staging.env`, and `env/prod.env` are git-ignored and should stay local only.
+- Provide real sensitive values via local environment variables, Docker/Jenkins env injection, or CI secret stores.
+- Use [env/dev.env.example](../env/dev.env.example), [env/staging.env.example](../env/staging.env.example), and [env/prod.env.example](../env/prod.env.example) as templates for required keys.
+- The framework can now start even if `env/<ENV>.env` is missing, as long as the required variables are already present in `process.env`.
 - Recommended CI secrets: `TEST_USER_EMAIL`, `TEST_USER_PASSWORD`, `API_KEY`, `BASE_URL`, `API_BASE_URL`.
 
 ## Performance load testing
@@ -66,4 +125,4 @@ Add new methods at `createProductsHelpers`, `createUsersHelpers`, or `createBran
   - `npm run perf:report:load`
   - `npm run perf:report:ui`
 - Reports are generated locally from Artillery JSON via `perf/reporters/generate-report.js`.
-- Trend mode compares the current run against `*.prev.json` baseline files. 
+- Trend mode compares the current run against `*.prev.json` baseline files.

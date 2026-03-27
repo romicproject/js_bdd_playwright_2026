@@ -2,7 +2,7 @@
 export function createBrandsHelpers(apiClient) {
   return {
     async getAllBrands() {
-      return apiClient.get('/brandsList');
-    }
+      return apiClient.get("/brandsList");
+    },
   };
 }

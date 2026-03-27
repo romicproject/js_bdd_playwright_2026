@@ -1,6 +1,6 @@
 // fixtures/api/helpers/utils.js
 export const FORM_HEADERS = {
-  'Content-Type': 'application/x-www-form-urlencoded'
+  "Content-Type": "application/x-www-form-urlencoded",
 };
 
 export function buildForm(data = {}) {
@@ -22,10 +22,10 @@ export function formBody(data = {}) {
 export function buildSearchParams(searchTerm) {
   const params = new URLSearchParams();
 
-  if (typeof searchTerm === 'string' && searchTerm.length > 0) {
-    params.append('search_product', searchTerm);
+  if (typeof searchTerm === "string" && searchTerm.length > 0) {
+    params.append("search_product", searchTerm);
   }
 
   const qs = params.toString();
-  return qs ? `?${qs}` : '';
+  return qs ? `?${qs}` : "";
 }
