@@ -25,32 +25,23 @@ function env(name, fallback) {
 }
 
 export const test = base.extend({
-  context: async ({ browser }, use, testInfo) => {
-    const allowedHosts = ["automationexercise.com"];
+  networkPolicy: [
+    async ({ context }, use, testInfo) => {
+      const allowedHosts = ["automationexercise.com"];
 
-    const context = await browser.newContext({
-      baseURL: config.baseUrl,
-      ignoreHTTPSErrors: true,
-    });
+      const net = await applyNetworkBlocking(context, {
+        allowedHosts,
+      });
 
-    const net = await applyNetworkBlocking(context, {
-      allowedHosts,
-    });
+      testInfo.annotations.push({
+        type: "network",
+        description: `NETWORK_POLICY ads=${net.enabled} resources=${net.blockResources} allowedHosts=${allowedHosts.join(",")}`,
+      });
 
-    testInfo.annotations.push({
-      type: "network",
-      description: `NETWORK_POLICY ads=${net.enabled} resources=${net.blockResources} allowedHosts=${allowedHosts.join(",")}`,
-    });
-
-    await use(context);
-    await context.close();
-  },
-
-  page: async ({ context }, use) => {
-    const page = await context.newPage();
-    await use(page);
-    await page.close();
-  },
+      await use(context);
+    },
+    { auto: true },
+  ],
 
   uiContext: async ({}, use, testInfo) => {
     const startTime = Date.now();

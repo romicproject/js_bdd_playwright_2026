@@ -51,15 +51,6 @@ export function createUsersHelpers(apiClient) {
         withFormHeaders(options),
       );
     },
-
-    async updateAccount(userData, options = {}) {
-      return apiClient.put(
-        "/updateAccount",
-        formBody(userData || {}),
-        withFormHeaders(options),
-      );
-    },
-
     async getUserDetailByEmail(email, options = {}) {
       if (email == null) throw new Error("email is required");
       const params = new URLSearchParams({ email: String(email) });

@@ -9,7 +9,7 @@ const { Given, When, Then } = createBdd(test);
 // CREATE USER
 // ----------------------
 When("I create a user with:", async ({ apiContext, apiHelpers }, dataTable) => {
-  const user = apiContext.resolveDataTable(dataTable.rowsHash());
+  const user = apiContext.resolveDataTable(dataTable);
 
   if (user.email) {
     apiContext.createdUserEmail = user.email;
@@ -67,7 +67,7 @@ Given(
 // LOGIN
 // ----------------------
 When("I verify login with:", async ({ apiContext, apiHelpers }, dataTable) => {
-  const login = apiContext.resolveDataTable(dataTable.rowsHash());
+  const login = apiContext.resolveDataTable(dataTable);
   apiContext.response = await apiHelpers.verifyLogin(login);
 });
 

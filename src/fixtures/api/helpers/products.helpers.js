@@ -38,18 +38,8 @@ export function createProductsHelpers(apiClient) {
 
     return getResponse;
   }
-
-  async function getProductById(productId, options = {}) {
-    return apiClient.post(
-      "/searchProduct",
-      buildForm({ product_id: productId }).toString(),
-      { ...options, headers: { ...FORM_HEADERS, ...(options.headers || {}) } },
-    );
-  }
-
   return {
     getAllProductsList,
     searchProduct,
-    getProductById,
   };
 }

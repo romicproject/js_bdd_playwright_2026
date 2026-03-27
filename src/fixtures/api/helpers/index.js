@@ -9,24 +9,12 @@ export function createApiHelpers(apiClient) {
   const usersHelpers = createUsersHelpers(apiClient);
 
   return {
-    // Products
     getAllProductsList: productsHelpers.getAllProductsList,
     searchProduct: productsHelpers.searchProduct,
-    getProductById: productsHelpers.getProductById,
-
-    // Brands
     getAllBrands: brandsHelpers.getAllBrands,
-
-    // Users
     createUser: usersHelpers.createUser,
     verifyLogin: usersHelpers.verifyLogin,
     deleteAccount: usersHelpers.deleteAccount,
-    updateAccount: usersHelpers.updateAccount,
     getUserDetailByEmail: usersHelpers.getUserDetailByEmail,
-
-    // Namespaced access (optional)
-    products: productsHelpers,
-    brands: brandsHelpers,
-    users: usersHelpers,
   };
 }
