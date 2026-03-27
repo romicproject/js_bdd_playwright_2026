@@ -1,15 +1,7 @@
 // fixtures/ui/ui.fixtures.js
 import { test as base } from "playwright-bdd";
 import { config } from "../../framework/config/envConfig.js";
-import {
-  createLogger,
-  getAttachAllureEnabled,
-} from "../../framework/logging/logger.js";
-import {
-  buildTestLogPath,
-  inferFeatureFromTestInfo,
-} from "../../logging/paths.js";
-
+import { startTestLogging } from "../shared/testLogging.js";
 import { applyNetworkBlocking } from "./helpers/networkBlocker.js";
 
 import {
@@ -19,10 +11,6 @@ import {
   ProductsPage,
   RegisterPage,
 } from "../../ui/pages/index.js";
-
-function env(name, fallback) {
-  return process.env[name] ?? fallback;
-}
 
 export const test = base.extend({
   networkPolicy: [
@@ -45,33 +33,12 @@ export const test = base.extend({
 
   uiContext: async ({}, use, testInfo) => {
     const startTime = Date.now();
-    const projectName = testInfo.project?.name || "";
-    const feature = inferFeatureFromTestInfo(testInfo);
-    const baseDir = env("LOG_DIR", "logs");
-    const logFilePath = buildTestLogPath({
-      baseDir,
-      kind: "UI",
-      feature,
-      testTitle: testInfo.title,
-    });
-
-    const logger = createLogger({
-      filePath: logFilePath,
-      testId: testInfo.testId,
-    });
-
-    testInfo.annotations.push({
-      type: "feature",
-      description: feature,
-    });
-    testInfo.annotations.push({
-      type: "log-file",
-      description: logFilePath,
-    });
-    testInfo.annotations.push({
-      type: "project",
-      description: projectName || "unknown",
-    });
+    const { logger, logFilePath, attachExecutionLog } = startTestLogging(
+      testInfo,
+      {
+        kind: "UI",
+      },
+    );
 
     logger.info(`Starting: ${testInfo.title}`);
     logger.debug(`Environment: ${config.env}`);
@@ -88,12 +55,7 @@ export const test = base.extend({
     const duration = Date.now() - startTime;
     logger.info(`Completed in ${duration}ms | status=${testInfo.status}`);
 
-    if (getAttachAllureEnabled()) {
-      await testInfo.attach("execution.log", {
-        path: logFilePath,
-        contentType: "text/plain",
-      });
-    }
+    await attachExecutionLog();
   },
 
   homePage: async ({ page }, use) => {

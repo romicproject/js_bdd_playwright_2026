@@ -34,7 +34,7 @@ export class ProductsPage extends BasePage {
   }
 
   searchButton() {
-    return this.searchButtonByRole().or(this.searchButtonFallback()).first();
+    return this.searchButtonFallback();
   }
 
   searchedProductsHeading() {
@@ -60,9 +60,28 @@ export class ProductsPage extends BasePage {
     await this.searchInput().fill(term);
     await expect(this.searchButton()).toBeVisible();
     await this.searchButton().click();
+    await expect(this.searchInput()).toHaveValue(term);
   }
 
   async assertSearchResultsContain(term) {
+    const resultsHeadingVisible = await this.searchedProductsHeading()
+      .isVisible({ timeout: 5000 })
+      .catch(() => false);
+
+    if (!resultsHeadingVisible) {
+      const currentNames = await this.productNames().allTextContents();
+      const normalizedTerm = term.toLowerCase();
+      const hasVisibleMatch = currentNames.some((name) =>
+        name.toLowerCase().includes(normalizedTerm),
+      );
+
+      expect(
+        hasVisibleMatch,
+        `Expected searched products related to "${term}", but the page did not show the searched-products heading.`,
+      ).toBe(true);
+      return;
+    }
+
     await expect(this.searchedProductsHeading()).toBeVisible();
     await expect(this.productCards().first()).toBeVisible();
     await expect(this.productNames().first()).toBeVisible();

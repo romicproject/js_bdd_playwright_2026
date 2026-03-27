@@ -24,6 +24,27 @@ function safeJson(v) {
   }
 }
 
+function extractBodyResponseCode(body) {
+  const rawRc =
+    body && typeof body === "object" ? body.responseCode : undefined;
+  return Number.isFinite(Number(rawRc)) ? Number(rawRc) : undefined;
+}
+
+function buildApiResult({ status, body, headers, duration }) {
+  const bodyResponseCode = extractBodyResponseCode(body);
+  const hasBodyCode = typeof bodyResponseCode === "number";
+  const effectiveStatus = hasBodyCode ? bodyResponseCode : status;
+
+  return {
+    status,
+    bodyResponseCode,
+    body,
+    headers,
+    ok: effectiveStatus >= 200 && effectiveStatus < 300,
+    duration,
+  };
+}
+
 export function createApiClient(apiContext, testInfo) {
   const { request, config } = apiContext;
   const log = getLogger(apiContext);
@@ -32,6 +53,7 @@ export function createApiClient(apiContext, testInfo) {
 
   async function _makeRequest(method, url, options = {}) {
     const start = Date.now();
+    const verboseLogging = shouldLog();
     const fullUrl = joinUrl(config.apiBaseUrl, url);
     const safeUrl = redactUrl(fullUrl);
 
@@ -82,10 +104,11 @@ export function createApiClient(apiContext, testInfo) {
         ? redactBodyForLogs(requestOptions.data, requestOptions.headers)
         : undefined;
 
-    if (shouldLog()) {
-      log.info(`→ ${method} ${safeUrl}`);
-      if (reqBodySnapshot !== undefined)
+    if (verboseLogging) {
+      log.info(`-> ${method} ${safeUrl}`);
+      if (reqBodySnapshot !== undefined) {
         log.debug(`  Body: ${safeJson(reqBodySnapshot)}`);
+      }
     }
 
     const mockResponse = resolveApiMockResponse({
@@ -99,33 +122,23 @@ export function createApiClient(apiContext, testInfo) {
         "content-type": "application/json",
       };
       const body = mockResponse.body ?? {};
-
-      const rawRc =
-        body && typeof body === "object" ? body.responseCode : undefined;
-      const bodyResponseCode = Number.isFinite(Number(rawRc))
-        ? Number(rawRc)
-        : undefined;
-      const hasBodyCode = typeof bodyResponseCode === "number";
-      const effectiveStatus = hasBodyCode ? bodyResponseCode : httpStatus;
       const duration = Date.now() - start;
-
-      if (shouldLog()) {
-        const statusLog = hasBodyCode
-          ? `${httpStatus} (body:${bodyResponseCode})`
-          : `${httpStatus}`;
-        log.info(
-          `↺ MOCK ${statusLog} (${duration}ms) profile=${apiContext.mock.profile}`,
-        );
-      }
-
-      const result = {
+      const result = buildApiResult({
         status: httpStatus,
-        bodyResponseCode,
         body,
         headers: resHeaders,
-        ok: effectiveStatus >= 200 && effectiveStatus < 300,
         duration,
-      };
+      });
+      const hasBodyCode = typeof result.bodyResponseCode === "number";
+
+      if (verboseLogging) {
+        const statusLog = hasBodyCode
+          ? `${httpStatus} (body:${result.bodyResponseCode})`
+          : `${httpStatus}`;
+        log.info(
+          `<- MOCK ${statusLog} (${duration}ms) profile=${apiContext.mock.profile}`,
+        );
+      }
 
       if (storeResponse) apiContext.response = result;
       return result;
@@ -157,7 +170,7 @@ export function createApiClient(apiContext, testInfo) {
       const duration = Date.now() - start;
 
       log.error(
-        `✗✗✗ ${method} ${safeUrl} failed after ${duration}ms: ${String(e?.message || e)}`,
+        `FAIL ${method} ${safeUrl} failed after ${duration}ms: ${String(e?.message || e)}`,
       );
 
       await attachJson(testInfo, `api-exception-${method}.json`, {
@@ -182,38 +195,27 @@ export function createApiClient(apiContext, testInfo) {
       body = await response.text();
     }
 
-    // accept numeric OR numeric-string
-    const rawRc =
-      body && typeof body === "object" ? body.responseCode : undefined;
-    const bodyResponseCode = Number.isFinite(Number(rawRc))
-      ? Number(rawRc)
-      : undefined;
-
-    const hasBodyCode = typeof bodyResponseCode === "number";
-    const effectiveStatus = hasBodyCode ? bodyResponseCode : httpStatus;
-
     const duration = Date.now() - start;
+    const result = buildApiResult({
+      status: httpStatus,
+      body,
+      headers: resHeaders,
+      duration,
+    });
+    const hasBodyCode = typeof result.bodyResponseCode === "number";
 
     const statusLog = hasBodyCode
-      ? `${httpStatus} (body:${bodyResponseCode})`
+      ? `${httpStatus} (body:${result.bodyResponseCode})`
       : `${httpStatus}`;
 
     // classify "HTTP ok but business code fail" as WARN (mixed fail)
     const isHttpOk = httpStatus >= 200 && httpStatus < 300;
     const isBodyOk =
-      !hasBodyCode || (bodyResponseCode >= 200 && bodyResponseCode < 300);
+      !hasBodyCode ||
+      (result.bodyResponseCode >= 200 && result.bodyResponseCode < 300);
     const isMixedFail = isHttpOk && hasBodyCode && !isBodyOk;
 
-    if (shouldLog()) log.info(`← ${statusLog} (${duration}ms)`);
-
-    const result = {
-      status: httpStatus,
-      bodyResponseCode,
-      body,
-      headers: resHeaders,
-      ok: effectiveStatus >= 200 && effectiveStatus < 300,
-      duration,
-    };
+    if (verboseLogging) log.info(`<- ${statusLog} (${duration}ms)`);
 
     if (!result.ok) {
       const failLog = isMixedFail ? log.warn : log.error;
@@ -226,7 +228,7 @@ export function createApiClient(apiContext, testInfo) {
         url: safeUrl,
         duration,
         httpStatus,
-        bodyResponseCode,
+        bodyResponseCode: result.bodyResponseCode,
         request: { headers: reqHeadersSnapshot, body: reqBodySnapshot },
         response: {
           headers: redactHeaders(resHeaders),
