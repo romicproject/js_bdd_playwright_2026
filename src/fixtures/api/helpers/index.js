@@ -1,7 +1,7 @@
 // fixtures/api/helpers/index.js
-import { createProductsHelpers } from './products.helpers.js';
-import { createBrandsHelpers } from './brands.helpers.js';
-import { createUsersHelpers } from './users.helpers.js';
+import { createProductsHelpers } from "./products.helpers.js";
+import { createBrandsHelpers } from "./brands.helpers.js";
+import { createUsersHelpers } from "./users.helpers.js";
 
 export function createApiHelpers(apiClient) {
   const productsHelpers = createProductsHelpers(apiClient);
@@ -27,6 +27,6 @@ export function createApiHelpers(apiClient) {
     // Namespaced access (optional)
     products: productsHelpers,
     brands: brandsHelpers,
-    users: usersHelpers
+    users: usersHelpers,
   };
 }

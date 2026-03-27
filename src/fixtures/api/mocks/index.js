@@ -1,2 +1,1 @@
-export { resolveApiMockResponse } from './registry.js';
-
+export { resolveApiMockResponse } from "./registry.js";

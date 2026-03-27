@@ -1,34 +1,36 @@
-import { expect } from '@playwright/test';
-import { BasePage } from './BasePage.js';
+import { expect } from "@playwright/test";
+import { BasePage } from "./BasePage.js";
 
 export class ProductsPage extends BasePage {
   allProductsHeading() {
-    return this.getByRole('heading', { name: /all products/i });
+    return this.getByRole("heading", { name: /all products/i });
   }
 
   productsSection() {
     return this.page
-      .locator('section')
+      .locator("section")
       .filter({
-        has: this.getByRole('heading', { name: /all products|searched products/i }),
+        has: this.getByRole("heading", {
+          name: /all products|searched products/i,
+        }),
       })
       .first();
   }
 
   productsContainer() {
-    return this.productsSection().locator('.features_items').first();
+    return this.productsSection().locator(".features_items").first();
   }
 
   searchInput() {
-    return this.page.getByPlaceholder('Search Product');
+    return this.page.getByPlaceholder("Search Product");
   }
 
   searchButtonByRole() {
-    return this.getByRole('button', { name: /search/i });
+    return this.getByRole("button", { name: /search/i });
   }
 
   searchButtonFallback() {
-    return this.page.locator('#submit_search');
+    return this.page.locator("#submit_search");
   }
 
   searchButton() {
@@ -36,15 +38,15 @@ export class ProductsPage extends BasePage {
   }
 
   searchedProductsHeading() {
-    return this.getByRole('heading', { name: /searched products/i });
+    return this.getByRole("heading", { name: /searched products/i });
   }
 
   productCards() {
-    return this.productsContainer().locator('.product-image-wrapper');
+    return this.productsContainer().locator(".product-image-wrapper");
   }
 
   productNames() {
-    return this.productsContainer().locator('.productinfo p');
+    return this.productsContainer().locator(".productinfo p");
   }
 
   async assertOnProductsPage() {
@@ -67,7 +69,9 @@ export class ProductsPage extends BasePage {
 
     const normalizedTerm = term.toLowerCase();
     const names = await this.productNames().allTextContents();
-    const hasMatch = names.some((name) => name.toLowerCase().includes(normalizedTerm));
+    const hasMatch = names.some((name) =>
+      name.toLowerCase().includes(normalizedTerm),
+    );
 
     expect(hasMatch).toBe(true);
   }

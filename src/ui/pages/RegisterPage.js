@@ -1,17 +1,17 @@
-import { expect } from '@playwright/test';
-import { BasePage } from './BasePage.js';
+import { expect } from "@playwright/test";
+import { BasePage } from "./BasePage.js";
 
 export class RegisterPage extends BasePage {
   accountInfoHeading() {
-    return this.getByRole('heading', { name: /enter account information/i });
+    return this.getByRole("heading", { name: /enter account information/i });
   }
 
   accountCreatedHeading() {
-    return this.getByRole('heading', { name: /account created/i });
+    return this.getByRole("heading", { name: /account created/i });
   }
 
   loggedInAsAnyLink() {
-    return this.getByRole('link', { name: /logged in as/i });
+    return this.getByRole("link", { name: /logged in as/i });
   }
 
   passwordInput() {
@@ -63,17 +63,19 @@ export class RegisterPage extends BasePage {
   }
 
   createAccountButton() {
-    return this.getByRole('button', { name: /create account/i });
+    return this.getByRole("button", { name: /create account/i });
   }
 
   continueButton() {
-    return this.getByRole('button', { name: /continue/i })
+    return this.getByRole("button", { name: /continue/i })
       .or(this.page.locator('[data-qa="continue-button"]'))
       .first();
   }
 
   loggedInAsLink(name) {
-    return this.getByRole('link', { name: new RegExp(`logged in as\\s*${name}`, 'i') });
+    return this.getByRole("link", {
+      name: new RegExp(`logged in as\\s*${name}`, "i"),
+    });
   }
 
   async assertOnAccountInfoPage() {
@@ -86,9 +88,9 @@ export class RegisterPage extends BasePage {
 
     await this.getByLabel(/mr\./i).check();
     await this.passwordInput().fill(user.password);
-    await this.daysSelect().selectOption('10');
-    await this.monthsSelect().selectOption('5');
-    await this.yearsSelect().selectOption('1992');
+    await this.daysSelect().selectOption("10");
+    await this.monthsSelect().selectOption("5");
+    await this.yearsSelect().selectOption("1992");
 
     await this.firstNameInput().scrollIntoViewIfNeeded();
     await this.firstNameInput().fill(user.firstName);
@@ -98,7 +100,7 @@ export class RegisterPage extends BasePage {
     await this.addressInput().fill(user.address);
 
     await this.countrySelect().scrollIntoViewIfNeeded();
-    await this.countrySelect().selectOption('Canada');
+    await this.countrySelect().selectOption("Canada");
 
     await this.stateInput().scrollIntoViewIfNeeded();
     await this.stateInput().fill(user.state);
@@ -125,18 +127,20 @@ export class RegisterPage extends BasePage {
 
   async continueAfterAccountCreated() {
     await this.continueButton().click();
-    await this.recoverFromVignette('/');
-    await expect(this.getByRole('link', { name: /logout/i })).toBeVisible();
+    await this.recoverFromVignette("/");
+    await expect(this.getByRole("link", { name: /logout/i })).toBeVisible();
   }
 
   logoutLink() {
-    return this.getByRole('link', { name: /logout/i });
+    return this.getByRole("link", { name: /logout/i });
   }
 
   async assertLoggedIn(name) {
     await expect(this.logoutLink()).toBeVisible();
 
-    const loggedInVisible = await this.loggedInAsAnyLink().isVisible({ timeout: 1500 }).catch(() => false);
+    const loggedInVisible = await this.loggedInAsAnyLink()
+      .isVisible({ timeout: 1500 })
+      .catch(() => false);
     if (loggedInVisible && name) {
       await expect(this.loggedInAsLink(name)).toBeVisible();
     }

@@ -1,11 +1,11 @@
-import { expect } from '@playwright/test';
+import { expect } from "@playwright/test";
 
 export class BasePage {
   constructor(page) {
     this.page = page;
   }
 
-  async goto(path = '/') {
+  async goto(path = "/") {
     await this.page.goto(path);
   }
 
@@ -17,26 +17,28 @@ export class BasePage {
     await expect(this.page).toHaveTitle(expected);
   }
 
-  async recoverFromVignette(path = '/') {
-    if (this.page.url().includes('#google_vignette')) {
+  async recoverFromVignette(path = "/") {
+    if (this.page.url().includes("#google_vignette")) {
       await this.goto(path);
     }
   }
 
   forbiddenHeading() {
-    return this.getByRole('heading', { name: /forbidden/i });
+    return this.getByRole("heading", { name: /forbidden/i });
   }
 
   async isForbiddenPage() {
-    return this.forbiddenHeading().isVisible({ timeout: 1500 }).catch(() => false);
+    return this.forbiddenHeading()
+      .isVisible({ timeout: 1500 })
+      .catch(() => false);
   }
 
-  async ensureNotForbidden(contextMessage = 'navigation flow') {
+  async ensureNotForbidden(contextMessage = "navigation flow") {
     const forbidden = await this.isForbiddenPage();
     if (!forbidden) return;
 
     throw new Error(
-      `External site instability detected during ${contextMessage}: received Forbidden (403).`
+      `External site instability detected during ${contextMessage}: received Forbidden (403).`,
     );
   }
 

@@ -7,10 +7,12 @@ This project uses a logger that always writes to a **file** and can optionally p
 
 ### Rules (unambiguous)
 
-1) A message is **recorded** (written to the file) if:
+1. A message is **recorded** (written to the file) if:
+
 - `level >= LOG_LEVEL`
 
-2) A message is **printed to the console** if:
+2. A message is **printed to the console** if:
+
 - `LOG_CONSOLE=true` and
 - `level >= max(LOG_LEVEL, LOG_CONSOLE_LEVEL)`
 
@@ -18,12 +20,12 @@ This project uses a logger that always writes to a **file** and can optionally p
 
 ### Cheatsheet
 
-| Goal | LOG_LEVEL | LOG_CONSOLE | LOG_CONSOLE_LEVEL | Result |
-|---|---:|---:|---:|---|
-| Dev: full file, quiet console | debug | true | warn | file: debug+ / console: warn+ |
-| CI: minimal useful signal | info | true | warn | file: info+ / console: warn+ |
-| Quick console debugging | debug | true | debug | file: debug+ / console: debug+ |
-| No console output | debug | false | (any) | file: debug+ / console: nothing |
+| Goal                          | LOG_LEVEL | LOG_CONSOLE | LOG_CONSOLE_LEVEL | Result                          |
+| ----------------------------- | --------: | ----------: | ----------------: | ------------------------------- |
+| Dev: full file, quiet console |     debug |        true |              warn | file: debug+ / console: warn+   |
+| CI: minimal useful signal     |      info |        true |              warn | file: info+ / console: warn+    |
+| Quick console debugging       |     debug |        true |             debug | file: debug+ / console: debug+  |
+| No console output             |     debug |       false |             (any) | file: debug+ / console: nothing |
 
 Legend: `debug+` means `debug, info, warn, error` (all levels at or above that threshold).
 
@@ -38,6 +40,7 @@ Legend: `debug+` means `debug, info, warn, error` (all levels at or above that t
 ### Recommended profiles
 
 **Local development (`env/dev.env`)**
+
 ```ini
 LOG_LEVEL=debug
 LOG_FORMAT=pretty

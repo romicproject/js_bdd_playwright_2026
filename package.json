@@ -5,6 +5,11 @@
   "description": "Playwright API Testing Framework with BDD",
   "scripts": {
     "test": "playwright test",
+    "lint": "eslint .",
+    "lint:fix": "npm run lint -- --fix",
+    "format:check": "prettier --check .",
+    "format": "prettier --write .",
+    "check:quality": "npm run bdd:generate && npm run lint && npm run format:check",
     "test:dev": "cross-env ENV=dev playwright test",
     "docker:test:dev": "docker compose --profile dev up --build --abort-on-container-exit --exit-code-from tests-dev --remove-orphans",
     "docker:test:staging": "docker compose --profile staging up --build --abort-on-container-exit --exit-code-from tests-staging --remove-orphans",
@@ -55,12 +60,16 @@
     "test-automation"
   ],
   "devDependencies": {
+    "@eslint/js": "^10.0.1",
     "@playwright/test": "^1.58.2",
     "artillery": "^2.0.23",
     "artillery-engine-playwright": "^1.22.0",
     "cross-env": "^10.1.0",
     "dotenv": "^17.3.1",
+    "eslint": "^10.1.0",
+    "globals": "^17.4.0",
     "playwright-bdd": "^8.4.2",
+    "prettier": "^3.8.1",
     "rimraf": "^6.1.2",
     "zod": "^4.3.6"
   }

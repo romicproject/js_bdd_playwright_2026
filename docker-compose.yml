@@ -9,7 +9,6 @@ x-test-base: &test-base
     - ./out/test-results:/app/out/test-results
 
 services:
-
   tests-dev:
     <<: *test-base
     environment:

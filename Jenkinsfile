@@ -36,6 +36,13 @@ pipeline {
       }
     }
 
+    stage('Quality Gate') {
+      steps {
+        sh 'npm ci'
+        sh 'npm run check:quality'
+      }
+    }
+
     stage('Run Tests') {
       steps {
         sh "npm run docker:test:${params.TEST_ENV}"
