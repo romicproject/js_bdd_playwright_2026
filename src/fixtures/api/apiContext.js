@@ -1,6 +1,6 @@
 // fixtures/api/apiContext.js
 export function createApiContext(request, config) {
-  const defaultMockProfile = config?.apiMock?.profile || '';
+  const defaultMockProfile = config?.apiMock?.profile || "";
 
   return {
     request,
@@ -20,6 +20,7 @@ export function createApiContext(request, config) {
     existingUserPassword: null,
     savedUserEmail: null,
     savedUserPassword: null,
+    cleanupUsers: [],
 
     // Stable timestamp per scenario (set once in api.fixtures.js)
     scenarioTimestamp: null,
@@ -31,17 +32,17 @@ export function createApiContext(request, config) {
     // API mock controls (per scenario)
     mock: {
       enabled: Boolean(config?.apiMock?.enabled),
-      profile: defaultMockProfile
+      profile: defaultMockProfile,
     },
 
     resolveTemplate(value) {
       if (value === null || value === undefined) return value;
 
-      if (typeof value !== 'string') return value;
+      if (typeof value !== "string") return value;
 
-      if (value.includes('{timestamp}')) {
+      if (value.includes("{timestamp}")) {
         const ts = this.scenarioTimestamp ?? Date.now();
-        return value.replaceAll('{timestamp}', String(ts));
+        return value.replaceAll("{timestamp}", String(ts));
       }
 
       return value;
@@ -58,7 +59,11 @@ export function createApiContext(request, config) {
       let input = dataTableOrRowsHash;
 
       // If it's a playwright-bdd DataTable, it typically has rowsHash()
-      if (input && typeof input === 'object' && typeof input.rowsHash === 'function') {
+      if (
+        input &&
+        typeof input === "object" &&
+        typeof input.rowsHash === "function"
+      ) {
         input = input.rowsHash();
       }
 
@@ -72,6 +77,25 @@ export function createApiContext(request, config) {
       return out;
     },
 
+    trackCleanupUser(email, password) {
+      if (!email || !password) return;
+
+      const alreadyTracked = this.cleanupUsers.some(
+        (user) => user.email === email && user.password === password,
+      );
+
+      if (!alreadyTracked) {
+        this.cleanupUsers.push({ email, password });
+      }
+    },
+
+    untrackCleanupUser(email) {
+      if (!email) return;
+      this.cleanupUsers = this.cleanupUsers.filter(
+        (user) => user.email !== email,
+      );
+    },
+
     reset() {
       this.response = null;
       this.lastRequest = null;
@@ -83,11 +107,12 @@ export function createApiContext(request, config) {
       this.existingUserPassword = null;
       this.savedUserEmail = null;
       this.savedUserPassword = null;
+      this.cleanupUsers = [];
 
       this.mock.enabled = Boolean(this.config?.apiMock?.enabled);
-      this.mock.profile = this.config?.apiMock?.profile || '';
+      this.mock.profile = this.config?.apiMock?.profile || "";
 
       // keep scenarioTimestamp stable for scenario; do not reset here
-    }
+    },
   };
 }

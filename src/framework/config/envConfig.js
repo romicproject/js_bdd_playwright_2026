@@ -1,24 +1,30 @@
-import dotenv from 'dotenv';
-import path from 'path';
+import dotenv from "dotenv";
+import path from "path";
+import fs from "node:fs";
 
 // Determine environment (default: dev)
-const ENV = process.env.ENV || 'dev';
+const ENV = process.env.ENV || "dev";
 
 // Validate environment
-const validEnvironments = ['dev', 'staging', 'prod'];
+const validEnvironments = ["dev", "staging", "prod"];
 if (!validEnvironments.includes(ENV)) {
   throw new Error(
-    `Invalid environment: ${ENV}. Must be one of: ${validEnvironments.join(', ')}`
+    `Invalid environment: ${ENV}. Must be one of: ${validEnvironments.join(", ")}`,
   );
 }
 
-// Load the corresponding .env file from repository env/
+// Load the corresponding .env file from repository env/ when present.
+// If the local file is missing, rely on already-injected process.env values
+// so CI and container-based runs can provide secrets without a checked-in file.
 const envPath = path.resolve(process.cwd(), `env/${ENV}.env`);
-const result = dotenv.config({ path: envPath, quiet: true });
+const hasEnvFile = fs.existsSync(envPath);
+const result = hasEnvFile
+  ? dotenv.config({ path: envPath, quiet: true })
+  : { parsed: {} };
 
-if (result.error) {
+if (hasEnvFile && result.error) {
   throw new Error(
-    `Failed to load environment config from ${envPath}: ${result.error.message}`
+    `Failed to load environment config from ${envPath}: ${result.error.message}`,
   );
 }
 
@@ -34,7 +40,7 @@ function parseIntSafe(value, fallback) {
  * Parse boolean from string
  */
 function parseBoolean(value) {
-  return value === 'true' || value === '1';
+  return value === "true" || value === "1";
 }
 
 /**
@@ -43,9 +49,9 @@ function parseBoolean(value) {
 export const config = {
   // Environment info
   env: ENV,
-  isProduction: ENV === 'prod',
-  isDevelopment: ENV === 'dev',
-  isStaging: ENV === 'staging',
+  isProduction: ENV === "prod",
+  isDevelopment: ENV === "dev",
+  isStaging: ENV === "staging",
 
   // URLs
   baseUrl: process.env.BASE_URL,
@@ -54,13 +60,13 @@ export const config = {
   // Timeouts
   timeout: {
     request: parseIntSafe(process.env.REQUEST_TIMEOUT, 10000),
-    global: parseIntSafe(process.env.GLOBAL_TIMEOUT, 30000)
+    global: parseIntSafe(process.env.GLOBAL_TIMEOUT, 30000),
   },
 
   // Test user (for scenarios that require an existing user)
   testUser: {
     email: process.env.TEST_USER_EMAIL,
-    password: process.env.TEST_USER_PASSWORD
+    password: process.env.TEST_USER_PASSWORD,
   },
 
   // API Keys
@@ -69,44 +75,47 @@ export const config = {
   // API mock mode (opt-in)
   apiMock: {
     enabled: parseBoolean(process.env.API_MOCK_ENABLED),
-    profile: process.env.API_MOCK_PROFILE || ''
+    profile: process.env.API_MOCK_PROFILE || "",
   },
 
   // Retry settings
   retry: {
     retries: parseIntSafe(process.env.RETRY_FAILED_TESTS, 0),
-    maxRetries: parseIntSafe(process.env.MAX_RETRIES, 2)
+    maxRetries: parseIntSafe(process.env.MAX_RETRIES, 2),
   },
 
   // Debug settings
   debug: {
     enabled: parseBoolean(process.env.DEBUG_MODE),
-    verboseLogging: parseBoolean(process.env.VERBOSE_LOGGING)
-  }
+    verboseLogging: parseBoolean(process.env.VERBOSE_LOGGING),
+  },
 };
 
 // Validate critical configuration
 if (!config.apiBaseUrl) {
-  throw new Error('API_BASE_URL is required in environment configuration');
+  throw new Error("API_BASE_URL is required in environment configuration");
 }
 
 // Export for validation in tests
 export function validateConfig() {
   const required = [
-    ['apiBaseUrl', config.apiBaseUrl],
-    ['timeout.request', config.timeout?.request],
-    ['timeout.global', config.timeout?.global]
+    ["apiBaseUrl", config.apiBaseUrl],
+    ["timeout.request", config.timeout?.request],
+    ["timeout.global", config.timeout?.global],
   ];
   const missing = required
-    .filter(([, value]) => value === undefined || value === null || value === '')
+    .filter(
+      ([, value]) => value === undefined || value === null || value === "",
+    )
     .map(([key]) => key);
 
   if (missing.length > 0) {
-    throw new Error(`Missing required config: ${missing.join(', ')}`);
+    throw new Error(`Missing required config: ${missing.join(", ")}`);
   }
 
   return {
     valid: true,
-    env: config.env
+    env: config.env,
+    envFileLoaded: hasEnvFile,
   };
 }

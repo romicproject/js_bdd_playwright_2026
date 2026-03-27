@@ -4,26 +4,29 @@ function env(name, fallback) {
 
 function toBool(v, fallback) {
   if (v == null) return fallback;
-  return String(v).toLowerCase() === 'true';
+  return String(v).toLowerCase() === "true";
 }
 
 const LEVELS = { debug: 10, info: 20, warn: 30, error: 40 };
 
 function getLogLevelName() {
-  const fromEnv = String(env('LOG_LEVEL', 'info')).toLowerCase();
+  const fromEnv = String(env("LOG_LEVEL", "info")).toLowerCase();
   if (LEVELS[fromEnv] != null) return fromEnv;
 
   // Optional aliases
-  if (toBool(env('VERBOSE_LOGGING', null), false) || toBool(env('DEBUG_MODE', null), false)) {
-    return 'debug';
+  if (
+    toBool(env("VERBOSE_LOGGING", null), false) ||
+    toBool(env("DEBUG_MODE", null), false)
+  ) {
+    return "debug";
   }
 
-  return 'info';
+  return "info";
 }
 
 export function getAttachAllureEnabled() {
   // Same flag used by api.fixtures.js to attach execution.log
-  return toBool(env('LOG_ATTACH_ALLURE', 'true'), true);
+  return toBool(env("LOG_ATTACH_ALLURE", "true"), true);
 }
 
 /**
@@ -32,7 +35,7 @@ export function getAttachAllureEnabled() {
  */
 export function shouldLog() {
   // log request/response flow only when debug
-  return getLogLevelName() === 'debug';
+  return getLogLevelName() === "debug";
 }
 
 export function getLogger(apiContext) {
@@ -42,7 +45,7 @@ export function getLogger(apiContext) {
     debug: console.log,
     info: console.log,
     warn: console.warn,
-    error: console.error
+    error: console.error,
   };
 }
 
@@ -56,8 +59,18 @@ export async function attachJson(testInfo, name, obj) {
 
   if (getAttachAllureEnabled()) return;
 
+  const payload = {
+    metadata: {
+      title: testInfo.title,
+      testId: testInfo.testId,
+      project: testInfo.project?.name || "unknown",
+      file: testInfo.file || testInfo.location?.file || "unknown",
+    },
+    details: obj,
+  };
+
   await testInfo.attach(name, {
-    body: Buffer.from(JSON.stringify(obj, null, 2), 'utf8'),
-    contentType: 'application/json'
+    body: Buffer.from(JSON.stringify(payload, null, 2), "utf8"),
+    contentType: "application/json",
   });
 }

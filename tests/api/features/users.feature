@@ -31,27 +31,27 @@ Feature: User Account Management API
 
   @smoke @positive
   Scenario: Login with valid credentials
-    Given a user exists with email "ceva@pceva.com" and password "ceva@123"
+    Given a user exists with email "login.valid.{timestamp}@test.com" and password "Valid123!"
     When I verify login with:
-      | email    | ceva@pceva.com |
-      | password | ceva@123       |
+      | email    | login.valid.{timestamp}@test.com |
+      | password | Valid123!                       |
     Then the response status should be 200
 
   @regression @negative
   Scenario: Create user with duplicate email
-    Given a user exists with email "duplicate@test.com"
+    Given a user exists with email "duplicate.{timestamp}@test.com"
     When I create a user with:
-      | name     | Duplicate User     |
-      | email    | duplicate@test.com |
-      | password | Test123!           |
+      | name     | Duplicate User                |
+      | email    | duplicate.{timestamp}@test.com |
+      | password | Test123!                      |
     Then the response status should be 400
     And the response message should indicate "email already exists"
 
   @regression @negative
   Scenario: Login with invalid credentials
     When I verify login with:
-      | email    | nonexistent@test.com |
-      | password | WrongPassword123!    |
+      | email    | nonexistent.{timestamp}@example.invalid |
+      | password | WrongPassword123!                      |
     Then the response status should be 404
     And the response message should indicate "user not found"
 

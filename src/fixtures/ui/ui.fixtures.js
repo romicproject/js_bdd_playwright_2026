@@ -1,10 +1,16 @@
 // fixtures/ui/ui.fixtures.js
-import { test as base } from 'playwright-bdd';
-import { config } from '../../framework/config/envConfig.js';
-import { createLogger, getAttachAllureEnabled } from '../../framework/logging/logger.js';
-import { buildTestLogPath, inferFeatureFromTestInfo } from '../../logging/paths.js';
+import { test as base } from "playwright-bdd";
+import { config } from "../../framework/config/envConfig.js";
+import {
+  createLogger,
+  getAttachAllureEnabled,
+} from "../../framework/logging/logger.js";
+import {
+  buildTestLogPath,
+  inferFeatureFromTestInfo,
+} from "../../logging/paths.js";
 
-import { applyNetworkBlocking } from './helpers/networkBlocker.js';
+import { applyNetworkBlocking } from "./helpers/networkBlocker.js";
 
 import {
   ContactUsPage,
@@ -12,7 +18,7 @@ import {
   LoginPage,
   ProductsPage,
   RegisterPage,
-} from '../../ui/pages/index.js';
+} from "../../ui/pages/index.js";
 
 function env(name, fallback) {
   return process.env[name] ?? fallback;
@@ -20,7 +26,7 @@ function env(name, fallback) {
 
 export const test = base.extend({
   context: async ({ browser }, use, testInfo) => {
-    const allowedHosts = ['automationexercise.com'];
+    const allowedHosts = ["automationexercise.com"];
 
     const context = await browser.newContext({
       baseURL: config.baseUrl,
@@ -32,8 +38,8 @@ export const test = base.extend({
     });
 
     testInfo.annotations.push({
-      type: 'network',
-      description: `NETWORK_POLICY ads=${net.enabled} resources=${net.blockResources} allowedHosts=${allowedHosts.join(',')}`,
+      type: "network",
+      description: `NETWORK_POLICY ads=${net.enabled} resources=${net.blockResources} allowedHosts=${allowedHosts.join(",")}`,
     });
 
     await use(context);
@@ -46,18 +52,35 @@ export const test = base.extend({
     await page.close();
   },
 
-  uiContext: async ({ }, use, testInfo) => {
+  uiContext: async ({}, use, testInfo) => {
     const startTime = Date.now();
+    const projectName = testInfo.project?.name || "";
     const feature = inferFeatureFromTestInfo(testInfo);
-    const baseDir = env('LOG_DIR', 'logs');
+    const baseDir = env("LOG_DIR", "logs");
     const logFilePath = buildTestLogPath({
       baseDir,
-      kind: 'UI',
+      kind: "UI",
       feature,
       testTitle: testInfo.title,
     });
 
-    const logger = createLogger({ filePath: logFilePath, testId: testInfo.testId });
+    const logger = createLogger({
+      filePath: logFilePath,
+      testId: testInfo.testId,
+    });
+
+    testInfo.annotations.push({
+      type: "feature",
+      description: feature,
+    });
+    testInfo.annotations.push({
+      type: "log-file",
+      description: logFilePath,
+    });
+    testInfo.annotations.push({
+      type: "project",
+      description: projectName || "unknown",
+    });
 
     logger.info(`Starting: ${testInfo.title}`);
     logger.debug(`Environment: ${config.env}`);
@@ -75,16 +98,26 @@ export const test = base.extend({
     logger.info(`Completed in ${duration}ms | status=${testInfo.status}`);
 
     if (getAttachAllureEnabled()) {
-      await testInfo.attach('execution.log', {
+      await testInfo.attach("execution.log", {
         path: logFilePath,
-        contentType: 'text/plain',
+        contentType: "text/plain",
       });
     }
   },
 
-  homePage: async ({ page }, use) => { await use(new HomePage(page)); },
-  loginPage: async ({ page }, use) => { await use(new LoginPage(page)); },
-  contactUsPage: async ({ page }, use) => { await use(new ContactUsPage(page)); },
-  productsPage: async ({ page }, use) => { await use(new ProductsPage(page)); },
-  registerPage: async ({ page }, use) => { await use(new RegisterPage(page)); },
+  homePage: async ({ page }, use) => {
+    await use(new HomePage(page));
+  },
+  loginPage: async ({ page }, use) => {
+    await use(new LoginPage(page));
+  },
+  contactUsPage: async ({ page }, use) => {
+    await use(new ContactUsPage(page));
+  },
+  productsPage: async ({ page }, use) => {
+    await use(new ProductsPage(page));
+  },
+  registerPage: async ({ page }, use) => {
+    await use(new RegisterPage(page));
+  },
 });
