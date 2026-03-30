@@ -84,6 +84,17 @@ export class RegisterPage extends BasePage {
     });
   }
 
+  async isVisible(locator, timeout = 1500) {
+    return locator.isVisible({ timeout }).catch(() => false);
+  }
+
+  async isLoggedInUiVisible(timeout = 1500) {
+    const logoutVisible = await this.isVisible(this.logoutLink(), timeout);
+    if (logoutVisible) return true;
+
+    return this.isVisible(this.loggedInAsAnyLink(), timeout);
+  }
+
   async ensureMrTitleSelected() {
     const titleRadio = this.titleMrRadio();
     if (await titleRadio.isChecked().catch(() => false)) return;
@@ -151,26 +162,42 @@ export class RegisterPage extends BasePage {
     const continueButton = this.continueButton();
     await expect(continueButton).toBeVisible();
 
-    try {
-      await continueButton.click({ timeout: 3000, force: true });
-    } catch {
-      await continueButton.evaluate((node) => node.click());
-    }
+    // This public demo site is occasionally slow or lands on transient
+    // post-continue states, so we re-check the logged-in UI before failing.
+    for (let attempt = 0; attempt < 3; attempt += 1) {
+      if (attempt === 0) {
+        try {
+          await continueButton.click({ timeout: 3000, force: true });
+        } catch {
+          await continueButton.evaluate((node) => node.click());
+        }
+      } else {
+        await this.goto("/");
+      }
 
-    await this.recoverFromVignette("/");
+      await this.page
+        .waitForLoadState("domcontentloaded", { timeout: 3000 })
+        .catch(() => {});
+      await this.recoverFromVignette("/");
 
-    const logoutLink = this.logoutLink();
-    const loggedInVisible = await this.loggedInAsAnyLink()
-      .isVisible({ timeout: 3000 })
-      .catch(() => false);
-    if (loggedInVisible) {
-      await expect(logoutLink).toBeVisible();
-      return;
+      const loggedInUiVisible = await this.isLoggedInUiVisible(2500);
+      if (loggedInUiVisible) {
+        await expect(this.logoutLink()).toBeVisible({ timeout: 5000 });
+        return;
+      }
+
+      const continueStillVisible = await this.isVisible(
+        this.continueButton(),
+        1000,
+      );
+      if (continueStillVisible) {
+        continue;
+      }
     }
 
     await this.goto("/");
     await this.recoverFromVignette("/");
-    await expect(logoutLink).toBeVisible();
+    await expect(this.logoutLink()).toBeVisible({ timeout: 7000 });
   }
 
   logoutLink() {
@@ -178,11 +205,14 @@ export class RegisterPage extends BasePage {
   }
 
   async assertLoggedIn(name) {
-    await expect(this.logoutLink()).toBeVisible();
+    if (!(await this.isVisible(this.logoutLink(), 2500))) {
+      await this.recoverFromVignette("/");
+      await this.goto("/");
+    }
 
-    const loggedInVisible = await this.loggedInAsAnyLink()
-      .isVisible({ timeout: 1500 })
-      .catch(() => false);
+    await expect(this.logoutLink()).toBeVisible({ timeout: 7000 });
+
+    const loggedInVisible = await this.isVisible(this.loggedInAsAnyLink());
     if (loggedInVisible && name) {
       await expect(this.loggedInAsLink(name)).toBeVisible();
     }

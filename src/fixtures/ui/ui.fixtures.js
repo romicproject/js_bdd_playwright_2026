@@ -1,6 +1,6 @@
 // fixtures/ui/ui.fixtures.js
 import { test as base } from "playwright-bdd";
-import { config } from "../../framework/config/envConfig.js";
+import { config, requireUiConfig } from "../../framework/config/envConfig.js";
 import { startTestLogging } from "../shared/testLogging.js";
 import { applyNetworkBlocking } from "./helpers/networkBlocker.js";
 
@@ -15,7 +15,12 @@ import {
 export const test = base.extend({
   networkPolicy: [
     async ({ context }, use, testInfo) => {
-      const allowedHosts = ["automationexercise.com"];
+      const { baseUrl } = requireUiConfig();
+      const allowedHosts = [];
+
+      try {
+        allowedHosts.push(new URL(baseUrl).hostname);
+      } catch {}
 
       const net = await applyNetworkBlocking(context, {
         allowedHosts,
@@ -33,6 +38,7 @@ export const test = base.extend({
 
   uiContext: async ({}, use, testInfo) => {
     const startTime = Date.now();
+    const { baseUrl } = requireUiConfig();
     const { logger, logFilePath, attachExecutionLog } = startTestLogging(
       testInfo,
       {
@@ -42,7 +48,7 @@ export const test = base.extend({
 
     logger.info(`Starting: ${testInfo.title}`);
     logger.debug(`Environment: ${config.env}`);
-    logger.debug(`Base URL: ${config.baseUrl}`);
+    logger.debug(`Base URL: ${baseUrl}`);
 
     await use({
       logger,

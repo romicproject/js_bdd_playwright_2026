@@ -7,9 +7,13 @@ export function createProductsHelpers(apiClient) {
   }
 
   async function searchProduct(searchTerm, options = {}) {
-    // if called with "", return the full list (existing behavior) instead of 400 Bad Request
+    // Keep empty-term tests pointed at the real search contract instead of
+    // silently downgrading them to "get all products".
     if (typeof searchTerm === "string" && searchTerm.length === 0) {
-      return getAllProductsList(options);
+      return apiClient.post("/searchProduct", buildForm({}).toString(), {
+        ...options,
+        headers: { ...FORM_HEADERS, ...(options.headers || {}) },
+      });
     }
 
     const queryString = buildSearchParams(searchTerm);

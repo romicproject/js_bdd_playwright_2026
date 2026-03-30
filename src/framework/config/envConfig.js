@@ -91,18 +91,42 @@ export const config = {
   },
 };
 
-// Validate critical configuration
-if (!config.apiBaseUrl) {
-  throw new Error("API_BASE_URL is required in environment configuration");
+function requireValue(envName, value) {
+  if (value !== undefined && value !== null && value !== "") {
+    return value;
+  }
+
+  throw new Error(`${envName} is required in environment configuration`);
+}
+
+export function requireApiConfig() {
+  return {
+    apiBaseUrl: requireValue("API_BASE_URL", config.apiBaseUrl),
+  };
+}
+
+export function requireUiConfig() {
+  return {
+    baseUrl: requireValue("BASE_URL", config.baseUrl),
+  };
 }
 
 // Export for validation in tests
-export function validateConfig() {
+export function validateConfig(options = {}) {
+  const { requireApi = true, requireUi = true } = options;
   const required = [
-    ["apiBaseUrl", config.apiBaseUrl],
     ["timeout.request", config.timeout?.request],
     ["timeout.global", config.timeout?.global],
   ];
+
+  if (requireApi) {
+    required.push(["apiBaseUrl", config.apiBaseUrl]);
+  }
+
+  if (requireUi) {
+    required.push(["baseUrl", config.baseUrl]);
+  }
+
   const missing = required
     .filter(
       ([, value]) => value === undefined || value === null || value === "",

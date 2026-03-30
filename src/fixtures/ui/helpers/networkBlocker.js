@@ -7,7 +7,15 @@ function env(name, fallback) {
   return process.env[name] ?? fallback;
 }
 
-const DEFAULT_ALLOWED_HOSTS = ["automationexercise.com"];
+function getDefaultAllowedHosts() {
+  const baseUrl = env("BASE_URL", "");
+
+  try {
+    return [new URL(baseUrl).hostname];
+  } catch {
+    return [];
+  }
+}
 
 const DEFAULT_AD_HOST_PATTERNS = [
   /doubleclick\.net/i,
@@ -50,7 +58,9 @@ export async function applyNetworkBlocking(context, options = {}) {
   if (!enabled && !blockResources)
     return { enabled: false, blockResources: false };
 
-  const allowedHosts = new Set(options.allowedHosts ?? DEFAULT_ALLOWED_HOSTS);
+  const allowedHosts = new Set(
+    options.allowedHosts ?? getDefaultAllowedHosts(),
+  );
   const adHostPatterns = options.adHostPatterns ?? DEFAULT_AD_HOST_PATTERNS;
 
   await context.route("**/*", async (route) => {

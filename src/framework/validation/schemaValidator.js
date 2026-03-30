@@ -32,7 +32,7 @@ export function validateSchema(data, schema, options = {}) {
   if (!result.success) {
     const errors = result.error.issues;
 
-    console.error("❌ Schema validation failed:");
+    console.error("[Schema] Validation failed:");
     console.error("Data:", JSON.stringify(redactSensitive(data), null, 2));
     console.error("Errors:", JSON.stringify(errors, null, 2));
 

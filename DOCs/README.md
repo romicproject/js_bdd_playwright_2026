@@ -29,7 +29,7 @@
 ## Helper architecture
 
 - `fixtures/api/api.fixtures.js` injects `apiHelpers` into steps via Playwright fixtures.
-- `fixtures/api/helpers/index.js` aggregates product, brand, and user helper groups + exposes flat methods plus namespaced objects for convenience.
+- `fixtures/api/helpers/index.js` aggregates product, brand, and user helper groups and currently exposes a flat helper surface (`apiHelpers.createUser`, `apiHelpers.searchProduct`, etc.).
 - Each helper wraps `apiClient` to handle POST/DELETE/PUT payloads, form encoding, and responseCode fallback.
 
 ## How to use in tests
@@ -44,7 +44,7 @@ test("rewind response", async ({ apiHelpers, apiContext }) => {
 ```
 
 - Use the top-level methods for common operations (`apiHelpers.createUser`, `apiHelpers.getAllBrands`, etc.).
-- To access helper-specific APIs or extensions, use the namespaces (`apiHelpers.products`, `apiHelpers.brands`, `apiHelpers.users`). This keeps helper code organized as the suite grows.
+- If namespaced helper groups are added later, document them here before relying on them in steps or examples.
 
 ## Helper utils
 
@@ -53,7 +53,7 @@ test("rewind response", async ({ apiHelpers, apiContext }) => {
 
 ## Extending helpers
 
-Add new methods at `createProductsHelpers`, `createUsersHelpers`, or `createBrandsHelpers` and expose them either directly in the returned object or via the namespaced property. Existing steps already consume `apiHelpers.*`, so keep the flat exports stable.
+Add new methods at `createProductsHelpers`, `createUsersHelpers`, or `createBrandsHelpers` and expose them through `createApiHelpers`. Existing steps already consume flat `apiHelpers.*` methods, so keep that surface stable unless you intentionally introduce and document namespaces.
 
 ## API mock mode (example)
 
