@@ -1,6 +1,6 @@
 // fixtures/api/api.fixtures.js
 import { test as base } from "playwright-bdd";
-import { config } from "../../framework/config/envConfig.js";
+import { config, requireApiConfig } from "../../framework/config/envConfig.js";
 import { createApiContext } from "./apiContext.js";
 import { createApiClient } from "./apiClient.js";
 import { createApiHelpers } from "./helpers/index.js";
@@ -8,6 +8,7 @@ import { startTestLogging } from "../shared/testLogging.js";
 
 export const test = base.extend({
   apiContext: async ({ request }, use, testInfo) => {
+    const { apiBaseUrl } = requireApiConfig();
     const context = createApiContext(request, config);
 
     context.startTime = Date.now();
@@ -29,7 +30,7 @@ export const test = base.extend({
 
     logger.info(`Starting: ${testInfo.title}`);
     logger.debug(`Environment: ${config.env}`);
-    logger.debug(`Base URL: ${config.apiBaseUrl}`);
+    logger.debug(`Base URL: ${apiBaseUrl}`);
     logger.debug(`API mock enabled: ${context.mock.enabled}`);
     logger.debug(`API mock profile: ${context.mock.profile || "none"}`);
 

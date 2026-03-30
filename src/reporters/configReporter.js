@@ -3,7 +3,7 @@ import { config } from "../framework/config/envConfig.js";
 
 function buildConfigSummary() {
   return (
-    `\n🔧 Configuration Loaded:\n` +
+    `\n[Config] Configuration Loaded:\n` +
     `   Environment: ${config.env}\n` +
     `   API Base URL: ${config.apiBaseUrl}\n` +
     `   Request Timeout: ${config.timeout.request}ms\n` +

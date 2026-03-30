@@ -40,8 +40,8 @@ Feature: Products API
   @regression @negative
   Scenario: Search with empty search term
     When I search for product ""
-    Then the response status should be 200
-    And the response should match product list schema
+    Then the response status should be 400
+    And the response message should indicate "missing parameter"
 
   @regression @positive
   Scenario: Get all brands

@@ -39,12 +39,12 @@ Keep each layer focused on a single responsibility:
 
 Use this dependency flow as the default:
 
-- `steps` → `fixtures` / `support`
-- `fixtures` → `framework` / `support` / `ui/pages` / API helpers
-- `support` → `ui/pages` / `framework` / `schemas`
-- `ui/pages` → Playwright + shared page base classes
-- `schemas` → schema libraries only
-- `framework` → independent shared infrastructure
+- `steps` -> `fixtures` / `support`
+- `fixtures` -> `framework` / `support` / `ui/pages` / API helpers
+- `support` -> `ui/pages` / `framework` / `schemas`
+- `ui/pages` -> Playwright + shared page base classes
+- `schemas` -> schema libraries only
+- `framework` -> independent shared infrastructure
 
 If a dependency points upward in the stack, it is usually a signal that responsibilities are starting to blur.
 
@@ -97,7 +97,7 @@ If the logic spans multiple actions or multiple pages, it usually belongs in a h
 
 Examples:
 
-- open home page → navigate to signup → submit new user → verify logged in
+- open home page -> navigate to signup -> submit new user -> verify logged in
 - prepare scenario data and enrich test context
 
 ### 5. Keep fixtures focused on wiring
@@ -144,11 +144,11 @@ If in doubt, use this rule of thumb:
 
 When adding new logic, ask:
 
-1. Is it Gherkin-facing? → `src/steps/**`
-2. Is it dependency setup or lifecycle? → `src/fixtures/**`
-3. Is it selector/action/assertion for one page? → `src/ui/pages/**`
-4. Is it reusable flow or helper logic? → `src/support/**`
-5. Is it contract validation? → `src/schemas/**`
-6. Is it generic infra/config/logging/http utility? → `src/framework/**`
+1. Is it Gherkin-facing? -> `src/steps/**`
+2. Is it dependency setup or lifecycle? -> `src/fixtures/**`
+3. Is it selector/action/assertion for one page? -> `src/ui/pages/**`
+4. Is it reusable flow or helper logic? -> `src/support/**`
+5. Is it contract validation? -> `src/schemas/**`
+6. Is it generic infra/config/logging/http utility? -> `src/framework/**`
 
 If one file tries to answer several of the questions above, it probably needs to be split.

@@ -34,7 +34,7 @@ export class ProductsPage extends BasePage {
   }
 
   searchButton() {
-    return this.searchButtonFallback();
+    return this.searchButtonByRole().or(this.searchButtonFallback()).first();
   }
 
   searchedProductsHeading() {
