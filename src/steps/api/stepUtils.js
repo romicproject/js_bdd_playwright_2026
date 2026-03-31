@@ -146,4 +146,3 @@ export function assertSchema(body, validateSchemaFn, schema, options = {}) {
 
   return true;
 }
-

@@ -62,8 +62,8 @@ export class HomePage extends BasePage {
       path: "/",
       contextMessage: "open home page",
       verify: async () => {
-      await this.expectUrl(/\/(?:\?|$)/);
-      await expect(this.navLinkByName("Home")).toBeVisible();
+        await this.expectUrl(/\/(?:\?|$)/);
+        await expect(this.navLinkByName("Home")).toBeVisible();
       },
     });
   }

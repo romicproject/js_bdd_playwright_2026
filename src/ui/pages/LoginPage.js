@@ -35,9 +35,9 @@ export class LoginPage extends BasePage {
       path: "/login",
       contextMessage: "open login page",
       verify: async () => {
-      await this.expectUrl(/\/login(?:\?|$)/);
-      await expect(this.heading()).toBeVisible();
-      await expect(this.newUserSignupHeading()).toBeVisible();
+        await this.expectUrl(/\/login(?:\?|$)/);
+        await expect(this.heading()).toBeVisible();
+        await expect(this.newUserSignupHeading()).toBeVisible();
       },
     });
   }

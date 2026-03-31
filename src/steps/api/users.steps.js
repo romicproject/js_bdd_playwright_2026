@@ -26,21 +26,27 @@ When("I create a user with:", createUserFromTable);
 Given(
   "a user exists with email {string} and password {string}",
   async ({ apiContext, apiHelpers }, email, password) => {
-    await ensureUserExists({ apiContext, apiHelpers }, {
-      email,
-      password,
-    });
+    await ensureUserExists(
+      { apiContext, apiHelpers },
+      {
+        email,
+        password,
+      },
+    );
   },
 );
 
 Given(
   "a user exists with email {string}",
   async ({ apiContext, apiHelpers }, email) => {
-    await ensureUserExists({ apiContext, apiHelpers }, {
-      email,
-      password: "Delete123!",
-      saveAsCurrent: true,
-    });
+    await ensureUserExists(
+      { apiContext, apiHelpers },
+      {
+        email,
+        password: "Delete123!",
+        saveAsCurrent: true,
+      },
+    );
   },
 );
 
@@ -75,15 +81,9 @@ When(
 // ----------------------
 // USER DETAIL (atomic) - ACT steps
 // ----------------------
-When(
-  "I get user detail by email {string}",
-  getUserDetailByEmail,
-);
+When("I get user detail by email {string}", getUserDetailByEmail);
 
-When(
-  "I get user detail by the saved user email",
-  getUserDetailBySavedUser,
-);
+When("I get user detail by the saved user email", getUserDetailBySavedUser);
 
 // ----------------------
 // SAVE USER

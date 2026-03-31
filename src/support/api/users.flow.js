@@ -20,7 +20,10 @@ function resolveTrackedEmail(apiContext, emailTemplate) {
   return resolved;
 }
 
-export async function createUserFromTable({ apiContext, apiHelpers }, dataTable) {
+export async function createUserFromTable(
+  { apiContext, apiHelpers },
+  dataTable,
+) {
   const user = apiContext.resolveDataTable(dataTable);
 
   if (user.email) {
@@ -35,7 +38,12 @@ export async function createUserFromTable({ apiContext, apiHelpers }, dataTable)
 }
 
 export async function ensureUserExists({ apiContext, apiHelpers }, options) {
-  const { email, password, name = "Existing User", saveAsCurrent = false } = options;
+  const {
+    email,
+    password,
+    name = "Existing User",
+    saveAsCurrent = false,
+  } = options;
   const resolvedEmail = apiContext.resolveTemplate(email);
 
   await apiHelpers.users.createUser(
@@ -105,10 +113,7 @@ export async function deleteAccountWithSavedUser({ apiContext, apiHelpers }) {
   apiContext.untrackCleanupUser(email);
 }
 
-export async function getUserDetailByEmail(
-  { apiContext, apiHelpers },
-  email,
-) {
+export async function getUserDetailByEmail({ apiContext, apiHelpers }, email) {
   apiContext.response = await apiHelpers.users.getUserDetailByEmail(
     apiContext.resolveTemplate(email),
   );
