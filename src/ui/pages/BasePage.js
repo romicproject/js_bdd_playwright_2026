@@ -69,7 +69,12 @@ export class BasePage {
   }
 
   async clickWithFallback(locator, options = {}) {
-    const { timeout = 3000, force = false, scroll = false } = options;
+    const {
+      timeout = 3000,
+      force = false,
+      scroll = false,
+      allowDomFallback = false,
+    } = options;
 
     if (scroll) {
       await locator.scrollIntoViewIfNeeded();
@@ -77,7 +82,11 @@ export class BasePage {
 
     try {
       await locator.click({ timeout, force });
-    } catch {
+    } catch (error) {
+      if (!allowDomFallback) {
+        throw error;
+      }
+
       await locator.evaluate((node) => node.click());
     }
   }

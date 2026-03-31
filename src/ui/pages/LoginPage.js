@@ -27,7 +27,10 @@ export class LoginPage extends BasePage {
   }
 
   signupEmailExistsError() {
-    return this.page.getByText(/email address already exist/i).first();
+    return this.signupForm()
+      .locator("p")
+      .filter({ hasText: /email address already exist/i })
+      .first();
   }
 
   async assertOnLoginPage() {
@@ -57,6 +60,7 @@ export class LoginPage extends BasePage {
       await this.clickWithFallback(signupButton, {
         timeout: 3000,
         scroll: true,
+        allowDomFallback: true,
       });
 
       await this.recoverFromVignette("/login");

@@ -78,6 +78,11 @@ export const config = {
     profile: process.env.API_MOCK_PROFILE || "",
   },
 
+  // API cleanup policy
+  apiCleanup: {
+    failOnError: parseBoolean(process.env.API_FAIL_ON_CLEANUP_ERROR),
+  },
+
   // Retry settings
   retry: {
     retries: parseIntSafe(process.env.RETRY_FAILED_TESTS, 0),

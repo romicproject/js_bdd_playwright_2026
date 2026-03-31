@@ -18,7 +18,7 @@ import {
   expectMessageType,
   assertSchema,
   getResponseBody,
-} from "./stepUtils.js";
+} from "../../support/api/response.assertions.js";
 
 const { Before, Given, Then } = createBdd(test);
 

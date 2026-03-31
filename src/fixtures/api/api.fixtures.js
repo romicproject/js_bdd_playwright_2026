@@ -8,6 +8,7 @@ import { startTestLogging } from "../shared/testLogging.js";
 
 async function cleanupTrackedUsers(apiContext, apiHelpers) {
   const logger = apiContext.getLogger();
+  const failures = [];
 
   for (const user of [...apiContext.getCleanupUsers()].reverse()) {
     try {
@@ -23,14 +24,29 @@ async function cleanupTrackedUsers(apiContext, apiHelpers) {
         email: user.email,
       });
     } catch (error) {
-      logger?.warn("Cleanup user delete failed", {
+      const failure = {
         email: user.email,
         error: String(error?.message || error),
+      };
+
+      failures.push(failure);
+      logger?.warn("Cleanup user delete failed", {
+        email: failure.email,
+        error: failure.error,
       });
     } finally {
       apiContext.untrackCleanupUser(user.email);
     }
   }
+
+  if (failures.length > 0) {
+    logger?.warn("Tracked user cleanup completed with failures", {
+      count: failures.length,
+      emails: failures.map((failure) => failure.email),
+    });
+  }
+
+  return failures;
 }
 
 export const test = base.extend({
@@ -84,9 +100,26 @@ export const test = base.extend({
   },
 
   cleanupTrackedUsers: [
-    async ({ apiContext, apiHelpers }, use) => {
+    async ({ apiContext, apiHelpers }, use, testInfo) => {
       await use();
-      await cleanupTrackedUsers(apiContext, apiHelpers);
+      const failures = await cleanupTrackedUsers(apiContext, apiHelpers);
+
+      if (failures.length === 0) {
+        return;
+      }
+
+      testInfo.annotations.push({
+        type: "cleanup",
+        description: `failed=${failures.length}; users=${failures.map((failure) => failure.email).join(",")}`,
+      });
+
+      if (config.apiCleanup.failOnError) {
+        throw new Error(
+          `Tracked user cleanup failed for ${failures.length} user(s): ${failures
+            .map((failure) => `${failure.email} (${failure.error})`)
+            .join("; ")}`,
+        );
+      }
     },
     { auto: true },
   ],
