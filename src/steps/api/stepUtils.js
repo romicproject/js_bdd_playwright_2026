@@ -31,6 +31,16 @@ export function requireResponse(apiContext) {
   return res;
 }
 
+export function getResponseBody(apiContext) {
+  const body = requireResponse(apiContext)?.body;
+  return body && typeof body === "object" ? body : {};
+}
+
+export function getResponseArrayField(apiContext, field) {
+  const value = getResponseBody(apiContext)[field];
+  return Array.isArray(value) ? value : [];
+}
+
 /**
  * Assert effective status (body.responseCode if present, else HTTP status).
  * Includes both for diagnostics.
@@ -109,7 +119,7 @@ export function expectMessageType(apiContext, messageType, messageMap) {
  * - options.previewOmitKeys: keys to omit in preview (useful for big arrays)
  */
 export function assertSchema(body, validateSchemaFn, schema, options = {}) {
-  const { requiredKey, previewOmitKeys = [] } = options;
+  const { requiredKey, previewOmitKeys = [], logger } = options;
 
   const safeBody = body ?? {};
 
@@ -119,7 +129,7 @@ export function assertSchema(body, validateSchemaFn, schema, options = {}) {
     );
   }
 
-  const validation = validateSchemaFn(safeBody, schema);
+  const validation = validateSchemaFn(safeBody, schema, { logger });
 
   if (!validation.valid) {
     const errors = JSON.stringify(validation.errors || [], null, 2);
@@ -137,41 +147,3 @@ export function assertSchema(body, validateSchemaFn, schema, options = {}) {
   return true;
 }
 
-/**
- * Build a default user payload for createAccount.
- * You can override any field via overrides (email/password/etc).
- */
-export function buildUserPayload(overrides = {}) {
-  return {
-    name: "Test User",
-    title: "Mr",
-    birth_date: "1",
-    birth_month: "1",
-    birth_year: "1990",
-    firstname: "Test",
-    lastname: "User",
-    company: "Test Company",
-    address1: "123 Test St",
-    country: "United States",
-    zipcode: "12345",
-    state: "Test State",
-    city: "Test City",
-    mobile_number: "1234567890",
-    ...overrides,
-  };
-}
-
-/**
- * Resolve an email string:
- * - supports {timestamp} via apiContext.resolveTemplate()
- * - if caller passed template and apiContext.existingUserEmail exists, prefer it
- */
-export function resolveEmail(apiContext, emailTemplate) {
-  const raw = String(emailTemplate ?? "");
-  const resolved = apiContext.resolveTemplate(raw);
-
-  if (raw.includes("{timestamp}") && apiContext.existingUserEmail) {
-    return apiContext.existingUserEmail;
-  }
-  return resolved;
-}

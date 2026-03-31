@@ -81,7 +81,6 @@ export const config = {
   // Retry settings
   retry: {
     retries: parseIntSafe(process.env.RETRY_FAILED_TESTS, 0),
-    maxRetries: parseIntSafe(process.env.MAX_RETRIES, 2),
   },
 
   // Debug settings

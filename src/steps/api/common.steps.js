@@ -17,47 +17,29 @@ import {
   expectHttpStatus,
   expectMessageType,
   assertSchema,
+  getResponseBody,
 } from "./stepUtils.js";
 
-const { Before, After, Given, Then } = createBdd(test);
+const { Before, Given, Then } = createBdd(test);
+
+function enableMockProfile(apiContext, profile = "products-happy") {
+  apiContext.mock.enabled = true;
+  apiContext.mock.profile = profile;
+}
 
 Before({ tags: "@mock" }, async ({ apiContext }) => {
-  apiContext.mock.enabled = true;
   if (!apiContext.mock.profile) {
-    apiContext.mock.profile = "products-happy";
+    enableMockProfile(apiContext);
+    return;
   }
-});
 
-After({ tags: "@api" }, async ({ apiContext, apiHelpers }) => {
-  for (const user of [...apiContext.cleanupUsers].reverse()) {
-    try {
-      await apiHelpers.deleteAccount(
-        {
-          email: user.email,
-          password: user.password,
-        },
-        { storeResponse: false },
-      );
-
-      apiContext.logger?.info("Cleanup user deleted", {
-        email: user.email,
-      });
-    } catch (error) {
-      apiContext.logger?.warn("Cleanup user delete failed", {
-        email: user.email,
-        error: String(error?.message || error),
-      });
-    } finally {
-      apiContext.untrackCleanupUser(user.email);
-    }
-  }
+  apiContext.mock.enabled = true;
 });
 
 Given(
   "API mock profile {string} is enabled",
   async ({ apiContext }, profile) => {
-    apiContext.mock.enabled = true;
-    apiContext.mock.profile = profile;
+    enableMockProfile(apiContext, profile);
   },
 );
 
@@ -82,11 +64,12 @@ Then(
 Then(
   "the response should match product list schema",
   async ({ apiContext }) => {
-    const body = apiContext.response?.body || {};
+    const body = getResponseBody(apiContext);
 
     assertSchema(body, validateSchema, productListSchema, {
       requiredKey: "products",
       previewOmitKeys: ["products"],
+      logger: apiContext.getLogger(),
     });
   },
 );
@@ -115,10 +98,12 @@ Then(
       "account not found": notFoundSchema,
     };
 
-    const body = apiContext.response?.body || {};
+    const body = getResponseBody(apiContext);
     const schema = schemaMap[messageType];
     if (schema) {
-      assertSchema(body, validateSchema, schema);
+      assertSchema(body, validateSchema, schema, {
+        logger: apiContext.getLogger(),
+      });
     }
 
     expectMessageType(apiContext, messageType, messageMap);

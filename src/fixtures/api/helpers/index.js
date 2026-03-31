@@ -9,6 +9,11 @@ export function createApiHelpers(apiClient) {
   const usersHelpers = createUsersHelpers(apiClient);
 
   return {
+    products: productsHelpers,
+    brands: brandsHelpers,
+    users: usersHelpers,
+
+    // Backward-compatible aliases while steps/helpers migrate to namespaces.
     getAllProductsList: productsHelpers.getAllProductsList,
     searchProduct: productsHelpers.searchProduct,
     getAllBrands: brandsHelpers.getAllBrands,

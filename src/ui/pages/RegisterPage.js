@@ -125,27 +125,15 @@ export class RegisterPage extends BasePage {
     await this.monthsSelect().selectOption("5");
     await this.yearsSelect().selectOption("1992");
 
-    await this.firstNameInput().scrollIntoViewIfNeeded();
-    await this.firstNameInput().fill(user.firstName);
+    await this.fillAfterScroll(this.firstNameInput(), user.firstName);
     await this.lastNameInput().fill(user.lastName);
 
-    await this.addressInput().scrollIntoViewIfNeeded();
-    await this.addressInput().fill(user.address);
-
-    await this.countrySelect().scrollIntoViewIfNeeded();
-    await this.countrySelect().selectOption("Canada");
-
-    await this.stateInput().scrollIntoViewIfNeeded();
-    await this.stateInput().fill(user.state);
-
-    await this.cityInput().scrollIntoViewIfNeeded();
-    await this.cityInput().fill(user.city);
-
-    await this.zipcodeInput().scrollIntoViewIfNeeded();
-    await this.zipcodeInput().fill(user.zipcode);
-
-    await this.mobileNumberInput().scrollIntoViewIfNeeded();
-    await this.mobileNumberInput().fill(user.mobileNumber);
+    await this.fillAfterScroll(this.addressInput(), user.address);
+    await this.selectAfterScroll(this.countrySelect(), "Canada");
+    await this.fillAfterScroll(this.stateInput(), user.state);
+    await this.fillAfterScroll(this.cityInput(), user.city);
+    await this.fillAfterScroll(this.zipcodeInput(), user.zipcode);
+    await this.fillAfterScroll(this.mobileNumberInput(), user.mobileNumber);
   }
 
   async submitCreateAccount() {
@@ -166,11 +154,10 @@ export class RegisterPage extends BasePage {
     // post-continue states, so we re-check the logged-in UI before failing.
     for (let attempt = 0; attempt < 3; attempt += 1) {
       if (attempt === 0) {
-        try {
-          await continueButton.click({ timeout: 3000, force: true });
-        } catch {
-          await continueButton.evaluate((node) => node.click());
-        }
+        await this.clickWithFallback(continueButton, {
+          timeout: 3000,
+          force: true,
+        });
       } else {
         await this.goto("/");
       }

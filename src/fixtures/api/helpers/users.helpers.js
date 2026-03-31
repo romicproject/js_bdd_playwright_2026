@@ -1,22 +1,6 @@
 // fixtures/api/helpers/users.helpers.js
+import { buildUserPayload } from "../../../support/api/users.data.js";
 import { formBody, FORM_HEADERS } from "./utils.js";
-
-const DEFAULT_USER_FIELDS = {
-  name: "Auto User",
-  title: "Mr",
-  birth_date: "1",
-  birth_month: "1",
-  birth_year: "1990",
-  firstname: "Auto",
-  lastname: "User",
-  company: "Test Company",
-  address1: "123 Test St",
-  country: "United States",
-  zipcode: "12345",
-  state: "Test State",
-  city: "Test City",
-  mobile_number: "1234567890",
-};
 
 export function createUsersHelpers(apiClient) {
   function withFormHeaders(options = {}) {
@@ -28,10 +12,9 @@ export function createUsersHelpers(apiClient) {
 
   return {
     async createUser(userData, options = {}) {
-      const merged = { ...DEFAULT_USER_FIELDS, ...(userData || {}) };
       return apiClient.post(
         "/createAccount",
-        formBody(merged),
+        formBody(buildUserPayload(userData)),
         withFormHeaders(options),
       );
     },

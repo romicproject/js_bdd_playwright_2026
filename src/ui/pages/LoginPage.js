@@ -31,27 +31,15 @@ export class LoginPage extends BasePage {
   }
 
   async assertOnLoginPage() {
-    for (let attempt = 0; attempt < 2; attempt += 1) {
-      if (attempt > 0) {
-        await this.goto("/login");
-      }
-
-      await this.recoverFromVignette("/login");
-      const forbidden = await this.isForbiddenPage();
-      if (forbidden) {
-        continue;
-      }
-
+    await this.verifyPageReady({
+      path: "/login",
+      contextMessage: "open login page",
+      verify: async () => {
       await this.expectUrl(/\/login(?:\?|$)/);
       await expect(this.heading()).toBeVisible();
       await expect(this.newUserSignupHeading()).toBeVisible();
-      return;
-    }
-
-    await this.ensureNotForbidden("open login page");
-    await this.expectUrl(/\/login(?:\?|$)/);
-    await expect(this.heading()).toBeVisible();
-    await expect(this.newUserSignupHeading()).toBeVisible();
+      },
+    });
   }
 
   async submitNewUserSignup(name, email) {
@@ -66,13 +54,10 @@ export class LoginPage extends BasePage {
       await this.signupEmailInput().fill(email);
       const signupButton = this.signupButton();
       await expect(signupButton).toBeVisible();
-      await signupButton.scrollIntoViewIfNeeded();
-
-      try {
-        await signupButton.click({ timeout: 3000 });
-      } catch {
-        await signupButton.evaluate((node) => node.click());
-      }
+      await this.clickWithFallback(signupButton, {
+        timeout: 3000,
+        scroll: true,
+      });
 
       await this.recoverFromVignette("/login");
       const forbidden = await this.isForbiddenPage();

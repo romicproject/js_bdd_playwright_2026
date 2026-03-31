@@ -4,25 +4,28 @@ import { expect } from "@playwright/test";
 import { test } from "../../fixtures/api/api.fixtures.js";
 import { validateSchema } from "../../framework/validation/schemaValidator.js";
 import { brandListSchema } from "../../schemas/brandList.schema.js";
-import { assertSchema } from "./stepUtils.js";
+import {
+  assertSchema,
+  getResponseArrayField,
+  getResponseBody,
+} from "./stepUtils.js";
 
 const { When, Then } = createBdd(test);
 
 // Products - Get All
 When("I get all products", async ({ apiContext, apiHelpers }) => {
-  apiContext.response = await apiHelpers.getAllProductsList();
+  apiContext.response = await apiHelpers.products.getAllProductsList();
 });
 
 Then("the response should contain products", async ({ apiContext }) => {
-  const body = apiContext.response?.body || {};
+  const body = getResponseBody(apiContext);
   expect(body.products).toBeDefined();
   expect(Array.isArray(body.products)).toBe(true);
   expect(body.products.length).toBeGreaterThan(0);
 });
 
 Then("each product should have required fields", async ({ apiContext }) => {
-  const products = apiContext.response?.body?.products || [];
-  expect(Array.isArray(products)).toBe(true);
+  const products = getResponseArrayField(apiContext, "products");
 
   products.forEach((product, index) => {
     expect(product.id, `Product ${index} should have id`).toBeDefined();
@@ -36,15 +39,14 @@ Then("each product should have required fields", async ({ apiContext }) => {
 When(
   "I search for product {string}",
   async ({ apiContext, apiHelpers }, searchTerm) => {
-    apiContext.response = await apiHelpers.searchProduct(searchTerm);
+    apiContext.response = await apiHelpers.products.searchProduct(searchTerm);
   },
 );
 
 Then(
   "the response should contain products matching {string}",
   async ({ apiContext }, searchTerm) => {
-    const products = apiContext.response?.body?.products || [];
-    expect(Array.isArray(products)).toBe(true);
+    const products = getResponseArrayField(apiContext, "products");
     expect(products.length).toBeGreaterThan(0);
 
     products.forEach((product) => {
@@ -56,30 +58,29 @@ Then(
 );
 
 Then("the products list should be empty", async ({ apiContext }) => {
-  const products = apiContext.response?.body?.products || [];
-  expect(Array.isArray(products)).toBe(true);
+  const products = getResponseArrayField(apiContext, "products");
   expect(products.length).toBe(0);
 });
 
 // Brands
 When("I get all brands", async ({ apiContext, apiHelpers }) => {
-  apiContext.response = await apiHelpers.getAllBrands();
+  apiContext.response = await apiHelpers.brands.getAllBrands();
 });
 
 Then("the response should contain brands", async ({ apiContext }) => {
-  const body = apiContext.response?.body || {};
+  const body = getResponseBody(apiContext);
 
   assertSchema(body, validateSchema, brandListSchema, {
     requiredKey: "brands",
     previewOmitKeys: ["brands"],
+    logger: apiContext.getLogger(),
   });
 
   expect(body.brands.length).toBeGreaterThan(0);
 });
 
 Then("each brand should have required fields", async ({ apiContext }) => {
-  const brands = apiContext.response?.body?.brands || [];
-  expect(Array.isArray(brands)).toBe(true);
+  const brands = getResponseArrayField(apiContext, "brands");
 
   brands.forEach((brand, index) => {
     expect(brand.id, `Brand ${index} should have id`).toBeDefined();

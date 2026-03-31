@@ -6,14 +6,40 @@ import { createApiClient } from "./apiClient.js";
 import { createApiHelpers } from "./helpers/index.js";
 import { startTestLogging } from "../shared/testLogging.js";
 
+async function cleanupTrackedUsers(apiContext, apiHelpers) {
+  const logger = apiContext.getLogger();
+
+  for (const user of [...apiContext.getCleanupUsers()].reverse()) {
+    try {
+      await apiHelpers.users.deleteAccount(
+        {
+          email: user.email,
+          password: user.password,
+        },
+        { storeResponse: false },
+      );
+
+      logger?.info("Cleanup user deleted", {
+        email: user.email,
+      });
+    } catch (error) {
+      logger?.warn("Cleanup user delete failed", {
+        email: user.email,
+        error: String(error?.message || error),
+      });
+    } finally {
+      apiContext.untrackCleanupUser(user.email);
+    }
+  }
+}
+
 export const test = base.extend({
   apiContext: async ({ request }, use, testInfo) => {
     const { apiBaseUrl } = requireApiConfig();
     const context = createApiContext(request, config);
 
-    context.startTime = Date.now();
-    context.scenarioName = testInfo.title;
-    context.scenarioTimestamp = Date.now();
+    context.setScenarioStartTime(Date.now());
+    context.setScenarioTimestamp(Date.now());
 
     // derive kind from project.name
     const projectName = testInfo.project?.name || "";
@@ -25,8 +51,8 @@ export const test = base.extend({
     );
 
     // expose logger/path on context
-    context.logger = logger;
-    context.logFilePath = logFilePath;
+    context.setLogger(logger);
+    context.setLogFilePath(logFilePath);
 
     logger.info(`Starting: ${testInfo.title}`);
     logger.debug(`Environment: ${config.env}`);
@@ -41,7 +67,7 @@ export const test = base.extend({
       description: `enabled=${context.mock.enabled} profile=${context.mock.profile || "none"}`,
     });
 
-    const duration = Date.now() - context.startTime;
+    const duration = Date.now() - context.getScenarioStartTime();
     logger.info(`Completed in ${duration}ms | status=${testInfo.status}`);
 
     await attachExecutionLog();
@@ -56,4 +82,12 @@ export const test = base.extend({
     const helpers = createApiHelpers(apiClient);
     await use(helpers);
   },
+
+  cleanupTrackedUsers: [
+    async ({ apiContext, apiHelpers }, use) => {
+      await use();
+      await cleanupTrackedUsers(apiContext, apiHelpers);
+    },
+    { auto: true },
+  ],
 });

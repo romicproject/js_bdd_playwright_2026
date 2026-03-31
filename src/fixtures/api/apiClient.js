@@ -94,8 +94,8 @@ export function createApiClient(apiContext, testInfo) {
 
     requestOptions.timeout = timeout;
 
-    apiContext.lastRequest = { method, url: fullUrl };
-    apiContext.lastError = null;
+    apiContext.setLastRequest({ method, url: fullUrl });
+    apiContext.clearLastError();
 
     // snapshots (safe)
     const reqHeadersSnapshot = redactHeaders(requestOptions.headers);
@@ -166,7 +166,7 @@ export function createApiClient(apiContext, testInfo) {
           throw new Error(`Unsupported HTTP method: ${method}`);
       }
     } catch (e) {
-      apiContext.lastError = e;
+      apiContext.setLastError(e);
       const duration = Date.now() - start;
 
       log.error(

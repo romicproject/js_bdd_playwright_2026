@@ -68,10 +68,57 @@ export class BasePage {
     await expect(this.page).toHaveTitle(expected);
   }
 
+  async clickWithFallback(locator, options = {}) {
+    const { timeout = 3000, force = false, scroll = false } = options;
+
+    if (scroll) {
+      await locator.scrollIntoViewIfNeeded();
+    }
+
+    try {
+      await locator.click({ timeout, force });
+    } catch {
+      await locator.evaluate((node) => node.click());
+    }
+  }
+
+  async fillAfterScroll(locator, value) {
+    await locator.scrollIntoViewIfNeeded();
+    await locator.fill(value);
+  }
+
+  async selectAfterScroll(locator, value) {
+    await locator.scrollIntoViewIfNeeded();
+    await locator.selectOption(value);
+  }
+
   async recoverFromVignette(path = "/") {
     if (this.page.url().includes("#google_vignette")) {
       await this.goto(path);
     }
+  }
+
+  async verifyPageReady({ path, attempts = 2, contextMessage, verify }) {
+    for (let attempt = 0; attempt < attempts; attempt += 1) {
+      if (attempt > 0 && path) {
+        await this.goto(path);
+      }
+
+      if (path) {
+        await this.recoverFromVignette(path);
+      }
+
+      const forbidden = await this.isForbiddenPage();
+      if (forbidden) {
+        continue;
+      }
+
+      await verify();
+      return;
+    }
+
+    await this.ensureNotForbidden(contextMessage);
+    await verify();
   }
 
   forbiddenHeading() {
