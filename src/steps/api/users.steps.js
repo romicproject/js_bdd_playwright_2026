@@ -25,8 +25,8 @@ When("I create a user with:", createUserFromTable);
 // ----------------------
 Given(
   "a user exists with email {string} and password {string}",
-  async (fixtures, email, password) => {
-    await ensureUserExists(fixtures, {
+  async ({ apiContext, apiHelpers }, email, password) => {
+    await ensureUserExists({ apiContext, apiHelpers }, {
       email,
       password,
     });
@@ -35,8 +35,8 @@ Given(
 
 Given(
   "a user exists with email {string}",
-  async (fixtures, email) => {
-    await ensureUserExists(fixtures, {
+  async ({ apiContext, apiHelpers }, email) => {
+    await ensureUserExists({ apiContext, apiHelpers }, {
       email,
       password: "Delete123!",
       saveAsCurrent: true,
