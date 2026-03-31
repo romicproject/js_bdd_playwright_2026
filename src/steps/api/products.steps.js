@@ -8,7 +8,7 @@ import {
   assertSchema,
   getResponseArrayField,
   getResponseBody,
-} from "./stepUtils.js";
+} from "../../support/api/response.assertions.js";
 
 const { When, Then } = createBdd(test);
 

@@ -66,6 +66,7 @@ Avoid:
 
 - long orchestration logic in the step file
 - repeated request-building or UI flow code
+- reusable API response/assertion helpers that are not Gherkin-specific
 
 ### 2. Do not import Page Object classes directly into steps
 
@@ -99,6 +100,7 @@ Examples:
 
 - open home page -> navigate to signup -> submit new user -> verify logged in
 - prepare scenario data and enrich test context
+- reusable API response/assertion helpers that are shared across step files
 
 ### 5. Keep fixtures focused on wiring
 

@@ -157,6 +157,7 @@ export class RegisterPage extends BasePage {
         await this.clickWithFallback(continueButton, {
           timeout: 3000,
           force: true,
+          allowDomFallback: true,
         });
       } else {
         await this.goto("/");

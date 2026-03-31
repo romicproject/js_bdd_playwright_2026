@@ -1,4 +1,3 @@
-// src/steps/api/stepUtils.js
 import { expect } from "@playwright/test";
 
 /**
@@ -135,8 +134,8 @@ export function assertSchema(body, validateSchemaFn, schema, options = {}) {
     const errors = JSON.stringify(validation.errors || [], null, 2);
 
     const preview = { ...safeBody };
-    for (const k of previewOmitKeys) {
-      if (k in preview) preview[k] = "[omitted]";
+    for (const key of previewOmitKeys) {
+      if (key in preview) preview[key] = "[omitted]";
     }
 
     throw new Error(
