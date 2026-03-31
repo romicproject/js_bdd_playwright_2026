@@ -58,24 +58,13 @@ export class HomePage extends BasePage {
   }
 
   async assertOnHomePage() {
-    for (let attempt = 0; attempt < 2; attempt += 1) {
-      if (attempt > 0) {
-        await this.goto("/");
-      }
-
-      await this.recoverFromVignette("/");
-      const forbidden = await this.isForbiddenPage();
-      if (forbidden) {
-        continue;
-      }
-
-      await this.expectUrl(/\/(?:\?|$)/);
-      await expect(this.navLinkByName("Home")).toBeVisible();
-      return;
-    }
-
-    await this.ensureNotForbidden("open home page");
-    await this.expectUrl(/\/(?:\?|$)/);
-    await expect(this.navLinkByName("Home")).toBeVisible();
+    await this.verifyPageReady({
+      path: "/",
+      contextMessage: "open home page",
+      verify: async () => {
+        await this.expectUrl(/\/(?:\?|$)/);
+        await expect(this.navLinkByName("Home")).toBeVisible();
+      },
+    });
   }
 }

@@ -39,6 +39,11 @@ export function shouldLog() {
 }
 
 export function getLogger(apiContext) {
+  if (typeof apiContext?.getLogger === "function") {
+    const logger = apiContext.getLogger();
+    if (logger) return logger;
+  }
+
   if (apiContext?.logger) return apiContext.logger;
 
   return {

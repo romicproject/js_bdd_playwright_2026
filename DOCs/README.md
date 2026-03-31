@@ -29,7 +29,8 @@
 ## Helper architecture
 
 - `fixtures/api/api.fixtures.js` injects `apiHelpers` into steps via Playwright fixtures.
-- `fixtures/api/helpers/index.js` aggregates product, brand, and user helper groups and currently exposes a flat helper surface (`apiHelpers.createUser`, `apiHelpers.searchProduct`, etc.).
+- `fixtures/api/helpers/index.js` aggregates product, brand, and user helper groups and exposes namespaced helpers (`apiHelpers.users.createUser`, `apiHelpers.products.searchProduct`, etc.).
+- Flat aliases are still preserved for backward compatibility while older steps migrate.
 - Each helper wraps `apiClient` to handle POST/DELETE/PUT payloads, form encoding, and responseCode fallback.
 
 ## How to use in tests
@@ -43,8 +44,8 @@ test("rewind response", async ({ apiHelpers, apiContext }) => {
 });
 ```
 
-- Use the top-level methods for common operations (`apiHelpers.createUser`, `apiHelpers.getAllBrands`, etc.).
-- If namespaced helper groups are added later, document them here before relying on them in steps or examples.
+- Prefer namespaced helper groups for new code (`apiHelpers.users.createUser`, `apiHelpers.brands.getAllBrands`, etc.).
+- Flat aliases still work, but treat them as compatibility shims rather than the long-term API.
 
 ## Helper utils
 

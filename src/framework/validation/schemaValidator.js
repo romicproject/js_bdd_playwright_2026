@@ -25,16 +25,25 @@ function redactSensitive(value) {
 }
 
 export function validateSchema(data, schema, options = {}) {
-  const { throwOnError = false } = options;
+  const { throwOnError = false, logger } = options;
 
   const result = schema.safeParse(data);
 
   if (!result.success) {
     const errors = result.error.issues;
+    const errorLines = [
+      "[Schema] Validation failed:",
+      `Data: ${JSON.stringify(redactSensitive(data), null, 2)}`,
+      `Errors: ${JSON.stringify(errors, null, 2)}`,
+    ];
 
-    console.error("[Schema] Validation failed:");
-    console.error("Data:", JSON.stringify(redactSensitive(data), null, 2));
-    console.error("Errors:", JSON.stringify(errors, null, 2));
+    if (logger?.error) {
+      logger.error(errorLines.join("\n"));
+    } else {
+      console.error("[Schema] Validation failed:");
+      console.error("Data:", JSON.stringify(redactSensitive(data), null, 2));
+      console.error("Errors:", JSON.stringify(errors, null, 2));
+    }
 
     if (throwOnError) {
       throw new Error(
@@ -65,22 +74,4 @@ function formatZodErrors(errors) {
     expected: error.expected,
     received: error.received,
   }));
-}
-
-/**
- * Validate and throw if invalid (for scenarios where you want fail fast)
- */
-export function validateSchemaStrict(data, schema) {
-  return validateSchema(data, schema, { throwOnError: true });
-}
-
-/**
- * Validate only the structure (ignore specific values)
- */
-export function validateSchemaShape(data, schema) {
-  // Use partial to allow missing fields
-  if (schema && typeof schema.partial === "function") {
-    return validateSchema(data, schema.partial());
-  }
-  return validateSchema(data, schema);
 }
