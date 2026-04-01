@@ -15,6 +15,10 @@ function resolveProjectName(test, result) {
 }
 
 function buildTestKey(test, projectName) {
+  if (test?.id) {
+    return `${projectName || "unknown"} :: ${test.id} :: repeat-${test.repeatEachIndex ?? 0}`;
+  }
+
   return [
     projectName || "unknown",
     test.location?.file || "unknown",
