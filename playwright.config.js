@@ -3,7 +3,11 @@ import { defineConfig, devices } from "@playwright/test";
 import { defineBddConfig } from "playwright-bdd";
 import { config as envConfig } from "./src/framework/config/envConfig.js";
 
-function hhmmssSSS(d = new Date()) {
+const isCI = Boolean(process.env.CI);
+const outputDir = "out/test-results";
+const htmlReportDir = "out/playwright-report";
+
+function formatRunId(d = new Date()) {
   const hh = String(d.getHours()).padStart(2, "0");
   const mm = String(d.getMinutes()).padStart(2, "0");
   const ss = String(d.getSeconds()).padStart(2, "0");
@@ -11,8 +15,60 @@ function hhmmssSSS(d = new Date()) {
   return `${hh}-${mm}-${ss}-${ms}`;
 }
 
+function parsePositiveInt(value) {
+  const parsed = Number(value);
+  if (!Number.isFinite(parsed) || parsed <= 0) {
+    return undefined;
+  }
+
+  return Math.trunc(parsed);
+}
+
+function resolveWorkers() {
+  const configuredWorkers = parsePositiveInt(process.env.PLAYWRIGHT_WORKERS);
+  if (configuredWorkers) {
+    return configuredWorkers;
+  }
+
+  return isCI ? 3 : undefined;
+}
+
+function buildReporters() {
+  const reporters = [
+    ["list"],
+    ["./src/reporters/configReporter.js"],
+    ["./src/reporters/suiteMetricsReporter.js"],
+    [
+      "html",
+      {
+        open: "never",
+        outputFolder: htmlReportDir,
+      },
+    ],
+  ];
+
+  if (isCI) {
+    reporters.push(
+      [
+        "json",
+        {
+          outputFile: `${outputDir}/results.json`,
+        },
+      ],
+      [
+        "junit",
+        {
+          outputFile: `${outputDir}/junit.xml`,
+        },
+      ],
+    );
+  }
+
+  return reporters;
+}
+
 if (!process.env.LOG_RUN_ID) {
-  process.env.LOG_RUN_ID = hhmmssSSS();
+  process.env.LOG_RUN_ID = formatRunId();
 }
 
 const testDir = defineBddConfig({
@@ -40,37 +96,11 @@ export default defineConfig({
 
   timeout: envConfig.timeout.global,
   fullyParallel: true,
-  forbidOnly: !!process.env.CI,
+  forbidOnly: isCI,
   retries: envConfig.retry.retries,
-  workers: process.env.CI ? 3 : undefined,
+  workers: resolveWorkers(),
 
-  reporter: [
-    ["list"],
-    ["./src/reporters/configReporter.js"],
-    ["./src/reporters/suiteMetricsReporter.js"],
-
-    [
-      "html",
-      {
-        open: "never",
-        outputFolder: "out/playwright-report",
-      },
-    ],
-
-    [
-      "json",
-      {
-        outputFile: "out/test-results/results.json",
-      },
-    ],
-
-    [
-      "junit",
-      {
-        outputFile: "out/test-results/junit.xml",
-      },
-    ],
-  ],
+  reporter: buildReporters(),
 
   /**
    * Global test settings
@@ -114,5 +144,5 @@ export default defineConfig({
   ],
 
   // Playwright output (incl. attachments) goes here
-  outputDir: "out/test-results/",
+  outputDir,
 });
