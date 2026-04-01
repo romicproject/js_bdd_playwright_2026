@@ -154,3 +154,35 @@ When adding new logic, ask:
 6. Is it generic infra/config/logging/http utility? -> `src/framework/**`
 
 If one file tries to answer several of the questions above, it probably needs to be split.
+
+---
+
+## Scaling model
+
+When the suite grows toward hundreds or thousands of tests, architecture alone is not enough.
+The repository should also preserve a stable operating model:
+
+- `api-mock` lane for deterministic contract and regression coverage
+- `api-live-smoke` lane for a thin set of live confidence checks
+- `ui-critical` lane for the smallest business-critical UI journey set
+- `ui-regression` lane for broader UI coverage that is allowed to run less often
+- `perf-*` lanes for performance signals that stay operationally separate from functional gates
+
+### Practical guidance
+
+- Prefer adding new API regression coverage to mock or contract lanes first.
+- Add live API scenarios only when the risk is specifically environment or integration dependent.
+- Add UI end-to-end scenarios only for journeys that truly require browser validation.
+- Treat slow tests, flaky tests, and cleanup-failure annotations as architecture feedback, not just execution noise.
+- Keep step files thin even at scale; if one step starts carrying orchestration, move it to `src/support/**`.
+
+### Observability expectations
+
+- Functional runs should produce a machine-readable suite metrics artifact.
+- Teams should regularly review:
+  - slowest tests
+  - flaky tests
+  - cleanup-affected tests
+  - lane duration trends
+
+If those signals are ignored, the code structure may remain clean while the test platform itself becomes expensive to operate.

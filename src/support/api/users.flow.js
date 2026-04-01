@@ -1,5 +1,5 @@
 import { expect } from "@playwright/test";
-import { buildUserPayload } from "./users.data.js";
+import { buildTrackedUserRecord, buildUserPayload } from "./users.data.js";
 
 function requireUserField(apiContext, userKey, field) {
   const user = apiContext.getUser(userKey);
@@ -28,13 +28,14 @@ export async function createUserFromTable(
   dataTable,
 ) {
   const user = apiContext.resolveDataTable(dataTable);
+  const trackedUser = buildTrackedUserRecord(user);
 
   if (user.email) {
     apiContext.updateUser("created", {
-      email: user.email,
-      password: user.password,
+      email: trackedUser.email,
+      password: trackedUser.password,
     });
-    apiContext.trackCleanupUser(user.email, user.password);
+    apiContext.trackCleanupUser(trackedUser.email, trackedUser.password);
   }
 
   apiContext.response = await apiHelpers.users.createUser(user);
@@ -48,26 +49,29 @@ export async function ensureUserExists({ apiContext, apiHelpers }, options) {
     saveAsCurrent = false,
   } = options;
   const resolvedEmail = apiContext.resolveTemplate(email);
+  const trackedUser = buildTrackedUserRecord({
+    email: resolvedEmail,
+    password,
+  });
 
   await apiHelpers.users.createUser(
     buildUserPayload({
       name,
-      email: resolvedEmail,
-      password,
+      ...trackedUser,
     }),
     { storeResponse: false },
   );
 
   apiContext.updateUser("existing", {
-    email: resolvedEmail,
-    password,
+    email: trackedUser.email,
+    password: trackedUser.password,
   });
-  apiContext.trackCleanupUser(resolvedEmail, password);
+  apiContext.trackCleanupUser(trackedUser.email, trackedUser.password);
 
   if (saveAsCurrent) {
     apiContext.updateUser("saved", {
-      email: resolvedEmail,
-      password,
+      email: trackedUser.email,
+      password: trackedUser.password,
     });
   }
 }

@@ -74,3 +74,9 @@ Output files:
 - Run `perf:load` before release.
 - Version/store aggregated JSON output as pipeline artifacts for trend tracking.
 - Do not use real sensitive data in `perf/data/*.csv`.
+
+## Relationship to functional suite scaling
+
+- Performance scenarios should remain in separate lanes from `api-mock`, `api-live-*`, and `ui-*` functional runs.
+- Do not use perf results as a substitute for functional observability; functional runs now emit `out/test-results/suite-metrics.json` for flaky/slow-test tracking.
+- When the functional suite grows, prefer keeping perf signals stable and sparse rather than coupling them to every functional execution path.

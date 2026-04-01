@@ -6,6 +6,10 @@ import { validateSchema } from "../../framework/validation/schemaValidator.js";
 import { brandListSchema } from "../../schemas/brandList.schema.js";
 import {
   assertSchema,
+  expectArrayFieldEmpty,
+  expectArrayFieldHasItems,
+  expectArrayItemsMatch,
+  expectObjectsHaveKeys,
   getResponseArrayField,
   getResponseBody,
 } from "../../support/api/response.assertions.js";
@@ -20,19 +24,12 @@ When("I get all products", async ({ apiContext, apiHelpers }) => {
 Then("the response should contain products", async ({ apiContext }) => {
   const body = getResponseBody(apiContext);
   expect(body.products).toBeDefined();
-  expect(Array.isArray(body.products)).toBe(true);
-  expect(body.products.length).toBeGreaterThan(0);
+  expectArrayFieldHasItems(apiContext, "products");
 });
 
 Then("each product should have required fields", async ({ apiContext }) => {
   const products = getResponseArrayField(apiContext, "products");
-
-  products.forEach((product, index) => {
-    expect(product.id, `Product ${index} should have id`).toBeDefined();
-    expect(product.name, `Product ${index} should have name`).toBeDefined();
-    expect(product.price, `Product ${index} should have price`).toBeDefined();
-    expect(product.brand, `Product ${index} should have brand`).toBeDefined();
-  });
+  expectObjectsHaveKeys(products, ["id", "name", "price", "brand"], "Product");
 });
 
 // Products - Search
@@ -46,20 +43,22 @@ When(
 Then(
   "the response should contain products matching {string}",
   async ({ apiContext }, searchTerm) => {
-    const products = getResponseArrayField(apiContext, "products");
-    expect(products.length).toBeGreaterThan(0);
-
-    products.forEach((product) => {
-      const productText =
-        `${product.name} ${product.brand} ${product.category?.category || ""}`.toLowerCase();
-      expect(productText).toContain(searchTerm.toLowerCase());
-    });
+    expectArrayFieldHasItems(apiContext, "products");
+    expectArrayItemsMatch(
+      apiContext,
+      "products",
+      (product) => {
+        const productText =
+          `${product.name} ${product.brand} ${product.category?.category || ""}`.toLowerCase();
+        return productText.includes(searchTerm.toLowerCase());
+      },
+      `products matching "${searchTerm}"`,
+    );
   },
 );
 
 Then("the products list should be empty", async ({ apiContext }) => {
-  const products = getResponseArrayField(apiContext, "products");
-  expect(products.length).toBe(0);
+  expectArrayFieldEmpty(apiContext, "products");
 });
 
 // Brands
@@ -76,14 +75,10 @@ Then("the response should contain brands", async ({ apiContext }) => {
     logger: apiContext.getLogger(),
   });
 
-  expect(body.brands.length).toBeGreaterThan(0);
+  expectArrayFieldHasItems(apiContext, "brands");
 });
 
 Then("each brand should have required fields", async ({ apiContext }) => {
   const brands = getResponseArrayField(apiContext, "brands");
-
-  brands.forEach((brand, index) => {
-    expect(brand.id, `Brand ${index} should have id`).toBeDefined();
-    expect(brand.brand, `Brand ${index} should have brand name`).toBeDefined();
-  });
+  expectObjectsHaveKeys(brands, ["id", "brand"], "Brand");
 });

@@ -61,13 +61,13 @@ Add new methods at `createProductsHelpers`, `createUsersHelpers`, or `createBran
 ## API mock mode (example)
 
 - API mocks are opt-in and scenario-safe.
-- Use tag `@mock` and step `Given API mock profile "products-happy" is enabled` in API features.
+- Use tag `@mock` and step `Given API mock profile "contract-default" is enabled` in API features.
 - Run only mock scenarios:
-  - `npm run test:dev -- --project="API Tests - Chromium" --grep=@mock`
+  - `npm run test:api:mock`
 
 - Optional ENV fallback:
   - `API_MOCK_ENABLED=true`
-  - `API_MOCK_PROFILE=products-happy`
+  - `API_MOCK_PROFILE=contract-default`
 
 ## API cleanup policy
 
@@ -83,6 +83,7 @@ Add new methods at `createProductsHelpers`, `createUsersHelpers`, or `createBran
   - `@ui` for UI scenarios
 - Use one intent tag when relevant:
   - `@smoke` for fast confidence checks
+  - `@critical` for the smallest business-critical UI journey set
   - `@regression` for broader functional coverage
   - `@workflow` for cross-step or end-to-end flows
   - `@mock` for scenario-safe API mock runs
@@ -102,6 +103,33 @@ Add new methods at `createProductsHelpers`, `createUsersHelpers`, or `createBran
 - Generic examples:
   - `npm run test:dev -- --grep=@ui`
   - `npm run test:dev -- --grep=@register --headed`
+
+## Suite lanes
+
+- `npm run test:api:mock`
+  Fast deterministic API contract/regression coverage.
+- `npm run test:api:live:smoke`
+  Thin live API confidence checks.
+- `npm run test:api:live:regression`
+  Broader live API coverage when needed.
+- `npm run test:ui:critical`
+  Smallest business-critical UI journey set.
+- `npm run test:ui:regression`
+  Broader UI coverage with a higher operational cost.
+
+Use these lanes as the default planning unit when the suite grows. Avoid adding new large live-smoke buckets when a narrower lane is enough.
+
+## Suite metrics
+
+- Functional runs now emit `out/test-results/suite-metrics.json`.
+- The metrics reporter summarizes:
+  - total passed/failed tests
+  - flaky tests
+  - retried tests
+  - cleanup-affected tests
+  - slowest tests
+
+This file is intended for CI artifacts and trend analysis, especially once the suite scales beyond a few hundred tests.
 
 ### Common issues
 

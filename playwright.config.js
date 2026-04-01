@@ -46,6 +46,7 @@ export default defineConfig({
   reporter: [
     ["list"],
     ["./src/reporters/configReporter.js"],
+    ["./src/reporters/suiteMetricsReporter.js"],
 
     [
       "html",
