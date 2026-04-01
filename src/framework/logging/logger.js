@@ -93,10 +93,17 @@ export function createLogger({ filePath, testId }) {
           }`;
 
   if (filePath) ensureDir(path.dirname(filePath));
+  const stream = filePath
+    ? fs.createWriteStream(filePath, {
+        flags: "a",
+        encoding: "utf8",
+      })
+    : null;
+  let closePromise = null;
 
   function write(line) {
-    if (!filePath) return;
-    fs.appendFileSync(filePath, `${line}\n`, "utf8");
+    if (!stream) return;
+    stream.write(`${line}\n`);
   }
 
   function log(level, msg, meta) {
@@ -122,11 +129,25 @@ export function createLogger({ filePath, testId }) {
     write(formatLine(rec));
   }
 
+  async function close() {
+    if (!stream) return;
+
+    if (!closePromise) {
+      closePromise = new Promise((resolve, reject) => {
+        stream.once("error", reject);
+        stream.end(resolve);
+      });
+    }
+
+    await closePromise;
+  }
+
   return {
     debug: (m, meta) => log("debug", m, meta),
     info: (m, meta) => log("info", m, meta),
     warn: (m, meta) => log("warn", m, meta),
     error: (m, meta) => log("error", m, meta),
+    close,
   };
 }
 

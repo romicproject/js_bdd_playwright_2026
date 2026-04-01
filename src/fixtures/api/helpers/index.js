@@ -4,22 +4,9 @@ import { createBrandsHelpers } from "./brands.helpers.js";
 import { createUsersHelpers } from "./users.helpers.js";
 
 export function createApiHelpers(apiClient) {
-  const productsHelpers = createProductsHelpers(apiClient);
-  const brandsHelpers = createBrandsHelpers(apiClient);
-  const usersHelpers = createUsersHelpers(apiClient);
-
   return {
-    products: productsHelpers,
-    brands: brandsHelpers,
-    users: usersHelpers,
-
-    // Backward-compatible aliases while steps/helpers migrate to namespaces.
-    getAllProductsList: productsHelpers.getAllProductsList,
-    searchProduct: productsHelpers.searchProduct,
-    getAllBrands: brandsHelpers.getAllBrands,
-    createUser: usersHelpers.createUser,
-    verifyLogin: usersHelpers.verifyLogin,
-    deleteAccount: usersHelpers.deleteAccount,
-    getUserDetailByEmail: usersHelpers.getUserDetailByEmail,
+    products: createProductsHelpers(apiClient),
+    brands: createBrandsHelpers(apiClient),
+    users: createUsersHelpers(apiClient),
   };
 }

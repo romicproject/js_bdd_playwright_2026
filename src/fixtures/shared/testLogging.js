@@ -72,6 +72,8 @@ export function startTestLogging(testInfo, { kind }) {
     logFilePath,
     logger,
     async attachExecutionLog() {
+      await logger.close?.();
+
       if (shouldAttachExecutionLog(testInfo)) {
         await testInfo.attach("execution.log", {
           path: logFilePath,
