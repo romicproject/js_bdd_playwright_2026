@@ -43,6 +43,27 @@ function parseBoolean(value) {
   return value === "true" || value === "1";
 }
 
+function resolveRetryCount() {
+  const lane = String(process.env.TEST_LANE || "")
+    .trim()
+    .toLowerCase();
+  const defaultRetries = parseIntSafe(process.env.RETRY_FAILED_TESTS, 0);
+
+  switch (lane) {
+    case "api-mock":
+      return parseIntSafe(process.env.RETRY_API_MOCK, 0);
+    case "api-live-smoke":
+    case "api-live-regression":
+      return parseIntSafe(process.env.RETRY_API_LIVE, defaultRetries);
+    case "ui-critical":
+      return parseIntSafe(process.env.RETRY_UI_CRITICAL, 1);
+    case "ui-regression":
+      return parseIntSafe(process.env.RETRY_UI_REGRESSION, 1);
+    default:
+      return defaultRetries;
+  }
+}
+
 /**
  * Environment configuration
  */
@@ -85,7 +106,8 @@ export const config = {
 
   // Retry settings
   retry: {
-    retries: parseIntSafe(process.env.RETRY_FAILED_TESTS, 0),
+    lane: process.env.TEST_LANE || "default",
+    retries: resolveRetryCount(),
   },
 
   // Debug settings

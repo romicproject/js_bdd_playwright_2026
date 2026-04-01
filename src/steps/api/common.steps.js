@@ -22,7 +22,7 @@ import {
 
 const { Before, Given, Then } = createBdd(test);
 
-function enableMockProfile(apiContext, profile = "products-happy") {
+function enableMockProfile(apiContext, profile = "contract-default") {
   apiContext.mock.enabled = true;
   apiContext.mock.profile = profile;
 }
