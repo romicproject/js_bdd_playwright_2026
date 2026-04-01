@@ -6,9 +6,6 @@ Feature: Products API
   I want to retrieve and search products
   So that I can display them in my application
 
-  Background:
-    Given the API is available
-
   @smoke @positive
   Scenario: Get all products successfully
     When I get all products

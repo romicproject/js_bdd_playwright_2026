@@ -40,6 +40,65 @@ export function getResponseArrayField(apiContext, field) {
   return Array.isArray(value) ? value : [];
 }
 
+export function getResponseObjectField(apiContext, field) {
+  const value = getResponseBody(apiContext)[field];
+  return value && typeof value === "object" && !Array.isArray(value)
+    ? value
+    : {};
+}
+
+export function expectArrayFieldHasItems(apiContext, field, options = {}) {
+  const { min = 1, message } = options;
+  const items = getResponseArrayField(apiContext, field);
+
+  expect(
+    items.length,
+    message ||
+      `Expected response field "${field}" to contain at least ${min} item(s).`,
+  ).toBeGreaterThanOrEqual(min);
+
+  return items;
+}
+
+export function expectArrayFieldEmpty(apiContext, field, options = {}) {
+  const items = getResponseArrayField(apiContext, field);
+
+  expect(
+    items.length,
+    options.message || `Expected response field "${field}" to be empty.`,
+  ).toBe(0);
+
+  return items;
+}
+
+export function expectObjectsHaveKeys(items, requiredKeys, label = "Item") {
+  items.forEach((item, index) => {
+    requiredKeys.forEach((key) => {
+      expect(item?.[key], `${label} ${index} should have ${key}`).toBeDefined();
+    });
+  });
+
+  return items;
+}
+
+export function expectArrayItemsMatch(
+  apiContext,
+  field,
+  predicate,
+  description = field,
+) {
+  const items = getResponseArrayField(apiContext, field);
+
+  items.forEach((item, index) => {
+    expect(
+      predicate(item, index),
+      `Expected ${description} item ${index} to match predicate.`,
+    ).toBe(true);
+  });
+
+  return items;
+}
+
 /**
  * Assert effective status (body.responseCode if present, else HTTP status).
  * Includes both for diagnostics.

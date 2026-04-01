@@ -4,9 +4,6 @@ Feature: User Account Management API
   I want to manage user accounts
   So that users can register, login, and delete their accounts
 
-  Background:
-    Given the API is available
-
   @smoke @positive
   Scenario: Create new user account successfully
     When I create a user with:

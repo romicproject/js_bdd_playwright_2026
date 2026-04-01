@@ -8,9 +8,9 @@ on:
   workflow_dispatch:
     inputs:
       suite:
-        description: "ui-smoke | ui-only | api-only | all | perf-smoke | perf-load | perf-ui"
+        description: "ui-critical | ui-regression | api-live-smoke | api-live-regression | api-mock | all | perf-smoke | perf-load | perf-ui"
         required: true
-        default: "ui-smoke"
+        default: "ui-critical"
       project:
         description: "auto | UI Tests - Chromium | API Tests - Chromium"
         required: true
@@ -19,6 +19,14 @@ on:
         description: "optional --grep pattern (ex: @smoke)"
         required: false
         default: ""
+      shard_total:
+        description: "optional shard total for supported suites"
+        required: false
+        default: "1"
+      shard_index:
+        description: "optional 1-based shard index"
+        required: false
+        default: "1"
 
 concurrency:
   group: pw-${{ github.ref }}
@@ -28,15 +36,52 @@ env:
   CI: true
 
 jobs:
-  smoke:
-    name: Smoke (${{ matrix.suite }})
+  quality:
+    name: Quality
     if: github.event_name != 'workflow_dispatch'
+    runs-on: ubuntu-latest
+    timeout-minutes: 30
+    steps:
+      - uses: actions/checkout@v4
+      - uses: ./.github/actions/pw-setup
+        with:
+          api-base-url: ${{ vars.DEV_API_BASE_URL }}
+          base-url: ${{ vars.DEV_BASE_URL }}
+          api-key: ${{ secrets.DEV_API_KEY }}
+          test-user-email: ${{ secrets.DEV_TEST_USER_EMAIL }}
+          test-user-password: ${{ secrets.DEV_TEST_USER_PASSWORD }}
+          install-browser: "false"
+          generate-bdd: "false"
+
+      - name: Quality gate
+        run: npm run check:quality
+
+  lanes:
+    name: Lane (${{ matrix.lane }} ${{ matrix.shard_index }}/${{ matrix.shard_total }})
+    if: github.event_name != 'workflow_dispatch'
+    needs: quality
     runs-on: ubuntu-latest
     timeout-minutes: 60
     strategy:
       fail-fast: false
       matrix:
-        suite: [api, ui]
+        include:
+          - lane: api-live-smoke
+            npm_script: test:api:live:smoke:ci
+            shard_index: 1
+            shard_total: 1
+          - lane: api-mock
+            npm_script: test:api:mock:ci
+            shard_index: 1
+            shard_total: 2
+          - lane: api-mock
+            npm_script: test:api:mock:ci
+            shard_index: 2
+            shard_total: 2
+          - lane: ui-critical
+            npm_script: test:ui:critical:ci
+            shard_index: 1
+            shard_total: 1
     steps:
       - uses: actions/checkout@v4
       - uses: ./.github/actions/pw-setup
@@ -47,22 +92,19 @@ jobs:
           test-user-email: ${{ secrets.DEV_TEST_USER_EMAIL }}
           test-user-password: ${{ secrets.DEV_TEST_USER_PASSWORD }}
 
-      - name: Quality gate
-        run: npm run check:quality
-
-      - name: Run smoke suite (${{ matrix.suite }})
+      - name: Run lane (${{ matrix.lane }})
         timeout-minutes: 30
         run: |
-          if [ "${{ matrix.suite }}" = "api" ]; then
-            npm run test:smoke -- --project "API Tests - Chromium" --workers=3
+          if [ "${{ matrix.shard_total }}" = "1" ]; then
+            npm run ${{ matrix.npm_script }}
           else
-            npm run test:ui:smoke:ci
+            npm run ${{ matrix.npm_script }} -- --shard=${{ matrix.shard_index }}/${{ matrix.shard_total }}
           fi
 
       - uses: actions/upload-artifact@v4
         if: always()
         with:
-          name: report-smoke-${{ matrix.suite }}
+          name: report-${{ matrix.lane }}-${{ matrix.shard_index }}-of-${{ matrix.shard_total }}
           path: |
             artifacts/
             out/playwright-report/
@@ -73,11 +115,11 @@ jobs:
   ci-gate:
     name: CI Gate
     if: always() && github.event_name != 'workflow_dispatch'
-    needs: smoke
+    needs: [quality, lanes]
     runs-on: ubuntu-latest
     steps:
-      - name: Assert smoke passed
-        if: needs.smoke.result != 'success'
+      - name: Assert lanes passed
+        if: needs.quality.result != 'success' || needs.lanes.result != 'success'
         run: exit 1
 
   manual:
@@ -96,7 +138,7 @@ jobs:
           test-user-password: ${{ secrets.DEV_TEST_USER_PASSWORD }}
 
       - name: Quality gate
-        run: npm run check:quality
+        run: npm run check:quality:generated
 
       - name: Run suite (${{ inputs.suite }})
         timeout-minutes: 45
@@ -104,21 +146,33 @@ jobs:
           SUITE: ${{ inputs.suite }}
           GREP_PATTERN: ${{ inputs.grep }}
           MANUAL_PROJECT: ${{ inputs.project }}
+          SHARD_TOTAL: ${{ inputs.shard_total }}
+          SHARD_INDEX: ${{ inputs.shard_index }}
         run: |
           set -euo pipefail
           GREP_ARGS=()
           [ -n "$GREP_PATTERN" ] && GREP_ARGS=(--grep "$GREP_PATTERN")
           PROJECT_ARGS=()
           [ "$MANUAL_PROJECT" != "auto" ] && PROJECT_ARGS=(--project "$MANUAL_PROJECT")
+          SHARD_ARGS=()
+          if [ "${SHARD_TOTAL}" != "1" ]; then
+            SHARD_ARGS=(--shard "${SHARD_INDEX}/${SHARD_TOTAL}")
+          fi
 
           case "$SUITE" in
-            ui-smoke)
-              [ -n "$GREP_PATTERN" ] \
-                && npm run test:dev -- --project "UI Tests - Chromium" "${GREP_ARGS[@]}" \
-                || npm run test:ui:smoke:ci ;;
-            ui-only)  npm run test:dev -- "${PROJECT_ARGS[@]:-"--project" "UI Tests - Chromium"}" "${GREP_ARGS[@]}" ;;
-            api-only) npm run test:dev -- "${PROJECT_ARGS[@]:-"--project" "API Tests - Chromium"}" "${GREP_ARGS[@]}" ;;
-            all)      npm run test:dev -- "${PROJECT_ARGS[@]}" "${GREP_ARGS[@]}" ;;
+            ui-smoke|ui-critical)
+              npm run test:ui:critical -- "${SHARD_ARGS[@]}" ;;
+            ui-only|ui-regression)
+              npm run test:ui:regression -- "${SHARD_ARGS[@]}" ;;
+            api-live-smoke)
+              npm run test:api:live:smoke -- "${SHARD_ARGS[@]}" ;;
+            api-live-regression)
+              npm run test:api:live:regression -- "${SHARD_ARGS[@]}" ;;
+            api-mock)
+              npm run test:api:mock -- "${SHARD_ARGS[@]}" ;;
+            api-only)
+              npm run test:api:live:regression -- "${SHARD_ARGS[@]}" ;;
+            all)      npm run test:dev -- "${PROJECT_ARGS[@]}" "${GREP_ARGS[@]}" "${SHARD_ARGS[@]}" ;;
             perf-smoke) npm run perf:smoke ;;
             perf-load)  npm run perf:load ;;
             perf-ui)    npm run perf:ui ;;

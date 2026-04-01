@@ -4,7 +4,7 @@ Feature: User Registration - Create Account
   I want to create an account
   So I can access authenticated user capabilities
 
-  @smoke
+  @smoke @critical
   Scenario: Successful registration creates a new account
     Given I am on the Signup Login page
     When I register a new user with unique credentials

@@ -114,6 +114,8 @@ export function createApiClient(apiContext, testInfo) {
     const mockResponse = resolveApiMockResponse({
       method,
       fullUrl,
+      requestData: requestOptions.data,
+      requestHeaders: requestOptions.headers,
       apiContext,
     });
     if (mockResponse) {

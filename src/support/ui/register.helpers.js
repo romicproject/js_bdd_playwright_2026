@@ -1,5 +1,7 @@
-export function buildUniqueUser() {
-  const uniqueId = `${Date.now()}-${Math.floor(Math.random() * 100000)}`;
+import { buildScenarioUniqueId } from "../api/users.data.js";
+
+export function buildUniqueUser(identity = {}) {
+  const uniqueId = buildScenarioUniqueId(identity);
   const emailPrefix = "ui.register";
 
   return {
@@ -37,9 +39,10 @@ export async function createAccountWithUniqueUser({
   registerPage,
   uiContext,
 }) {
-  const user = buildUniqueUser();
+  const user = buildUniqueUser(uiContext.testIdentity);
   uiContext.state.register.user = user;
   uiContext.state.register.meta = buildRegisterUserMeta();
+  uiContext.trackCleanupUser(user);
 
   uiContext.logger?.info("Register test user prepared", {
     email: user.email,

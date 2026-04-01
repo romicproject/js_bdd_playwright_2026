@@ -4,9 +4,6 @@ Feature: User and Product Workflow
   I want to complete end-to-end workflows
   So that I can verify the system works correctly
 
-  Background:
-    Given the API is available
-
   @positive
   Scenario: New user searches for products
     When I create a user with:

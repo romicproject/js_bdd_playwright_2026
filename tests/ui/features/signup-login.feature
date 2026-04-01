@@ -4,7 +4,7 @@ Feature: Reach the Authentication Flow from Home
   I want to open the signup/login experience from the landing page
   So I can verify the expected UI state for authentication
 
-  @smoke
+  @smoke @critical
   Scenario: Home page leads to the Signup / Login screen
     Given I open the AutomationExercise home page
     When I navigate to the Signup Login page
