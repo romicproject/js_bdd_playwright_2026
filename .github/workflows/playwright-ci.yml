@@ -12,11 +12,11 @@ on:
         required: true
         default: "ui-critical"
       project:
-        description: "auto | UI Tests - Chromium | API Tests - Chromium"
+        description: "used only with suite=all: auto | UI Tests - Chromium | API Tests - Chromium"
         required: true
         default: "auto"
       grep:
-        description: "optional --grep pattern (ex: @smoke)"
+        description: "used only with suite=all: optional --grep pattern (ex: @smoke)"
         required: false
         default: ""
       shard_total:
@@ -159,9 +159,17 @@ jobs:
             SHARD_ARGS=(--shard "${SHARD_INDEX}/${SHARD_TOTAL}")
           fi
 
+          if [ "$SUITE" != "all" ] && { [ -n "$GREP_PATTERN" ] || [ "$MANUAL_PROJECT" != "auto" ]; }; then
+            echo "Note: 'project' and 'grep' inputs are applied only when suite=all."
+          fi
+
           case "$SUITE" in
             ui-smoke|ui-critical)
-              npm run test:ui:critical -- "${SHARD_ARGS[@]}" ;;
+              if [ "$SUITE" = "ui-smoke" ]; then
+                npm run test:ui:smoke -- "${SHARD_ARGS[@]}"
+              else
+                npm run test:ui:critical -- "${SHARD_ARGS[@]}"
+              fi ;;
             ui-only|ui-regression)
               npm run test:ui:regression -- "${SHARD_ARGS[@]}" ;;
             api-live-smoke)
