@@ -31,7 +31,6 @@
 - `fixtures/api/api.fixtures.js` injects `apiHelpers` into steps via Playwright fixtures.
 - `support/api/response.assertions.js` contains reusable API response/assertion helpers so step files stay focused on Gherkin mapping.
 - `fixtures/api/helpers/index.js` aggregates product, brand, and user helper groups and exposes namespaced helpers (`apiHelpers.users.createUser`, `apiHelpers.products.searchProduct`, etc.).
-- Flat aliases are still preserved for backward compatibility while older steps migrate.
 - Each helper wraps `apiClient` to handle POST/DELETE/PUT payloads, form encoding, and responseCode fallback.
 - API cleanup remains fixture-owned and now records cleanup-failure annotations; it only fails teardown when `API_FAIL_ON_CLEANUP_ERROR=true`.
 
@@ -41,13 +40,12 @@
 import { test } from "../fixtures/api/api.fixtures.js";
 
 test("rewind response", async ({ apiHelpers, apiContext }) => {
-  const response = await apiHelpers.searchProduct("jeans");
+  const response = await apiHelpers.products.searchProduct("jeans");
   expect(response.body.products).toBeDefined();
 });
 ```
 
 - Prefer namespaced helper groups for new code (`apiHelpers.users.createUser`, `apiHelpers.brands.getAllBrands`, etc.).
-- Flat aliases still work, but treat them as compatibility shims rather than the long-term API.
 
 ## Helper utils
 
@@ -56,7 +54,7 @@ test("rewind response", async ({ apiHelpers, apiContext }) => {
 
 ## Extending helpers
 
-Add new methods at `createProductsHelpers`, `createUsersHelpers`, or `createBrandsHelpers` and expose them through `createApiHelpers`. Prefer namespaced consumption in new steps/helpers and keep flat aliases only as temporary compatibility shims while older code migrates.
+Add new methods at `createProductsHelpers`, `createUsersHelpers`, or `createBrandsHelpers` and expose them through `createApiHelpers`. Prefer namespaced consumption in steps/helpers so the public helper API stays explicit and predictable.
 
 ## API mock mode (example)
 
