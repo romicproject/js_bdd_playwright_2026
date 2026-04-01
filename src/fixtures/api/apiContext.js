@@ -32,6 +32,7 @@ export function createApiContext(request, config) {
       },
       scenario: {
         timestamp: null,
+        uniqueId: null,
         startTime: null,
       },
       logs: {
@@ -51,9 +52,14 @@ export function createApiContext(request, config) {
 
       if (typeof value !== "string") return value;
 
+      if (value.includes("{unique}")) {
+        const uniqueId = this.getScenarioUniqueId() ?? String(Date.now());
+        return value.replaceAll("{unique}", uniqueId);
+      }
+
       if (value.includes("{timestamp}")) {
-        const ts = this.getScenarioTimestamp() ?? Date.now();
-        return value.replaceAll("{timestamp}", String(ts));
+        const uniqueId = this.getScenarioUniqueId() ?? String(Date.now());
+        return value.replaceAll("{timestamp}", uniqueId);
       }
 
       return value;
@@ -147,6 +153,14 @@ export function createApiContext(request, config) {
 
     setScenarioTimestamp(timestamp) {
       this.state.scenario.timestamp = timestamp;
+    },
+
+    getScenarioUniqueId() {
+      return this.state.scenario.uniqueId;
+    },
+
+    setScenarioUniqueId(uniqueId) {
+      this.state.scenario.uniqueId = uniqueId;
     },
 
     getScenarioStartTime() {
@@ -268,6 +282,12 @@ export function createApiContext(request, config) {
       get: () => context.state.scenario.timestamp,
       set: (value) => {
         context.state.scenario.timestamp = value;
+      },
+    },
+    scenarioUniqueId: {
+      get: () => context.state.scenario.uniqueId,
+      set: (value) => {
+        context.state.scenario.uniqueId = value;
       },
     },
     startTime: {

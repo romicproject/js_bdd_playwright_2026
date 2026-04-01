@@ -43,8 +43,8 @@ Given(
   },
 );
 
-Given("the API is available", async ({ apiClient }) => {
-  await apiClient.healthCheck({ path: "/productsList" });
+Given("the API is available", async ({ apiAvailability }) => {
+  await apiAvailability.ensure();
 });
 
 Then(

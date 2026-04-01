@@ -1,6 +1,7 @@
 import {
   createLogger,
   getAttachAllureEnabled,
+  isDebugLoggingEnabled,
 } from "../../framework/logging/logger.js";
 import {
   buildTestLogPath,
@@ -9,6 +10,31 @@ import {
 
 function env(name, fallback) {
   return process.env[name] ?? fallback;
+}
+
+function shouldAttachExecutionLog(testInfo) {
+  if (!getAttachAllureEnabled()) {
+    return false;
+  }
+
+  if (isDebugLoggingEnabled()) {
+    return true;
+  }
+
+  const attachMode = String(env("LOG_ATTACH_MODE", "fail")).toLowerCase();
+  if (attachMode === "always") {
+    return true;
+  }
+
+  if (attachMode === "never") {
+    return false;
+  }
+
+  if ((testInfo.retry ?? 0) > 0) {
+    return true;
+  }
+
+  return testInfo.status !== testInfo.expectedStatus;
 }
 
 export function startTestLogging(testInfo, { kind }) {
@@ -46,7 +72,7 @@ export function startTestLogging(testInfo, { kind }) {
     logFilePath,
     logger,
     async attachExecutionLog() {
-      if (getAttachAllureEnabled()) {
+      if (shouldAttachExecutionLog(testInfo)) {
         await testInfo.attach("execution.log", {
           path: logFilePath,
           contentType: "text/plain",

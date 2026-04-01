@@ -44,6 +44,26 @@ export function getAttachAllureEnabled() {
   return toBool(env("LOG_ATTACH_ALLURE", "true"), true);
 }
 
+function getLogLevelName() {
+  const fromEnv = String(env("LOG_LEVEL", "info")).toLowerCase();
+  if (LEVELS[fromEnv] != null) {
+    return fromEnv;
+  }
+
+  if (
+    toBool(env("VERBOSE_LOGGING", null), false) ||
+    toBool(env("DEBUG_MODE", null), false)
+  ) {
+    return "debug";
+  }
+
+  return "info";
+}
+
+export function isDebugLoggingEnabled() {
+  return getLogLevelName() === "debug";
+}
+
 function shouldConsole() {
   return toBool(env("LOG_CONSOLE", "true"), true);
 }
@@ -54,7 +74,7 @@ function consoleMinLevel() {
 }
 
 export function createLogger({ filePath, testId }) {
-  const levelName = String(env("LOG_LEVEL", "info")).toLowerCase();
+  const levelName = getLogLevelName();
   const minLevel = LEVELS[levelName] ?? LEVELS.info;
 
   // Avoid confusion:

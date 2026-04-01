@@ -1,5 +1,5 @@
 name: Playwright Setup
-description: "Node install + Playwright cache + env file + BDD generate"
+description: "Node install + optional Playwright browser setup + env file + optional BDD generate"
 
 inputs:
   api-base-url:
@@ -19,6 +19,12 @@ inputs:
   node-version:
     required: false
     default: "20"
+  install-browser:
+    required: false
+    default: "true"
+  generate-bdd:
+    required: false
+    default: "true"
 
 runs:
   using: composite
@@ -33,6 +39,7 @@ runs:
 
     - name: Cache Playwright browsers
       id: pw-cache
+      if: ${{ inputs.install-browser == 'true' }}
       uses: actions/cache@v4
       with:
         path: ~/.cache/ms-playwright
@@ -43,6 +50,7 @@ runs:
     # cache-hit=true  → binaries restored by actions/cache; only system deps needed.
     # cache-hit=false → full install (binaries + system deps).
     - name: Install Playwright browser
+      if: ${{ inputs.install-browser == 'true' }}
       shell: bash
       run: |
         if [ "${{ steps.pw-cache.outputs.cache-hit }}" = "true" ]; then
@@ -79,6 +87,7 @@ runs:
         } > env/dev.env
 
     - name: Generate BDD specs
+      if: ${{ inputs.generate-bdd == 'true' }}
       shell: bash
       run: |
         set -euo pipefail

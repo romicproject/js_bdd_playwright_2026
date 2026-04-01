@@ -87,6 +87,9 @@ export default defineConfig({
       use: {
         ...devices["Desktop Chrome"],
         baseURL: envConfig.apiBaseUrl,
+        trace: "off",
+        video: "off",
+        screenshot: "off",
         extraHTTPHeaders: {
           Accept: "application/json",
           "Content-Type": "application/json",

@@ -28,9 +28,30 @@ env:
   CI: true
 
 jobs:
+  quality:
+    name: Quality
+    if: github.event_name != 'workflow_dispatch'
+    runs-on: ubuntu-latest
+    timeout-minutes: 30
+    steps:
+      - uses: actions/checkout@v4
+      - uses: ./.github/actions/pw-setup
+        with:
+          api-base-url: ${{ vars.DEV_API_BASE_URL }}
+          base-url: ${{ vars.DEV_BASE_URL }}
+          api-key: ${{ secrets.DEV_API_KEY }}
+          test-user-email: ${{ secrets.DEV_TEST_USER_EMAIL }}
+          test-user-password: ${{ secrets.DEV_TEST_USER_PASSWORD }}
+          install-browser: "false"
+          generate-bdd: "false"
+
+      - name: Quality gate
+        run: npm run check:quality
+
   smoke:
     name: Smoke (${{ matrix.suite }})
     if: github.event_name != 'workflow_dispatch'
+    needs: quality
     runs-on: ubuntu-latest
     timeout-minutes: 60
     strategy:
@@ -46,9 +67,6 @@ jobs:
           api-key: ${{ secrets.DEV_API_KEY }}
           test-user-email: ${{ secrets.DEV_TEST_USER_EMAIL }}
           test-user-password: ${{ secrets.DEV_TEST_USER_PASSWORD }}
-
-      - name: Quality gate
-        run: npm run check:quality
 
       - name: Run smoke suite (${{ matrix.suite }})
         timeout-minutes: 30
@@ -73,11 +91,11 @@ jobs:
   ci-gate:
     name: CI Gate
     if: always() && github.event_name != 'workflow_dispatch'
-    needs: smoke
+    needs: [quality, smoke]
     runs-on: ubuntu-latest
     steps:
       - name: Assert smoke passed
-        if: needs.smoke.result != 'success'
+        if: needs.quality.result != 'success' || needs.smoke.result != 'success'
         run: exit 1
 
   manual:
@@ -96,7 +114,7 @@ jobs:
           test-user-password: ${{ secrets.DEV_TEST_USER_PASSWORD }}
 
       - name: Quality gate
-        run: npm run check:quality
+        run: npm run check:quality:generated
 
       - name: Run suite (${{ inputs.suite }})
         timeout-minutes: 45
