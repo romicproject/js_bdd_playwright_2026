@@ -11,15 +11,17 @@ export class RegisterPage extends BasePage {
   }
 
   accountInfoHeading() {
-    return this.getByRole("heading", { name: /enter account information/i });
+    return this.page.getByRole("heading", {
+      name: /enter account information/i,
+    });
   }
 
   accountCreatedHeading() {
-    return this.getByRole("heading", { name: /account created/i });
+    return this.page.getByRole("heading", { name: /account created/i });
   }
 
   loggedInAsAnyLink() {
-    return this.getByRole("link", { name: /logged in as/i });
+    return this.page.getByRole("link", { name: /logged in as/i });
   }
 
   passwordInput() {
@@ -71,7 +73,7 @@ export class RegisterPage extends BasePage {
   }
 
   createAccountButton() {
-    return this.getByRole("button", { name: /create account/i });
+    return this.page.getByRole("button", { name: /create account/i });
   }
 
   continueButton() {
@@ -79,7 +81,7 @@ export class RegisterPage extends BasePage {
   }
 
   loggedInAsLink(name) {
-    return this.getByRole("link", {
+    return this.page.getByRole("link", {
       name: new RegExp(`logged in as\\s*${name}`, "i"),
     });
   }
@@ -189,7 +191,7 @@ export class RegisterPage extends BasePage {
   }
 
   logoutLink() {
-    return this.getByRole("link", { name: /logout/i });
+    return this.page.getByRole("link", { name: /logout/i });
   }
 
   async assertLoggedIn(name) {

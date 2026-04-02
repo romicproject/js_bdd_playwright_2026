@@ -7,15 +7,15 @@ export class LoginPage extends BasePage {
   }
 
   heading() {
-    return this.getByRole("heading", { name: /login to your account/i });
+    return this.page.getByRole("heading", { name: /login to your account/i });
   }
 
   newUserSignupHeading() {
-    return this.getByRole("heading", { name: /new user signup/i });
+    return this.page.getByRole("heading", { name: /new user signup/i });
   }
 
   signupNameInput() {
-    return this.getByPlaceholder("Name");
+    return this.page.getByPlaceholder("Name");
   }
 
   signupEmailInput() {
@@ -23,7 +23,7 @@ export class LoginPage extends BasePage {
   }
 
   signupButton() {
-    return this.getByRole("button", { name: /signup/i });
+    return this.page.getByRole("button", { name: /signup/i });
   }
 
   signupEmailExistsError() {

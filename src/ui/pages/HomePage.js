@@ -14,7 +14,7 @@ export class HomePage extends BasePage {
   }
 
   signupLoginLink() {
-    return this.getByRole("link", { name: /signup\s*\/\s*login/i });
+    return this.page.getByRole("link", { name: /signup\s*\/\s*login/i });
   }
 
   async clickSignupLogin() {

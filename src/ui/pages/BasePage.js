@@ -131,7 +131,7 @@ export class BasePage {
   }
 
   forbiddenHeading() {
-    return this.getByRole("heading", { name: /forbidden/i });
+    return this.page.getByRole("heading", { name: /forbidden/i });
   }
 
   async isForbiddenPage() {
@@ -147,21 +147,5 @@ export class BasePage {
     throw new Error(
       `External site instability detected during ${contextMessage}: received Forbidden (403).`,
     );
-  }
-
-  getByRole(role, options) {
-    return this.page.getByRole(role, options);
-  }
-
-  getByLabel(label, options) {
-    return this.page.getByLabel(label, options);
-  }
-
-  getByPlaceholder(placeholder, options) {
-    return this.page.getByPlaceholder(placeholder, options);
-  }
-
-  getByTestId(testId) {
-    return this.page.getByTestId(testId);
   }
 }

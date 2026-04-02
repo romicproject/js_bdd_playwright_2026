@@ -3,11 +3,11 @@ import { BasePage } from "./BasePage.js";
 
 export class ContactUsPage extends BasePage {
   heading() {
-    return this.getByRole("heading", { name: /get in touch/i });
+    return this.page.getByRole("heading", { name: /get in touch/i });
   }
 
   submitButton() {
-    return this.getByRole("button", { name: /submit/i });
+    return this.page.getByRole("button", { name: /submit/i });
   }
 
   async assertOnContactUsPage() {
