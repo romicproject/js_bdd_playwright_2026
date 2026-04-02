@@ -6,6 +6,11 @@ function env(name, fallback) {
   return process.env[name] ?? fallback;
 }
 
+function envFlag(name, fallback = false) {
+  const value = env(name, fallback ? "true" : "false");
+  return value === true || value === "true" || value === "1";
+}
+
 function ensureDir(dir) {
   fs.mkdirSync(dir, { recursive: true });
 }
@@ -75,6 +80,7 @@ export default class SuiteMetricsReporter {
   }
 
   onBegin(configObj) {
+    this.records = new Map();
     this.runStartedAt = Date.now();
     this.runMetadata = {
       env: config.env,
@@ -177,7 +183,7 @@ export default class SuiteMetricsReporter {
       aggregated.filter((record) => record.flaky),
       10,
     );
-    const cleanupFailures = aggregated
+    const cleanupAffectedTests = aggregated
       .filter((record) => record.cleanup.length > 0)
       .map((record) => ({
         project: record.project,
@@ -193,7 +199,7 @@ export default class SuiteMetricsReporter {
       summary: totals,
       topSlowTests,
       flakyTests,
-      cleanupFailures,
+      cleanupAffectedTests,
     };
 
     const outputFile = String(
@@ -212,15 +218,17 @@ export default class SuiteMetricsReporter {
       `cleanup=${metrics.summary.cleanupAffected}`,
     ].join(" ");
 
-    console.log(summaryLine);
+    if (envFlag("LOG_SUITE_METRICS_CONSOLE", true)) {
+      console.log(summaryLine);
 
-    if (topSlowTests.length > 0) {
-      console.log("[Metrics] slowest tests:");
-      topSlowTests.slice(0, 5).forEach((testRecord, index) => {
-        console.log(
-          `  ${index + 1}. ${testRecord.totalDurationMs}ms | ${testRecord.project} | ${testRecord.title}`,
-        );
-      });
+      if (topSlowTests.length > 0) {
+        console.log("[Metrics] slowest tests:");
+        topSlowTests.slice(0, 5).forEach((testRecord, index) => {
+          console.log(
+            `  ${index + 1}. ${testRecord.totalDurationMs}ms | ${testRecord.project} | ${testRecord.title}`,
+          );
+        });
+      }
     }
   }
 }

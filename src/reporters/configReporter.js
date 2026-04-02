@@ -2,15 +2,20 @@
 import { config } from "../framework/config/envConfig.js";
 
 function buildConfigSummary() {
-  return (
-    `\n[Config] Configuration Loaded:\n` +
-    `   Environment: ${config.env}\n` +
-    `   Test Lane: ${config.retry?.lane || "default"}\n` +
-    `   API Base URL: ${config.apiBaseUrl}\n` +
-    `   Request Timeout: ${config.timeout.request}ms\n` +
-    `   Retries: ${config.retry?.retries}\n` +
-    `   Debug Mode: ${config.debug.enabled}\n`
-  );
+  const lines = [
+    "",
+    "[Config] Configuration Loaded:",
+    `   Environment: ${config.env}`,
+    `   Test Lane: ${config.retry?.lane || "default"}`,
+    `   API Base URL: ${config.apiBaseUrl || "n/a"}`,
+    `   Base URL: ${config.baseUrl || "n/a"}`,
+    `   Request Timeout: ${config.timeout.request}ms`,
+    `   Retries: ${config.retry?.retries}`,
+    `   Workers: ${process.env.PLAYWRIGHT_WORKERS || "auto"}`,
+    `   Debug Mode: ${config.debug.enabled}`,
+  ];
+
+  return lines.join("\n");
 }
 
 export default class ConfigReporter {
