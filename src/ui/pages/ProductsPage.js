@@ -10,7 +10,7 @@ export class ProductsPage extends BasePage {
     return this.page
       .locator("section")
       .filter({
-        has: this.getByRole("heading", {
+        has: this.page.getByRole("heading", {
           name: /all products|searched products/i,
         }),
       })

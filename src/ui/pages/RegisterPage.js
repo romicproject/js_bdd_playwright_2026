@@ -97,6 +97,18 @@ export class RegisterPage extends BasePage {
     return this.isVisible(this.loggedInAsAnyLink(), timeout);
   }
 
+  async settleHomePage() {
+    await this.page
+      .waitForLoadState("domcontentloaded", { timeout: 3000 })
+      .catch(() => {});
+    await this.recoverFromVignette("/");
+  }
+
+  async openHomeAndSettle() {
+    await this.goto("/");
+    await this.settleHomePage();
+  }
+
   async ensureMrTitleSelected() {
     const titleRadio = this.titleMrRadio();
     if (await titleRadio.isChecked().catch(() => false)) return;
@@ -162,13 +174,12 @@ export class RegisterPage extends BasePage {
           allowDomFallback: true,
         });
       } else {
-        await this.goto("/");
+        await this.openHomeAndSettle();
       }
 
-      await this.page
-        .waitForLoadState("domcontentloaded", { timeout: 3000 })
-        .catch(() => {});
-      await this.recoverFromVignette("/");
+      if (attempt === 0) {
+        await this.settleHomePage();
+      }
 
       const loggedInUiVisible = await this.isLoggedInUiVisible(2500);
       if (loggedInUiVisible) {
@@ -185,8 +196,7 @@ export class RegisterPage extends BasePage {
       }
     }
 
-    await this.goto("/");
-    await this.recoverFromVignette("/");
+    await this.openHomeAndSettle();
     await expect(this.logoutLink()).toBeVisible({ timeout: 7000 });
   }
 
@@ -196,8 +206,7 @@ export class RegisterPage extends BasePage {
 
   async assertLoggedIn(name) {
     if (!(await this.isVisible(this.logoutLink(), 2500))) {
-      await this.recoverFromVignette("/");
-      await this.goto("/");
+      await this.openHomeAndSettle();
     }
 
     await expect(this.logoutLink()).toBeVisible({ timeout: 7000 });
