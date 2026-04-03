@@ -2,6 +2,7 @@
 import { defineConfig, devices } from "@playwright/test";
 import { defineBddConfig } from "playwright-bdd";
 import { config as envConfig } from "./src/framework/config/envConfig.js";
+import { buildAllureReporterOptions } from "./src/reporters/allureConfig.js";
 
 const isCI = Boolean(process.env.CI);
 const outputDir = "out/test-results";
@@ -41,11 +42,7 @@ function buildReporters() {
     ["./src/reporters/suiteMetricsReporter.js"],
     [
       "allure-playwright",
-      {
-        resultsDir: allureResultsDir,
-        detail: true,
-        suiteTitle: true,
-      },
+      buildAllureReporterOptions(envConfig, allureResultsDir),
     ],
     [
       "html",

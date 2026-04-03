@@ -11,6 +11,7 @@ import {
   getResponseMessage,
 } from "../../support/api/response.assertions.js";
 import { buildScenarioUniqueId } from "../../support/api/users.data.js";
+import { applyAllureMetadata } from "../../reporters/allureRuntime.js";
 
 async function runApiPreflight(playwright) {
   const { apiBaseUrl } = requireApiConfig();
@@ -147,10 +148,8 @@ export const test = base.extend({
     const projectName = testInfo.project?.name || "";
     const kind = /api/i.test(projectName) ? "API" : "UI";
 
-    const { logger, logFilePath, attachExecutionLog } = startTestLogging(
-      testInfo,
-      { kind },
-    );
+    const { logger, logFilePath, attachExecutionLog, feature } =
+      startTestLogging(testInfo, { kind });
 
     // expose logger/path on context
     context.setLogger(logger);
@@ -161,6 +160,13 @@ export const test = base.extend({
     logger.debug(`Base URL: ${apiBaseUrl}`);
     logger.debug(`API mock enabled: ${context.mock.enabled}`);
     logger.debug(`API mock profile: ${context.mock.profile || "none"}`);
+
+    await applyAllureMetadata(testInfo, {
+      kind,
+      feature,
+      apiMockEnabled: context.mock.enabled,
+      apiMockProfile: context.mock.profile || "none",
+    });
 
     await use(context);
 

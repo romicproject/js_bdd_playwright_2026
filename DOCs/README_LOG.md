@@ -42,9 +42,11 @@ Legend: `debug+` means `debug, info, warn, error` (all levels at or above that t
 This project can publish the same test run into Allure in addition to the Playwright HTML report.
 
 - Test execution writes raw Allure results into `out/allure-results`
+- Reporter metadata includes environment info, run id, lane, and curated defect categories
 - Generate a static report with `npm run report:allure:generate`
 - Open a generated report with `npm run report:allure:open`
 - Generate and serve directly from raw results with `npm run report:allure:serve`
+- `report:allure:generate` also preserves local `history/` from the previous report, so trend widgets can accumulate across runs
 
 When `LOG_ATTACH_ALLURE=true`, the per-test `execution.log` attachment is also included in Allure results.
 
