@@ -65,8 +65,8 @@
     "clean:allure:results": "rimraf out/allure-results",
     "clean:allure:report": "rimraf out/allure-report",
     "clean:allure:history": "rimraf out/allure-history",
-    "clean": "rimraf out/test-results out/playwright-report out/allure-results out/allure-report out/allure-history .playwright",
-    "clean:light": "rimraf --glob \"out/test-results/**/attachments\" out/playwright-report/data",
+    "clean": "rimraf out/test-results out/playwright-report out/logs logs out/allure-results out/allure-report out/allure-history .playwright",
+    "clean:light": "rimraf --glob \"out/test-results/**/attachments\" out/playwright-report/data out/logs logs",
     "clean:all": "npm run clean && rimraf node_modules package-lock.json"
   },
   "keywords": [
