@@ -1,39 +1,15 @@
-const SENSITIVE_KEYS = new Set([
-  "password",
-  "pass",
-  "pwd",
-  "token",
-  "api_key",
-  "apikey",
-  "authorization",
-  "email",
-]);
-
-function redactSensitive(value) {
-  if (value === null || value === undefined) return value;
-  if (typeof value === "string") return value;
-  if (Array.isArray(value)) return value.map((item) => redactSensitive(item));
-  if (typeof value === "object") {
-    return Object.fromEntries(
-      Object.entries(value).map(([key, val]) => {
-        const isSensitive = SENSITIVE_KEYS.has(String(key).toLowerCase());
-        return [key, isSensitive ? "***" : redactSensitive(val)];
-      }),
-    );
-  }
-  return value;
-}
+import { redactSensitiveDeep } from "../http/redact.js";
 
 export function validateSchema(data, schema, options = {}) {
   const { throwOnError = false, logger } = options;
-
   const result = schema.safeParse(data);
 
   if (!result.success) {
     const errors = result.error.issues;
+    const redactedData = redactSensitiveDeep(data);
     const errorLines = [
       "[Schema] Validation failed:",
-      `Data: ${JSON.stringify(redactSensitive(data), null, 2)}`,
+      `Data: ${JSON.stringify(redactedData, null, 2)}`,
       `Errors: ${JSON.stringify(errors, null, 2)}`,
     ];
 
@@ -41,19 +17,19 @@ export function validateSchema(data, schema, options = {}) {
       logger.error(errorLines.join("\n"));
     } else {
       console.error("[Schema] Validation failed:");
-      console.error("Data:", JSON.stringify(redactSensitive(data), null, 2));
+      console.error("Data:", JSON.stringify(redactedData, null, 2));
       console.error("Errors:", JSON.stringify(errors, null, 2));
     }
 
     if (throwOnError) {
       throw new Error(
-        `Schema validation failed: ${errors.map((e) => e.message).join(", ")}`,
+        `Schema validation failed: ${errors.map((error) => error.message).join(", ")}`,
       );
     }
 
     return {
       valid: false,
-      errors: errors,
+      errors,
       formattedErrors: formatZodErrors(errors),
     };
   }
@@ -64,9 +40,6 @@ export function validateSchema(data, schema, options = {}) {
   };
 }
 
-/**
- * Format Zod errors for clearer logging
- */
 function formatZodErrors(errors) {
   return errors.map((error) => ({
     path: error.path.join("."),
