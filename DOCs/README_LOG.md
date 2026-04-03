@@ -37,6 +37,17 @@ Legend: `debug+` means `debug, info, warn, error` (all levels at or above that t
 - `LOG_API_MAX_BODY`: limit for API body dumps (truncate)
 - `LOG_ATTACH_ALLURE`: controls attaching `execution.log` to Allure (separate from console)
 
+### Allure
+
+This project can publish the same test run into Allure in addition to the Playwright HTML report.
+
+- Test execution writes raw Allure results into `out/allure-results`
+- Generate a static report with `npm run report:allure:generate`
+- Open a generated report with `npm run report:allure:open`
+- Generate and serve directly from raw results with `npm run report:allure:serve`
+
+When `LOG_ATTACH_ALLURE=true`, the per-test `execution.log` attachment is also included in Allure results.
+
 ### Recommended profiles
 
 **Local development (`env/dev.env`)**

@@ -6,6 +6,7 @@ import { config as envConfig } from "./src/framework/config/envConfig.js";
 const isCI = Boolean(process.env.CI);
 const outputDir = "out/test-results";
 const htmlReportDir = "out/playwright-report";
+const allureResultsDir = "out/allure-results";
 
 function formatRunId(d = new Date()) {
   const hh = String(d.getHours()).padStart(2, "0");
@@ -38,6 +39,14 @@ function buildReporters() {
     ["list"],
     ["./src/reporters/configReporter.js"],
     ["./src/reporters/suiteMetricsReporter.js"],
+    [
+      "allure-playwright",
+      {
+        resultsDir: allureResultsDir,
+        detail: true,
+        suiteTitle: true,
+      },
+    ],
     [
       "html",
       {
