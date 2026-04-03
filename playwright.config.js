@@ -2,10 +2,12 @@
 import { defineConfig, devices } from "@playwright/test";
 import { defineBddConfig } from "playwright-bdd";
 import { config as envConfig } from "./src/framework/config/envConfig.js";
+import { buildAllureReporterOptions } from "./src/reporters/allureConfig.js";
 
 const isCI = Boolean(process.env.CI);
 const outputDir = "out/test-results";
 const htmlReportDir = "out/playwright-report";
+const allureResultsDir = "out/allure-results";
 
 function formatRunId(d = new Date()) {
   const hh = String(d.getHours()).padStart(2, "0");
@@ -38,6 +40,10 @@ function buildReporters() {
     ["list"],
     ["./src/reporters/configReporter.js"],
     ["./src/reporters/suiteMetricsReporter.js"],
+    [
+      "allure-playwright",
+      buildAllureReporterOptions(envConfig, allureResultsDir),
+    ],
     [
       "html",
       {

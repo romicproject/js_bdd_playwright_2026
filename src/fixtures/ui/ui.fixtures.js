@@ -15,6 +15,7 @@ import {
   ProductsPage,
   RegisterPage,
 } from "../../ui/pages/index.js";
+import { applyAllureMetadata } from "../../reporters/allureRuntime.js";
 
 function createUiContext({ logger, logFilePath, testInfo }) {
   return {
@@ -159,16 +160,19 @@ export const test = base.extend({
   uiContext: async ({}, use, testInfo) => {
     const startTime = Date.now();
     const { baseUrl } = requireUiConfig();
-    const { logger, logFilePath, attachExecutionLog } = startTestLogging(
-      testInfo,
-      {
+    const { logger, logFilePath, attachExecutionLog, feature } =
+      startTestLogging(testInfo, {
         kind: "UI",
-      },
-    );
+      });
 
     logger.info(`Starting: ${testInfo.title}`);
     logger.debug(`Environment: ${config.env}`);
     logger.debug(`Base URL: ${baseUrl}`);
+
+    await applyAllureMetadata(testInfo, {
+      kind: "UI",
+      feature,
+    });
 
     const uiContext = createUiContext({
       logger,

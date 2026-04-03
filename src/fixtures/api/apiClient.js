@@ -175,7 +175,7 @@ export function createApiClient(apiContext, testInfo) {
         `FAIL ${method} ${safeUrl} failed after ${duration}ms: ${String(e?.message || e)}`,
       );
 
-      await attachJson(testInfo, `api-exception-${method}.json`, {
+      await attachJson(testInfo, `api-diagnostic-exception-${method}.json`, {
         kind: "exception",
         method,
         url: safeUrl,
@@ -224,19 +224,23 @@ export function createApiClient(apiContext, testInfo) {
 
       failLog(`API FAIL ${method} ${safeUrl} -> ${statusLog} (${duration}ms)`);
 
-      await attachJson(testInfo, `api-fail-${method}-${httpStatus}.json`, {
-        kind: isMixedFail ? "business-fail" : "http-fail",
-        method,
-        url: safeUrl,
-        duration,
-        httpStatus,
-        bodyResponseCode: result.bodyResponseCode,
-        request: { headers: reqHeadersSnapshot, body: reqBodySnapshot },
-        response: {
-          headers: redactHeaders(resHeaders),
-          body: limitBody(body, MAX_BODY, safeJson),
+      await attachJson(
+        testInfo,
+        `api-diagnostic-${method}-${httpStatus}.json`,
+        {
+          kind: isMixedFail ? "business-fail" : "http-fail",
+          method,
+          url: safeUrl,
+          duration,
+          httpStatus,
+          bodyResponseCode: result.bodyResponseCode,
+          request: { headers: reqHeadersSnapshot, body: reqBodySnapshot },
+          response: {
+            headers: redactHeaders(resHeaders),
+            body: limitBody(body, MAX_BODY, safeJson),
+          },
         },
-      });
+      );
     }
 
     if (storeResponse) apiContext.response = result;
