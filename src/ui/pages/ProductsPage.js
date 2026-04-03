@@ -3,14 +3,14 @@ import { BasePage } from "./BasePage.js";
 
 export class ProductsPage extends BasePage {
   allProductsHeading() {
-    return this.getByRole("heading", { name: /all products/i });
+    return this.page.getByRole("heading", { name: /all products/i });
   }
 
   productsSection() {
     return this.page
       .locator("section")
       .filter({
-        has: this.getByRole("heading", {
+        has: this.page.getByRole("heading", {
           name: /all products|searched products/i,
         }),
       })
@@ -26,7 +26,7 @@ export class ProductsPage extends BasePage {
   }
 
   searchButtonByRole() {
-    return this.getByRole("button", { name: /search/i });
+    return this.page.getByRole("button", { name: /search/i });
   }
 
   searchButtonFallback() {
@@ -38,7 +38,7 @@ export class ProductsPage extends BasePage {
   }
 
   searchedProductsHeading() {
-    return this.getByRole("heading", { name: /searched products/i });
+    return this.page.getByRole("heading", { name: /searched products/i });
   }
 
   productCards() {

@@ -8,6 +8,32 @@ export class BasePage {
     this.page = page;
   }
 
+  async waitForDomContentLoadedQuietly(timeout = RECOVERY_DOM_TIMEOUT_MS) {
+    await this.page
+      .waitForLoadState("domcontentloaded", {
+        timeout,
+      })
+      .catch(() => {});
+  }
+
+  async hasDocumentBody() {
+    return this.page
+      .locator("body")
+      .count()
+      .then((count) => count > 0)
+      .catch(() => false);
+  }
+
+  async restorePath(path, { reload = false } = {}) {
+    if (reload && path) {
+      await this.goto(path);
+    }
+
+    if (path) {
+      await this.recoverFromVignette(path);
+    }
+  }
+
   async goto(path = "/") {
     try {
       // External pages can remain usable even when Playwright never reaches
@@ -19,7 +45,7 @@ export class BasePage {
     } catch (error) {
       if (!this.isNavigationTimeoutError(error)) throw error;
 
-      const recovered = await this.canRecoverFromNavigationTimeout(path);
+      const recovered = await this.canUsePageAfterNavigationTimeout(path);
       if (!recovered) throw error;
     }
   }
@@ -32,23 +58,13 @@ export class BasePage {
     );
   }
 
-  async canRecoverFromNavigationTimeout(path) {
-    await this.page
-      .waitForLoadState("domcontentloaded", {
-        timeout: RECOVERY_DOM_TIMEOUT_MS,
-      })
-      .catch(() => {});
+  async canUsePageAfterNavigationTimeout(path) {
+    await this.waitForDomContentLoadedQuietly();
 
     const currentUrl = this.page.url();
     if (!currentUrl || currentUrl === "about:blank") return false;
 
-    const hasBody = await this.page
-      .locator("body")
-      .count()
-      .then((count) => count > 0)
-      .catch(() => false);
-
-    if (!hasBody) return false;
+    if (!(await this.hasDocumentBody())) return false;
 
     if (path === "/") return true;
 
@@ -109,16 +125,9 @@ export class BasePage {
 
   async verifyPageReady({ path, attempts = 2, contextMessage, verify }) {
     for (let attempt = 0; attempt < attempts; attempt += 1) {
-      if (attempt > 0 && path) {
-        await this.goto(path);
-      }
+      await this.restorePath(path, { reload: attempt > 0 });
 
-      if (path) {
-        await this.recoverFromVignette(path);
-      }
-
-      const forbidden = await this.isForbiddenPage();
-      if (forbidden) {
+      if (await this.isForbiddenPage()) {
         continue;
       }
 
@@ -131,7 +140,7 @@ export class BasePage {
   }
 
   forbiddenHeading() {
-    return this.getByRole("heading", { name: /forbidden/i });
+    return this.page.getByRole("heading", { name: /forbidden/i });
   }
 
   async isForbiddenPage() {
@@ -147,21 +156,5 @@ export class BasePage {
     throw new Error(
       `External site instability detected during ${contextMessage}: received Forbidden (403).`,
     );
-  }
-
-  getByRole(role, options) {
-    return this.page.getByRole(role, options);
-  }
-
-  getByLabel(label, options) {
-    return this.page.getByLabel(label, options);
-  }
-
-  getByPlaceholder(placeholder, options) {
-    return this.page.getByPlaceholder(placeholder, options);
-  }
-
-  getByTestId(testId) {
-    return this.page.getByTestId(testId);
   }
 }

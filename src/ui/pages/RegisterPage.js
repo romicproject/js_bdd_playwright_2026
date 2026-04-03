@@ -11,15 +11,17 @@ export class RegisterPage extends BasePage {
   }
 
   accountInfoHeading() {
-    return this.getByRole("heading", { name: /enter account information/i });
+    return this.page.getByRole("heading", {
+      name: /enter account information/i,
+    });
   }
 
   accountCreatedHeading() {
-    return this.getByRole("heading", { name: /account created/i });
+    return this.page.getByRole("heading", { name: /account created/i });
   }
 
   loggedInAsAnyLink() {
-    return this.getByRole("link", { name: /logged in as/i });
+    return this.page.getByRole("link", { name: /logged in as/i });
   }
 
   passwordInput() {
@@ -71,7 +73,7 @@ export class RegisterPage extends BasePage {
   }
 
   createAccountButton() {
-    return this.getByRole("button", { name: /create account/i });
+    return this.page.getByRole("button", { name: /create account/i });
   }
 
   continueButton() {
@@ -79,7 +81,7 @@ export class RegisterPage extends BasePage {
   }
 
   loggedInAsLink(name) {
-    return this.getByRole("link", {
+    return this.page.getByRole("link", {
       name: new RegExp(`logged in as\\s*${name}`, "i"),
     });
   }
@@ -93,6 +95,18 @@ export class RegisterPage extends BasePage {
     if (logoutVisible) return true;
 
     return this.isVisible(this.loggedInAsAnyLink(), timeout);
+  }
+
+  async settleHomePage() {
+    await this.page
+      .waitForLoadState("domcontentloaded", { timeout: 3000 })
+      .catch(() => {});
+    await this.recoverFromVignette("/");
+  }
+
+  async openHomeAndSettle() {
+    await this.goto("/");
+    await this.settleHomePage();
   }
 
   async ensureMrTitleSelected() {
@@ -160,13 +174,12 @@ export class RegisterPage extends BasePage {
           allowDomFallback: true,
         });
       } else {
-        await this.goto("/");
+        await this.openHomeAndSettle();
       }
 
-      await this.page
-        .waitForLoadState("domcontentloaded", { timeout: 3000 })
-        .catch(() => {});
-      await this.recoverFromVignette("/");
+      if (attempt === 0) {
+        await this.settleHomePage();
+      }
 
       const loggedInUiVisible = await this.isLoggedInUiVisible(2500);
       if (loggedInUiVisible) {
@@ -183,19 +196,17 @@ export class RegisterPage extends BasePage {
       }
     }
 
-    await this.goto("/");
-    await this.recoverFromVignette("/");
+    await this.openHomeAndSettle();
     await expect(this.logoutLink()).toBeVisible({ timeout: 7000 });
   }
 
   logoutLink() {
-    return this.getByRole("link", { name: /logout/i });
+    return this.page.getByRole("link", { name: /logout/i });
   }
 
   async assertLoggedIn(name) {
     if (!(await this.isVisible(this.logoutLink(), 2500))) {
-      await this.recoverFromVignette("/");
-      await this.goto("/");
+      await this.openHomeAndSettle();
     }
 
     await expect(this.logoutLink()).toBeVisible({ timeout: 7000 });
