@@ -45,6 +45,7 @@ Thumbs.db
 # Logs
 *.log
 logs/
+out/logs/
 
 # GitHub metadata: keep only workflows and actions tracked
 .github/*

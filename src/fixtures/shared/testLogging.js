@@ -1,3 +1,5 @@
+import fs from "node:fs/promises";
+import path from "node:path";
 import {
   createLogger,
   getAttachAllureEnabled,
@@ -10,6 +12,17 @@ import {
 
 function env(name, fallback) {
   return process.env[name] ?? fallback;
+}
+
+function didTestNeedDiagnostics(testInfo) {
+  const expectedStatus = testInfo.expectedStatus || "passed";
+  const actualStatus = testInfo.status || expectedStatus;
+
+  if ((testInfo.errors?.length ?? 0) > 0) {
+    return true;
+  }
+
+  return actualStatus !== expectedStatus;
 }
 
 function shouldAttachExecutionLog(testInfo) {
@@ -34,13 +47,57 @@ function shouldAttachExecutionLog(testInfo) {
     return true;
   }
 
-  return testInfo.status !== testInfo.expectedStatus;
+  return didTestNeedDiagnostics(testInfo);
+}
+
+function shouldKeepExecutionLog(testInfo) {
+  if (isDebugLoggingEnabled()) {
+    return true;
+  }
+
+  const keepMode = String(env("LOG_KEEP_MODE", "fail")).toLowerCase();
+  if (keepMode === "always") {
+    return true;
+  }
+
+  if (keepMode === "never") {
+    return false;
+  }
+
+  if ((testInfo.retry ?? 0) > 0) {
+    return true;
+  }
+
+  return didTestNeedDiagnostics(testInfo);
+}
+
+async function removeFileAndEmptyParents(filePath, rootDir) {
+  try {
+    await fs.rm(filePath, { force: true });
+  } catch {}
+
+  const resolvedRoot = path.resolve(rootDir);
+  let currentDir = path.resolve(path.dirname(filePath));
+
+  while (
+    currentDir.startsWith(resolvedRoot) &&
+    currentDir !== resolvedRoot &&
+    currentDir !== path.dirname(currentDir)
+  ) {
+    try {
+      await fs.rmdir(currentDir);
+    } catch {
+      break;
+    }
+
+    currentDir = path.dirname(currentDir);
+  }
 }
 
 export function startTestLogging(testInfo, { kind }) {
   const feature = inferFeatureFromTestInfo(testInfo);
   const projectName = testInfo.project?.name || "";
-  const baseDir = String(env("LOG_DIR", "logs"));
+  const baseDir = String(env("LOG_DIR", "out/logs"));
 
   const logFilePath = buildTestLogPath({
     baseDir,
@@ -79,6 +136,10 @@ export function startTestLogging(testInfo, { kind }) {
           path: logFilePath,
           contentType: "text/plain",
         });
+      }
+
+      if (!shouldKeepExecutionLog(testInfo)) {
+        await removeFileAndEmptyParents(logFilePath, baseDir);
       }
     },
   };
