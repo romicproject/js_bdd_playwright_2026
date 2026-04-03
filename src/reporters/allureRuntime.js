@@ -1,5 +1,6 @@
 import * as allure from "allure-js-commons";
 import { Severity } from "allure-js-commons";
+import { createHash } from "node:crypto";
 import { config } from "../framework/config/envConfig.js";
 
 function normalizeTags(tags = []) {
@@ -29,15 +30,38 @@ function resolveSeverity(tags) {
   return Severity.NORMAL;
 }
 
+function buildStableIdentity(testInfo, { kind, feature } = {}) {
+  const titlePath = Array.isArray(testInfo?.titlePath)
+    ? testInfo.titlePath.map((value) => String(value).trim()).filter(Boolean)
+    : [];
+
+  const parts = [
+    String(kind || "unknown").trim(),
+    String(testInfo?.project?.name || "unknown").trim(),
+    String(feature || "unknown").trim(),
+    ...titlePath,
+  ].filter(Boolean);
+
+  return parts.join(" :: ");
+}
+
+function buildStableAllureId(value) {
+  return createHash("sha1").update(String(value)).digest("hex");
+}
+
 export async function applyAllureMetadata(
   testInfo,
   { kind, feature, apiMockEnabled, apiMockProfile } = {},
 ) {
   const tags = normalizeTags(testInfo?.tags);
+  const stableIdentity = buildStableIdentity(testInfo, { kind, feature });
   const jobs = [
-    allure.parameter("env", config.env),
-    allure.parameter("lane", config.retry?.lane || "default"),
-    allure.parameter("project", testInfo?.project?.name || "unknown"),
+    allure.parameter("env", config.env, { excluded: true }),
+    allure.parameter("lane", config.retry?.lane || "default", {
+      excluded: true,
+    }),
+    allure.testCaseId(buildStableAllureId(`case::${stableIdentity}`)),
+    allure.historyId(buildStableAllureId(`history::${stableIdentity}`)),
   ];
 
   if (process.env.LOG_RUN_ID) {
@@ -64,7 +88,9 @@ export async function applyAllureMetadata(
 
   if (kind === "API") {
     jobs.push(
-      allure.parameter("api_mock_enabled", String(Boolean(apiMockEnabled))),
+      allure.parameter("api_mock_enabled", String(Boolean(apiMockEnabled)), {
+        excluded: true,
+      }),
     );
 
     if (apiMockProfile) {

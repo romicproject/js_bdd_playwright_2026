@@ -47,7 +47,7 @@ This project can publish the same test run into Allure in addition to the Playwr
 - Generate a static report with `npm run report:allure:generate`
 - Open a generated report with `npm run report:allure:open`
 - Generate and serve directly from raw results with `npm run report:allure:serve`
-- `report:allure:generate` also preserves local `history/` from the previous report, so trend widgets can accumulate across runs
+- Allure 3 stores local history in `out/allure-history/history.jsonl`, so test history and trend data can accumulate across runs without copying an old `history/` folder
 
 When `LOG_ATTACH_ALLURE=true`, the per-test `execution.log` attachment is also included in Allure results.
 
@@ -63,7 +63,7 @@ npm run report:allure:open
 Notes:
 
 - `clean:light` intentionally leaves Allure artifacts untouched so local history is preserved
-- `clean` removes both `out/allure-results` and `out/allure-report`, which resets local Allure history
+- `clean` removes `out/allure-results`, `out/allure-report`, and `out/allure-history`, which resets local Allure history
 
 ### Recommended profiles
 
