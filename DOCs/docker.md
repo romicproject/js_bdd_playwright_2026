@@ -34,18 +34,24 @@ Anything the Playwright run writes in those directories (reports, attachments, t
 
 ## Jenkins CI usage
 
-The project includes a top-level `Jenkinsfile` that runs Docker Compose tests with a parameterized environment:
-
-- `TEST_ENV=dev` uses `tests-dev`
-- `TEST_ENV=staging` uses `tests-staging`
-- `TEST_ENV=prod` uses `tests-prod`
+The project includes a top-level `Jenkinsfile` that runs tests **directly inside the Playwright Docker image** (no Docker Compose on the agent).
 
 Pipeline flow:
 
 1. Checkout repository
-2. Verify Docker / Compose availability on agent
-3. Build image with `docker compose --profile <env> build`
-4. Run tests with `docker compose --profile <env> up --build --abort-on-container-exit --exit-code-from tests-<env> --remove-orphans`
-5. Publish `out/test-results/junit.xml` and archive `out/playwright-report/**` + `out/test-results/**`
+2. Install dependencies with `npm ci`
+3. Quality gate: `npm run check:quality` (bddgen + lint + format check)
+4. Restore Allure history from the last successful build (via `copyArtifacts`)
+5. Run three lanes **in parallel**:
+   - `api-mock` → `npm run test:api:mock:ci`
+   - `api-live-smoke` → `npm run test:api:live:smoke:ci`
+   - `ui-critical` → `npm run test:ui:critical:ci` (skippable via `SKIP_UI` parameter)
+6. Generate Allure report: `npm run report:allure:generate`
+7. Publish artifacts: `playwright-report`, `test-results`, `allure-results`, `allure-report`, `allure-history`, `logs`, per-lane snapshots under `out/lanes/`
 
-The Jenkins agent must have Docker access and permissions to execute `docker compose`.
+Parameters:
+
+- `TEST_ENV` — `dev` / `staging` / `prod`
+- `SKIP_UI` — boolean, skips the `ui-critical` lane when the UI site is unstable
+
+The Jenkins agent requires access to the Playwright Docker image (`mcr.microsoft.com/playwright:v1.58.2-jammy`). The `copyArtifacts` step requires the **Copy Artifact** plugin; the `publishHTML` step requires the **HTML Publisher** plugin. Both are optional — the pipeline degrades gracefully if they are absent.

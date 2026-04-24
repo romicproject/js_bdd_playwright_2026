@@ -14,8 +14,13 @@ export const DEFAULT_USER_FIELDS = {
   zipcode: "12345",
   state: "Test State",
   city: "Test City",
-  mobile_number: "1234567890",
 };
+
+function generateMobileNumber() {
+  // 10 digits total, starting with "5" to stay in a clearly-fake range.
+  const suffix = crypto.randomInt(100_000_000, 1_000_000_000);
+  return `5${suffix}`;
+}
 
 function env(name, fallback) {
   return process.env[name] ?? fallback;
@@ -62,33 +67,6 @@ export function buildScenarioUniqueId(identity = {}) {
   ].join("-");
 }
 
-export function buildScenarioEmail(
-  prefix = "api.user",
-  identity = {},
-  domain = "test.com",
-) {
-  const safePrefix = sanitizeIdPart(prefix, "user");
-  const safeDomain = String(domain || "test.com")
-    .trim()
-    .replace(/^@+/, "")
-    .toLowerCase();
-
-  return `${safePrefix}.${buildScenarioUniqueId(identity)}@${safeDomain}`;
-}
-
-export function buildScenarioPhoneNumber(identity = {}) {
-  const uniqueId = buildScenarioUniqueId(identity).replace(/[^0-9]/g, "");
-  const digits = `${uniqueId}1234567`.slice(0, 7);
-  return `555${digits}`;
-}
-
-export function buildUserCredentials(email, password) {
-  return {
-    email: String(email ?? "").trim(),
-    password: String(password ?? ""),
-  };
-}
-
 export function buildTrackedUserRecord(user = {}) {
   return {
     email: String(user.email ?? "").trim(),
@@ -96,27 +74,10 @@ export function buildTrackedUserRecord(user = {}) {
   };
 }
 
-export function buildScenarioUser(options = {}) {
-  const {
-    identity = {},
-    emailPrefix = "api.user",
-    emailDomain = "test.com",
-    password = "Test123!",
-    overrides = {},
-  } = options;
-
-  const email =
-    overrides.email ?? buildScenarioEmail(emailPrefix, identity, emailDomain);
-
-  return buildUserPayload({
-    ...buildUserCredentials(email, password),
-    ...overrides,
-  });
-}
-
 export function buildUserPayload(overrides = {}) {
   return {
     ...DEFAULT_USER_FIELDS,
+    mobile_number: generateMobileNumber(),
     ...overrides,
   };
 }

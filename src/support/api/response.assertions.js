@@ -187,7 +187,8 @@ export function assertSchema(body, validateSchemaFn, schema, options = {}) {
     );
   }
 
-  const validation = validateSchemaFn(safeBody, schema, { logger });
+  // Suppress internal logging - assertSchema throws a comprehensive error anyway
+  const validation = validateSchemaFn(safeBody, schema, { logger: null });
 
   if (!validation.valid) {
     const errors = JSON.stringify(validation.errors || [], null, 2);

@@ -8,7 +8,7 @@ Feature: User Account Management API
   Scenario: Create new user account successfully
     When I create a user with:
       | name          | John Doe                      |
-      | email         | john.doe.{timestamp}@test.com |
+      | email         | john.doe.{unique}@test.com |
       | password      | Test123!                      |
       | title         | Mr                            |
       | birth_date    | 15                            |
@@ -28,18 +28,18 @@ Feature: User Account Management API
 
   @smoke @positive
   Scenario: Login with valid credentials
-    Given a user exists with email "login.valid.{timestamp}@test.com" and password "Valid123!"
+    Given a user exists with email "login.valid.{unique}@test.com" and password "Valid123!"
     When I verify login with:
-      | email    | login.valid.{timestamp}@test.com |
+      | email    | login.valid.{unique}@test.com |
       | password | Valid123!                       |
     Then the response status should be 200
 
   @regression @negative
   Scenario: Create user with duplicate email
-    Given a user exists with email "duplicate.{timestamp}@test.com"
+    Given a user exists with email "duplicate.{unique}@test.com"
     When I create a user with:
       | name     | Duplicate User                |
-      | email    | duplicate.{timestamp}@test.com |
+      | email    | duplicate.{unique}@test.com |
       | password | Test123!                      |
     Then the response status should be 400
     And the response message should indicate "email already exists"
@@ -47,7 +47,7 @@ Feature: User Account Management API
   @regression @negative
   Scenario: Login with invalid credentials
     When I verify login with:
-      | email    | nonexistent.{timestamp}@example.invalid |
+      | email    | nonexistent.{unique}@example.invalid |
       | password | WrongPassword123!                      |
     Then the response status should be 404
     And the response message should indicate "user not found"
@@ -61,7 +61,7 @@ Feature: User Account Management API
 
   @smoke @positive
   Scenario: Delete user account successfully
-    Given a user exists with email "todelete.{timestamp}@test.com"
+    Given a user exists with email "todelete.{unique}@test.com"
     When I delete account with the saved user credentials
     Then the response status should be 200
     And the response message should indicate "account deleted"

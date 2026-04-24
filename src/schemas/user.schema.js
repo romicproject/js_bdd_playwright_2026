@@ -2,26 +2,6 @@
 import { z } from "zod";
 
 /**
- * Schema for the response to user creation/verification
- */
-export const userResponseSchema = z
-  .object({
-    responseCode: z
-      .number({
-        required_error: "Response code is required",
-        invalid_type_error: "Response code must be a number",
-      })
-      .int(),
-
-    message: z
-      .string({
-        invalid_type_error: "Message must be a string",
-      })
-      .optional(),
-  })
-  .strict();
-
-/**
  * Schema for user creation success
  */
 export const userCreatedSchema = z.object({

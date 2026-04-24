@@ -96,6 +96,8 @@ export default defineConfig({
   testDir,
   testMatch: "**/*.spec.js",
 
+  globalSetup: "./src/framework/globalSetup.js",
+
   timeout: envConfig.timeout.global,
   fullyParallel: true,
   forbidOnly: isCI,

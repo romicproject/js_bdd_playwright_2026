@@ -6,7 +6,6 @@ const SENSITIVE_KEYS = new Set([
   "api_key",
   "apikey",
   "authorization",
-  "email",
 ]);
 
 const REDACT_HEADERS = new Set([

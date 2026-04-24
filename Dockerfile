@@ -7,4 +7,4 @@ RUN npm ci
 
 COPY . .
 
-CMD ["sh", "-lc", "npm run bdd:generate && npm run test:dev"]
+CMD ["sh", "-lc", "npm run bdd:generate && cross-env ENV=${ENV:-dev} playwright test"]

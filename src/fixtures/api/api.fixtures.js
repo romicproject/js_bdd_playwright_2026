@@ -112,6 +112,12 @@ export const test = base.extend({
           return resolvedPreflight;
         }
 
+        // globalSetup already ran a successful preflight for this run.
+        if (process.env.API_PREFLIGHT_OK === "1") {
+          resolvedPreflight = { ok: true, source: "globalSetup" };
+          return resolvedPreflight;
+        }
+
         if (!preflightPromise) {
           preflightPromise = runApiPreflight(playwright).then((result) => {
             resolvedPreflight = result;
