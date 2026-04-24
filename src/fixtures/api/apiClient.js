@@ -1,5 +1,4 @@
 // fixtures/api/apiClient.js
-import { expect } from "@playwright/test";
 import {
   redactUrl,
   redactHeaders,
@@ -247,15 +246,6 @@ export function createApiClient(apiContext, testInfo) {
     return result;
   }
 
-  async function healthCheck({ path = "/productsList" } = {}) {
-    const res = await _makeRequest("GET", path, { storeResponse: true });
-    expect(
-      res.ok,
-      `Health check failed for ${path}. Status: ${res.status}`,
-    ).toBeTruthy();
-    return res;
-  }
-
   return {
     get: (url, options = {}) => _makeRequest("GET", url, options),
     post: (url, body = {}, options = {}) =>
@@ -266,6 +256,5 @@ export function createApiClient(apiContext, testInfo) {
       _makeRequest("DELETE", url, { ...options, data: body }),
     patch: (url, body = {}, options = {}) =>
       _makeRequest("PATCH", url, { ...options, data: body }),
-    healthCheck,
   };
 }

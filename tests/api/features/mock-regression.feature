@@ -17,7 +17,7 @@ Feature: Mocked API regression coverage
     Then the response status should be 400
     And the response message should indicate "missing parameter"
 
-  @regression @positive
+  @regression @positive @brands
   Scenario: Get all brands with contract mock
     When I get all brands
     Then the response status should be 200

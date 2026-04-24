@@ -74,11 +74,26 @@ Add new methods at `createProductsHelpers`, `createUsersHelpers`, or `createBran
 - To fail the scenario when cleanup cannot be completed, set:
   - `API_FAIL_ON_CLEANUP_ERROR=true`
 
+## globalSetup: config validation and API preflight
+
+- `src/framework/globalSetup.js` runs **once per Playwright process** (before workers start).
+- It validates required config keys (`API_BASE_URL`, `BASE_URL`) based on the active lane — fail fast before any test starts.
+- It performs the API live preflight (`/productsList`) a single time and signals workers via `API_PREFLIGHT_OK=1` so they skip the duplicate check.
+- Preflight is skipped automatically when:
+  - `TEST_LANE` starts with `ui-`
+  - `API_MOCK_ENABLED=true`
+  - `API_SKIP_PREFLIGHT=1` (escape hatch for local runs when the live API is down)
+
 ## Tagging and naming conventions
 
 - Use one layer tag on every scenario:
   - `@api` for API scenarios
   - `@ui` for UI scenarios
+- Use one domain tag when relevant:
+  - `@products` for product-related scenarios
+  - `@brands` for brand-related scenarios
+  - `@users` for user account scenarios
+  - `@workflow` for cross-step or end-to-end flows
 - Use one intent tag when relevant:
   - `@smoke` for fast confidence checks
   - `@critical` for the smallest business-critical UI journey set
@@ -114,6 +129,13 @@ Add new methods at `createProductsHelpers`, `createUsersHelpers`, or `createBran
   Smallest business-critical UI journey set.
 - `npm run test:ui:regression`
   Broader UI coverage with a higher operational cost.
+
+Domain-scoped shortcuts (all run on dev by default):
+
+- `npm run test:products` — product scenarios
+- `npm run test:brands` — brand scenarios
+- `npm run test:users` — user account scenarios
+- `npm run test:workflow` — end-to-end workflows
 
 Use these lanes as the default planning unit when the suite grows. Avoid adding new large live-smoke buckets when a narrower lane is enough.
 

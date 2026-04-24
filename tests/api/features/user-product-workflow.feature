@@ -8,7 +8,7 @@ Feature: User and Product Workflow
   Scenario: New user searches for products
     When I create a user with:
       | name     | Product Searcher              |
-      | email    | searcher.{timestamp}@test.com |
+      | email    | searcher.{unique}@test.com |
       | password | Search123!                    |
     Then the response status should be 201
 
@@ -23,7 +23,7 @@ Feature: User and Product Workflow
   Scenario: User lifecycle - create, login, delete
     When I create a user with:
       | name     | Lifecycle User                 |
-      | email    | lifecycle.{timestamp}@test.com |
+      | email    | lifecycle.{unique}@test.com |
       | password | Life123!                       |
     Then the response status should be 201
     And I save the created user email

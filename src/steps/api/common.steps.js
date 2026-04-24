@@ -77,35 +77,51 @@ Then(
 Then(
   "the response message should indicate {string}",
   async ({ apiContext }, messageType) => {
-    const messageMap = {
-      "account created":
-        /successfully subscribed|user created|account created/i,
-      "successful login": /login successful|user exists|success/i,
-      "email already exists": /email already exists|already exist/i,
-      "user not found": /user not found|not exist/i,
-      "missing parameter": /missing|required/i,
-      "account deleted": /account deleted|deleted/i,
-      "account not found": /account.*not found|not exist/i,
+    const MESSAGE_TYPES = {
+      "account created": {
+        pattern: /successfully subscribed|user created|account created/i,
+        schema: userCreatedSchema,
+      },
+      "successful login": {
+        pattern: /login successful|user exists|success/i,
+        schema: loginSuccessSchema,
+      },
+      "email already exists": {
+        pattern: /email already exists|already exist/i,
+        schema: badRequestSchema,
+      },
+      "user not found": {
+        pattern: /user not found|not exist/i,
+        schema: notFoundSchema,
+      },
+      "missing parameter": {
+        pattern: /missing|required/i,
+        schema: badRequestSchema,
+      },
+      "account deleted": {
+        pattern: /account deleted|deleted/i,
+        schema: deleteSuccessSchema,
+      },
+      "account not found": {
+        pattern: /account.*not found|not exist/i,
+        schema: notFoundSchema,
+      },
     };
 
-    const schemaMap = {
-      "account created": userCreatedSchema,
-      "successful login": loginSuccessSchema,
-      "email already exists": badRequestSchema,
-      "user not found": notFoundSchema,
-      "missing parameter": badRequestSchema,
-      "account deleted": deleteSuccessSchema,
-      "account not found": notFoundSchema,
-    };
-
+    const entry = MESSAGE_TYPES[messageType];
     const body = getResponseBody(apiContext);
-    const schema = schemaMap[messageType];
-    if (schema) {
-      assertSchema(body, validateSchema, schema, {
+    if (entry?.schema) {
+      assertSchema(body, validateSchema, entry.schema, {
         logger: apiContext.getLogger(),
       });
     }
 
-    expectMessageType(apiContext, messageType, messageMap);
+    expectMessageType(
+      apiContext,
+      messageType,
+      Object.fromEntries(
+        Object.entries(MESSAGE_TYPES).map(([k, v]) => [k, v.pattern]),
+      ),
+    );
   },
 );

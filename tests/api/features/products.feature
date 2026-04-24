@@ -40,13 +40,6 @@ Feature: Products API
     Then the response status should be 400
     And the response message should indicate "missing parameter"
 
-  @regression @positive
-  Scenario: Get all brands
-    When I get all brands
-    Then the response status should be 200
-    And the response should contain brands
-    And each brand should have required fields
-
   @regression @mock
   Scenario: Get all products successfully with mock profile
     Given API mock profile "products-happy" is enabled

@@ -1,41 +1,16 @@
-function env(name, fallback) {
-  return process.env[name] ?? fallback;
-}
+import {
+  isDebugLoggingEnabled,
+  getAttachAllureEnabled,
+} from "../../../framework/logging/logger.js";
 
-function toBool(v, fallback) {
-  if (v == null) return fallback;
-  return String(v).toLowerCase() === "true";
-}
-
-const LEVELS = { debug: 10, info: 20, warn: 30, error: 40 };
-
-function getLogLevelName() {
-  const fromEnv = String(env("LOG_LEVEL", "info")).toLowerCase();
-  if (LEVELS[fromEnv] != null) return fromEnv;
-
-  // Optional aliases
-  if (
-    toBool(env("VERBOSE_LOGGING", null), false) ||
-    toBool(env("DEBUG_MODE", null), false)
-  ) {
-    return "debug";
-  }
-
-  return "info";
-}
-
-export function getAttachAllureEnabled() {
-  // Same flag used by api.fixtures.js to attach execution.log
-  return toBool(env("LOG_ATTACH_ALLURE", "true"), true);
-}
+export { getAttachAllureEnabled };
 
 /**
  * Controls whether API client emits request/response flow logs.
  * Source of truth: LOG_LEVEL (+ optional VERBOSE_LOGGING/DEBUG_MODE aliases)
  */
 export function shouldLog() {
-  // log request/response flow only when debug
-  return getLogLevelName() === "debug";
+  return isDebugLoggingEnabled();
 }
 
 export function getLogger(apiContext) {

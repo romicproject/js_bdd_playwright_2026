@@ -57,11 +57,6 @@ export function createApiContext(request, config) {
         return value.replaceAll("{unique}", uniqueId);
       }
 
-      if (value.includes("{timestamp}")) {
-        const uniqueId = this.getScenarioUniqueId() ?? String(Date.now());
-        return value.replaceAll("{timestamp}", uniqueId);
-      }
-
       return value;
     },
 

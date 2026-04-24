@@ -13,10 +13,7 @@ function resolveTrackedEmail(apiContext, emailTemplate) {
   const resolved = apiContext.resolveTemplate(raw);
   const existingUser = apiContext.getUser("existing");
 
-  if (
-    (raw.includes("{timestamp}") || raw.includes("{unique}")) &&
-    existingUser.email
-  ) {
+  if (raw.includes("{unique}") && existingUser.email) {
     return existingUser.email;
   }
 
