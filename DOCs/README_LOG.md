@@ -55,7 +55,7 @@ Recommended local flow for trend-friendly Allure runs:
 
 ```bash
 npm run report:allure:new-run
-npm run test:api:mock
+npm run test:lane -- api-mock
 npm run report:allure:generate
 npm run report:allure:open
 ```

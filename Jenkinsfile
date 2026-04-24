@@ -78,26 +78,28 @@ pipeline {
       parallel {
         stage('api-mock') {
           steps {
-            sh 'npm run test:api:mock:ci'
-          }
-          post {
-            always {
-              sh 'mkdir -p out/lanes/api-mock'
-              sh 'cp -r out/test-results out/lanes/api-mock/test-results || true'
-              sh 'cp -r out/playwright-report out/lanes/api-mock/playwright-report || true'
+            withEnv([
+              'PLAYWRIGHT_OUTPUT_DIR=out/lanes/api-mock/test-results',
+              'PLAYWRIGHT_HTML_DIR=out/lanes/api-mock/playwright-report',
+              'ALLURE_RESULTS_DIR=out/lanes/api-mock/allure-results',
+              'SUITE_METRICS_FILE=out/lanes/api-mock/test-results/suite-metrics.json',
+              'LOG_DIR=out/lanes/api-mock/logs'
+            ]) {
+              sh 'npm run test:lane -- api-mock-ci'
             }
           }
         }
 
         stage('api-live-smoke') {
           steps {
-            sh 'npm run test:api:live:smoke:ci'
-          }
-          post {
-            always {
-              sh 'mkdir -p out/lanes/api-live-smoke'
-              sh 'cp -r out/test-results out/lanes/api-live-smoke/test-results || true'
-              sh 'cp -r out/playwright-report out/lanes/api-live-smoke/playwright-report || true'
+            withEnv([
+              'PLAYWRIGHT_OUTPUT_DIR=out/lanes/api-live-smoke/test-results',
+              'PLAYWRIGHT_HTML_DIR=out/lanes/api-live-smoke/playwright-report',
+              'ALLURE_RESULTS_DIR=out/lanes/api-live-smoke/allure-results',
+              'SUITE_METRICS_FILE=out/lanes/api-live-smoke/test-results/suite-metrics.json',
+              'LOG_DIR=out/lanes/api-live-smoke/logs'
+            ]) {
+              sh 'npm run test:lane -- api-live-smoke-ci'
             }
           }
         }
@@ -105,13 +107,14 @@ pipeline {
         stage('ui-critical') {
           when { expression { return !params.SKIP_UI } }
           steps {
-            sh 'npm run test:ui:critical:ci'
-          }
-          post {
-            always {
-              sh 'mkdir -p out/lanes/ui-critical'
-              sh 'cp -r out/test-results out/lanes/ui-critical/test-results || true'
-              sh 'cp -r out/playwright-report out/lanes/ui-critical/playwright-report || true'
+            withEnv([
+              'PLAYWRIGHT_OUTPUT_DIR=out/lanes/ui-critical/test-results',
+              'PLAYWRIGHT_HTML_DIR=out/lanes/ui-critical/playwright-report',
+              'ALLURE_RESULTS_DIR=out/lanes/ui-critical/allure-results',
+              'SUITE_METRICS_FILE=out/lanes/ui-critical/test-results/suite-metrics.json',
+              'LOG_DIR=out/lanes/ui-critical/logs'
+            ]) {
+              sh 'npm run test:lane -- ui-critical-ci'
             }
           }
         }
@@ -120,14 +123,14 @@ pipeline {
 
     stage('Allure report') {
       steps {
-        sh 'npm run report:allure:generate || true'
+        sh 'npm run report:allure:generate:lanes || true'
       }
     }
   }
 
   post {
     always {
-      junit testResults: 'out/test-results/junit.xml', allowEmptyResults: true
+      junit testResults: 'out/lanes/**/junit.xml', allowEmptyResults: true
 
       archiveArtifacts(
         artifacts: 'out/playwright-report/**,out/test-results/**,out/allure-results/**,out/allure-report/**,out/allure-history/**,out/logs/**,out/lanes/**',

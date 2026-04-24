@@ -15,7 +15,7 @@ services:
       - ENV=dev
     env_file:
       - env/dev.env
-    command: sh -lc "npm run bdd:generate && npm run test:dev"
+    command: sh -lc "npm run bdd:generate && npm run test:lane -- all-dev"
     profiles: ["dev"]
 
   tests-staging:
@@ -24,7 +24,7 @@ services:
       - ENV=staging
     env_file:
       - env/staging.env
-    command: sh -lc "npm run bdd:generate && npm run test:staging"
+    command: sh -lc "npm run bdd:generate && npm run test:lane -- all-staging"
     profiles: ["staging"]
 
   tests-prod:
@@ -33,5 +33,5 @@ services:
       - ENV=prod
     env_file:
       - env/prod.env
-    command: sh -lc "npm run bdd:generate && npm run test:prod"
+    command: sh -lc "npm run bdd:generate && npm run test:lane -- all-prod"
     profiles: ["prod"]

@@ -8,7 +8,7 @@ import {
 import {
   buildTestLogPath,
   inferFeatureFromTestInfo,
-} from "../../logging/paths.js";
+} from "../../framework/logging/paths.js";
 
 function env(name, fallback) {
   return process.env[name] ?? fallback;

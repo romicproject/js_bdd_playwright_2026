@@ -1,4 +1,3 @@
-// logging/paths.js
 import path from "node:path";
 
 function sanitize(s) {
@@ -27,7 +26,7 @@ export function buildTestLogPath({ baseDir, kind, feature, testTitle }) {
   return path.join(
     baseDir,
     date,
-    runId, // NEW: time folder per execution
+    runId,
     sanitize(kind),
     sanitize(feature),
     `${sanitize(testTitle)}.log`,

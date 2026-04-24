@@ -67,19 +67,19 @@ jobs:
       matrix:
         include:
           - lane: api-live-smoke
-            npm_script: test:api:live:smoke:ci
+            run_lane: api-live-smoke-ci
             shard_index: 1
             shard_total: 1
           - lane: api-mock
-            npm_script: test:api:mock:ci
+            run_lane: api-mock-ci
             shard_index: 1
             shard_total: 2
           - lane: api-mock
-            npm_script: test:api:mock:ci
+            run_lane: api-mock-ci
             shard_index: 2
             shard_total: 2
           - lane: ui-critical
-            npm_script: test:ui:critical:ci
+            run_lane: ui-critical-ci
             shard_index: 1
             shard_total: 1
     steps:
@@ -96,9 +96,9 @@ jobs:
         timeout-minutes: 30
         run: |
           if [ "${{ matrix.shard_total }}" = "1" ]; then
-            npm run ${{ matrix.npm_script }}
+            npm run test:lane -- ${{ matrix.run_lane }}
           else
-            npm run ${{ matrix.npm_script }} -- --shard=${{ matrix.shard_index }}/${{ matrix.shard_total }}
+            npm run test:lane -- ${{ matrix.run_lane }} --shard=${{ matrix.shard_index }}/${{ matrix.shard_total }}
           fi
 
       - uses: actions/upload-artifact@v4
@@ -166,24 +166,24 @@ jobs:
           case "$SUITE" in
             ui-smoke|ui-critical)
               if [ "$SUITE" = "ui-smoke" ]; then
-                npm run test:ui:smoke -- "${SHARD_ARGS[@]}"
+                npm run test:lane -- ui-smoke "${SHARD_ARGS[@]}"
               else
-                npm run test:ui:critical -- "${SHARD_ARGS[@]}"
+                npm run test:lane -- ui-critical "${SHARD_ARGS[@]}"
               fi ;;
             ui-only|ui-regression)
-              npm run test:ui:regression -- "${SHARD_ARGS[@]}" ;;
+              npm run test:lane -- ui-regression "${SHARD_ARGS[@]}" ;;
             api-live-smoke)
-              npm run test:api:live:smoke -- "${SHARD_ARGS[@]}" ;;
+              npm run test:lane -- api-live-smoke "${SHARD_ARGS[@]}" ;;
             api-live-regression)
-              npm run test:api:live:regression -- "${SHARD_ARGS[@]}" ;;
+              npm run test:lane -- api-live-regression "${SHARD_ARGS[@]}" ;;
             api-mock)
-              npm run test:api:mock -- "${SHARD_ARGS[@]}" ;;
+              npm run test:lane -- api-mock "${SHARD_ARGS[@]}" ;;
             api-only)
-              npm run test:api:live:regression -- "${SHARD_ARGS[@]}" ;;
-            all)      npm run test:dev -- "${PROJECT_ARGS[@]}" "${GREP_ARGS[@]}" "${SHARD_ARGS[@]}" ;;
-            perf-smoke) npm run perf:smoke ;;
-            perf-load)  npm run perf:load ;;
-            perf-ui)    npm run perf:ui ;;
+              npm run test:lane -- api-live-regression "${SHARD_ARGS[@]}" ;;
+            all)      npm run test:lane -- all-dev "${PROJECT_ARGS[@]}" "${GREP_ARGS[@]}" "${SHARD_ARGS[@]}" ;;
+            perf-smoke) npm run perf:run -- smoke ;;
+            perf-load)  npm run perf:run -- load ;;
+            perf-ui)    npm run perf:run -- ui ;;
             *) echo "Unknown suite: $SUITE"; exit 2 ;;
           esac
 

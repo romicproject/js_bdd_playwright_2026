@@ -61,7 +61,7 @@ Add new methods at `createProductsHelpers`, `createUsersHelpers`, or `createBran
 - API mocks are opt-in and scenario-safe.
 - Use tag `@mock` and step `Given API mock profile "contract-default" is enabled` in API features.
 - Run only mock scenarios:
-  - `npm run test:api:mock`
+  - `npm run test:lane -- api-mock`
 
 - Optional ENV fallback:
   - `API_MOCK_ENABLED=true`
@@ -77,7 +77,7 @@ Add new methods at `createProductsHelpers`, `createUsersHelpers`, or `createBran
 ## globalSetup: config validation and API preflight
 
 - `src/framework/globalSetup.js` runs **once per Playwright process** (before workers start).
-- It validates required config keys (`API_BASE_URL`, `BASE_URL`) based on the active lane — fail fast before any test starts.
+- It validates required config keys (`API_BASE_URL`, `BASE_URL`) based on the active lane - fail fast before any test starts.
 - It performs the API live preflight (`/productsList`) a single time and signals workers via `API_PREFLIGHT_OK=1` so they skip the duplicate check.
 - Preflight is skipped automatically when:
   - `TEST_LANE` starts with `ui-`
@@ -110,32 +110,32 @@ Add new methods at `createProductsHelpers`, `createUsersHelpers`, or `createBran
 ## Windows run tips (PowerShell/CMD)
 
 - Prefer `--grep=@tag` instead of `--grep @tag` to avoid argument parsing issues in PowerShell.
-- For register UI flow, use the dedicated scripts:
-  - `npm run test:ui:register`
-  - `npm run test:ui:register:headed`
+- For register UI flow, use the dedicated lanes:
+  - `npm run test:lane -- ui-register`
+  - `npm run test:lane -- ui-register-headed`
 - Generic examples:
-  - `npm run test:dev -- --grep=@ui`
-  - `npm run test:dev -- --grep=@register --headed`
+  - `npm run test:lane -- all-dev --grep=@ui`
+  - `npm run test:lane -- all-dev --grep=@register --headed`
 
 ## Suite lanes
 
-- `npm run test:api:mock`
+- `npm run test:lane -- api-mock`
   Fast deterministic API contract/regression coverage.
-- `npm run test:api:live:smoke`
+- `npm run test:lane -- api-live-smoke`
   Thin live API confidence checks.
-- `npm run test:api:live:regression`
+- `npm run test:lane -- api-live-regression`
   Broader live API coverage when needed.
-- `npm run test:ui:critical`
+- `npm run test:lane -- ui-critical`
   Smallest business-critical UI journey set.
-- `npm run test:ui:regression`
+- `npm run test:lane -- ui-regression`
   Broader UI coverage with a higher operational cost.
 
 Domain-scoped shortcuts (all run on dev by default):
 
-- `npm run test:products` — product scenarios
-- `npm run test:brands` — brand scenarios
-- `npm run test:users` — user account scenarios
-- `npm run test:workflow` — end-to-end workflows
+- `npm run test:lane -- products` - product scenarios
+- `npm run test:lane -- brands` - brand scenarios
+- `npm run test:lane -- users` - user account scenarios
+- `npm run test:lane -- workflow` - end-to-end workflows
 
 Use these lanes as the default planning unit when the suite grows. Avoid adding new large live-smoke buckets when a narrower lane is enough.
 
@@ -176,11 +176,11 @@ This file is intended for CI artifacts and trend analysis, especially once the s
 
 - Performance mini-project is available in [perf/README.md](../perf/README.md).
 - Quick commands:
-  - `npm run perf:smoke`
-  - `npm run perf:load`
-  - `npm run perf:ui`
-  - `npm run perf:report:smoke`
-  - `npm run perf:report:load`
-  - `npm run perf:report:ui`
+  - `npm run perf:run -- smoke`
+  - `npm run perf:run -- load`
+  - `npm run perf:run -- ui`
+  - `npm run perf:report -- smoke`
+  - `npm run perf:report -- load`
+  - `npm run perf:report -- ui`
 - Reports are generated locally from Artillery JSON via `perf/reporters/generate-report.js`.
 - Trend mode compares the current run against `*.prev.json` baseline files.

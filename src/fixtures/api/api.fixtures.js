@@ -5,101 +5,10 @@ import { createApiContext } from "./apiContext.js";
 import { createApiClient } from "./apiClient.js";
 import { createApiHelpers } from "./helpers/index.js";
 import { startTestLogging } from "../shared/testLogging.js";
-import { joinUrl } from "../../framework/http/url.js";
-import {
-  getEffectiveStatus,
-  getResponseMessage,
-} from "../../support/api/response.assertions.js";
 import { buildScenarioUniqueId } from "../../support/api/users.data.js";
 import { applyAllureMetadata } from "../../reporters/allureRuntime.js";
-
-async function runApiPreflight(playwright) {
-  const { apiBaseUrl } = requireApiConfig();
-  const fullUrl = joinUrl(apiBaseUrl, "/productsList");
-  const requestContext = await playwright.request.newContext({
-    extraHTTPHeaders: {
-      Accept: "application/json",
-      ...(config.apiKey && { "X-API-Key": config.apiKey }),
-    },
-    ignoreHTTPSErrors: !config.isProduction,
-  });
-
-  try {
-    const response = await requestContext.get(fullUrl, {
-      timeout: config.timeout?.request,
-    });
-
-    let body;
-    try {
-      body = await response.json();
-    } catch {
-      body = await response.text();
-    }
-
-    const preflightResult = {
-      status: response.status(),
-      body,
-    };
-    const effectiveStatus = getEffectiveStatus(preflightResult);
-
-    if (effectiveStatus >= 200 && effectiveStatus < 300) {
-      return {
-        ok: true,
-        checkedUrl: fullUrl,
-        effectiveStatus,
-      };
-    }
-
-    throw new Error(
-      `API preflight failed for ${fullUrl}. http=${response.status()} effective=${effectiveStatus} message="${getResponseMessage(preflightResult)}"`,
-    );
-  } finally {
-    await requestContext.dispose();
-  }
-}
-
-async function cleanupTrackedUsers(apiContext, apiHelpers) {
-  const logger = apiContext.getLogger();
-  const failures = [];
-
-  for (const user of [...apiContext.getCleanupUsers()].reverse()) {
-    try {
-      await apiHelpers.users.deleteAccount(
-        {
-          email: user.email,
-          password: user.password,
-        },
-        { storeResponse: false },
-      );
-
-      logger?.info("Cleanup user deleted", {
-        email: user.email,
-      });
-    } catch (error) {
-      const failure = {
-        email: user.email,
-        error: String(error?.message || error),
-      };
-
-      failures.push(failure);
-      logger?.warn("Cleanup user delete failed", {
-        email: failure.email,
-        error: failure.error,
-      });
-    } finally {
-      apiContext.untrackCleanupUser(user.email);
-    }
-  }
-
-  if (failures.length > 0) {
-    logger?.warn("Tracked user cleanup completed with failures", {
-      count: failures.length,
-      emails: failures.map((failure) => failure.email),
-    });
-  }
-
-  return failures;
-}
+import { runApiPreflight } from "../../framework/http/apiPreflight.js";
+import { cleanupTrackedUsers } from "../../support/api/cleanupUsers.js";
 
 export const test = base.extend({
   apiAvailability: [
@@ -119,7 +28,14 @@ export const test = base.extend({
         }
 
         if (!preflightPromise) {
-          preflightPromise = runApiPreflight(playwright).then((result) => {
+          const { apiBaseUrl } = requireApiConfig();
+          preflightPromise = runApiPreflight({
+            requestFactory: playwright.request,
+            apiBaseUrl,
+            apiKey: config.apiKey,
+            timeout: config.timeout?.request,
+            ignoreHTTPSErrors: !config.isProduction,
+          }).then((result) => {
             resolvedPreflight = result;
             return result;
           });
@@ -200,7 +116,19 @@ export const test = base.extend({
   cleanupTrackedUsers: [
     async ({ apiContext, apiHelpers }, use, testInfo) => {
       await use();
-      const failures = await cleanupTrackedUsers(apiContext, apiHelpers);
+      const failures = await cleanupTrackedUsers({
+        users: apiContext.getCleanupUsers(),
+        deleteUser: (user) =>
+          apiHelpers.users.deleteAccount(
+            {
+              email: user.email,
+              password: user.password,
+            },
+            { storeResponse: false },
+          ),
+        untrackUser: (email) => apiContext.untrackCleanupUser(email),
+        logger: apiContext.getLogger(),
+      });
 
       if (failures.length === 0) {
         return;

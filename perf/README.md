@@ -22,15 +22,15 @@ This module adds mature load testing capabilities on top of the existing framewo
 
 ## Run
 
-- `npm run perf:smoke`
-- `npm run perf:load`
-- `npm run perf:ui`
+- `npm run perf:run -- smoke`
+- `npm run perf:run -- load`
+- `npm run perf:run -- ui`
 
 ## Reports
 
-- `npm run perf:report:smoke`
-- `npm run perf:report:load`
-- `npm run perf:report:ui`
+- `npm run perf:report -- smoke`
+- `npm run perf:report -- load`
+- `npm run perf:report -- ui`
 
 HTML reports are generated locally by `perf/reporters/generate-report.js` from Artillery JSON output files.
 
@@ -70,8 +70,8 @@ Output files:
 
 ## Maturity recommendations
 
-- Run `perf:smoke` for every major PR (nightly if possible).
-- Run `perf:load` before release.
+- Run `perf:run -- smoke` for every major PR (nightly if possible).
+- Run `perf:run -- load` before release.
 - Version/store aggregated JSON output as pipeline artifacts for trend tracking.
 - Do not use real sensitive data in `perf/data/*.csv`.
 

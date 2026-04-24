@@ -6,11 +6,7 @@
 
 import { request as playwrightRequest } from "@playwright/test";
 import { config, validateConfig } from "./config/envConfig.js";
-import { joinUrl } from "./http/url.js";
-import {
-  getEffectiveStatus,
-  getResponseMessage,
-} from "../support/api/response.assertions.js";
+import { runApiPreflight } from "./http/apiPreflight.js";
 
 function parseBoolean(value) {
   return value === "true" || value === "1";
@@ -48,43 +44,6 @@ function shouldRunApiPreflight(requireApi) {
   return true;
 }
 
-async function runApiPreflight() {
-  const fullUrl = joinUrl(config.apiBaseUrl, "/productsList");
-  const requestContext = await playwrightRequest.newContext({
-    extraHTTPHeaders: {
-      Accept: "application/json",
-      ...(config.apiKey && { "X-API-Key": config.apiKey }),
-    },
-    ignoreHTTPSErrors: !config.isProduction,
-  });
-
-  try {
-    const response = await requestContext.get(fullUrl, {
-      timeout: config.timeout?.request,
-    });
-
-    let body;
-    try {
-      body = await response.json();
-    } catch {
-      body = await response.text();
-    }
-
-    const preflightResult = { status: response.status(), body };
-    const effectiveStatus = getEffectiveStatus(preflightResult);
-
-    if (effectiveStatus >= 200 && effectiveStatus < 300) {
-      return { checkedUrl: fullUrl, effectiveStatus };
-    }
-
-    throw new Error(
-      `API preflight failed for ${fullUrl}. http=${response.status()} effective=${effectiveStatus} message="${getResponseMessage(preflightResult)}"`,
-    );
-  } finally {
-    await requestContext.dispose();
-  }
-}
-
 export default async function globalSetup() {
   const { requireApi, requireUi } = resolveConfigRequirements();
 
@@ -101,7 +60,13 @@ export default async function globalSetup() {
   console.log(summary);
 
   if (shouldRunApiPreflight(requireApi)) {
-    const result = await runApiPreflight();
+    const result = await runApiPreflight({
+      requestFactory: playwrightRequest,
+      apiBaseUrl: config.apiBaseUrl,
+      apiKey: config.apiKey,
+      timeout: config.timeout?.request,
+      ignoreHTTPSErrors: !config.isProduction,
+    });
     console.log(
       `[globalSetup] API preflight OK (${result.effectiveStatus}) -> ${result.checkedUrl}`,
     );

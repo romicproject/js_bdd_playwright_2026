@@ -5,9 +5,10 @@ import { config as envConfig } from "./src/framework/config/envConfig.js";
 import { buildAllureReporterOptions } from "./src/reporters/allureConfig.js";
 
 const isCI = Boolean(process.env.CI);
-const outputDir = "out/test-results";
-const htmlReportDir = "out/playwright-report";
-const allureResultsDir = "out/allure-results";
+const outputDir = process.env.PLAYWRIGHT_OUTPUT_DIR || "out/test-results";
+const htmlReportDir =
+  process.env.PLAYWRIGHT_HTML_DIR || "out/playwright-report";
+const allureResultsDir = process.env.ALLURE_RESULTS_DIR || "out/allure-results";
 
 function formatRunId(d = new Date()) {
   const hh = String(d.getHours()).padStart(2, "0");
@@ -75,6 +76,10 @@ function buildReporters() {
 
 if (!process.env.LOG_RUN_ID) {
   process.env.LOG_RUN_ID = formatRunId();
+}
+
+if (!process.env.SUITE_METRICS_FILE) {
+  process.env.SUITE_METRICS_FILE = `${outputDir}/suite-metrics.json`;
 }
 
 const testDir = defineBddConfig({

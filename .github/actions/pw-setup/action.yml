@@ -46,9 +46,9 @@ runs:
         key: pw-chromium-${{ runner.os }}-${{ hashFiles('package-lock.json') }}
         restore-keys: pw-chromium-${{ runner.os }}-
 
-    # FIX #2: consolidated into one step — clearer intent, same behaviour.
-    # cache-hit=true  → binaries restored by actions/cache; only system deps needed.
-    # cache-hit=false → full install (binaries + system deps).
+    # Install browser dependencies from cache when possible.
+    # cache-hit=true: binaries restored by actions/cache; only system deps needed.
+    # cache-hit=false: full install (binaries and system deps).
     - name: Install Playwright browser
       if: ${{ inputs.install-browser == 'true' }}
       shell: bash
@@ -59,7 +59,7 @@ runs:
           npx playwright install --with-deps chromium
         fi
 
-    # FIX #1: printf per-line — no heredoc indentation bleed into the .env file.
+    # Write env values one per line to avoid heredoc indentation drift.
     - name: Create env file
       shell: bash
       env:
@@ -81,7 +81,7 @@ runs:
           printf 'MAX_RETRIES=%s\n'           "2"
           printf 'DEBUG_MODE=%s\n'            "false"
           printf 'VERBOSE_LOGGING=%s\n'       "false"
-          printf 'API_KEY=%s\n'              "${API_KEY:-}"
+          printf 'API_KEY=%s\n'               "${API_KEY:-}"
           printf 'TEST_USER_EMAIL=%s\n'       "${TEST_USER_EMAIL:-}"
           printf 'TEST_USER_PASSWORD=%s\n'    "${TEST_USER_PASSWORD:-}"
         } > env/dev.env

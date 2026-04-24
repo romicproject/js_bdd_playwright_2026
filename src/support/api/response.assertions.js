@@ -1,23 +1,14 @@
 import { expect } from "@playwright/test";
+import {
+  getEffectiveStatus,
+  getResponseMessage,
+} from "../../framework/http/apiResponse.js";
 
 /**
  * AutomationExercise API often returns HTTP 200 with a business code in body.responseCode.
  * This helper returns the "effective" status we assert on by default.
  */
-export function getEffectiveStatus(res) {
-  const body = res?.body || {};
-  const hasBodyCode =
-    body && typeof body === "object" && typeof body.responseCode === "number";
-
-  return hasBodyCode ? body.responseCode : res?.status;
-}
-
-/** Normalize message field(s) */
-export function getResponseMessage(res) {
-  const body = res?.body || {};
-  const msg = body?.message ?? body?.responseMessage ?? body?.response_message;
-  return String(msg ?? "");
-}
+export { getEffectiveStatus, getResponseMessage };
 
 export function requireResponse(apiContext) {
   const res = apiContext?.response;

@@ -6,7 +6,7 @@ import { applyNetworkBlocking } from "./helpers/networkBlocker.js";
 import { createApiContext } from "../api/apiContext.js";
 import { createApiClient } from "../api/apiClient.js";
 import { createApiHelpers } from "../api/helpers/index.js";
-import { getEffectiveStatus } from "../../support/api/response.assertions.js";
+import { cleanupTrackedUsers } from "../../support/api/cleanupUsers.js";
 
 import {
   ContactUsPage,
@@ -79,58 +79,29 @@ async function cleanupTrackedUiUsers(uiContext, request, testInfo) {
   cleanupContext.setLogger(uiContext.logger);
   const cleanupClient = createApiClient(cleanupContext, testInfo);
   const apiHelpers = createApiHelpers(cleanupClient);
-  const failures = [];
 
-  for (const user of [...uiContext.getCleanupUsers()].reverse()) {
-    try {
-      const response = await apiHelpers.users.deleteAccount(
+  return cleanupTrackedUsers({
+    users: uiContext.getCleanupUsers(),
+    deleteUser: (user) =>
+      apiHelpers.users.deleteAccount(
         {
           email: user.email,
           password: user.password,
         },
         { storeResponse: false },
-      );
-      const effectiveStatus = getEffectiveStatus(response);
-
-      if (effectiveStatus >= 200 && effectiveStatus < 300) {
-        uiContext.logger?.info("UI cleanup user deleted", {
-          email: user.email,
-        });
-      } else if (effectiveStatus === 404) {
-        uiContext.logger?.info("UI cleanup user already absent", {
-          email: user.email,
-        });
-      } else {
-        failures.push({
-          email: user.email,
-          error: `effectiveStatus=${effectiveStatus}`,
-        });
-        uiContext.logger?.warn("UI cleanup user delete returned non-success", {
-          email: user.email,
-          effectiveStatus,
-        });
-      }
-    } catch (error) {
-      const failure = {
-        email: user.email,
-        error: String(error?.message || error),
-      };
-
-      failures.push(failure);
-      uiContext.logger?.warn("UI cleanup user delete failed", failure);
-    } finally {
-      uiContext.untrackCleanupUser(user.email);
-
+      ),
+    untrackUser: (email) => uiContext.untrackCleanupUser(email),
+    logger: uiContext.logger,
+    label: "UI cleanup user",
+    afterUser: (user) => {
       if (uiContext.state.register.user?.email === user.email) {
         uiContext.state.register.meta = {
           ...(uiContext.state.register.meta || {}),
           cleanupPending: false,
         };
       }
-    }
-  }
-
-  return failures;
+    },
+  });
 }
 
 export const test = base.extend({
