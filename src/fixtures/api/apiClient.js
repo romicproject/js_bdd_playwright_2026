@@ -164,7 +164,7 @@ export function createApiClient(apiContext, testInfo) {
           response = await request.patch(fullUrl, requestOptions);
           break;
         default:
-          throw new Error(`Unsupported HTTP method: ${method}`);
+          throw new Error(`[API_CLIENT] Unsupported HTTP method: ${method}`);
       }
     } catch (e) {
       apiContext.setLastError(e);
@@ -183,7 +183,9 @@ export function createApiClient(apiContext, testInfo) {
         error: String(e?.message || e),
       });
 
-      throw new Error(`API request failed: ${method} ${safeUrl}`, { cause: e });
+      throw new Error(`[API_CLIENT] API request failed: ${method} ${safeUrl}`, {
+        cause: e,
+      });
     }
 
     const httpStatus = response.status();

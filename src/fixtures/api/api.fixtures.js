@@ -7,10 +7,15 @@ import { createApiHelpers } from "./helpers/index.js";
 import { startTestLogging } from "../shared/testLogging.js";
 import { joinUrl } from "../../framework/http/url.js";
 import {
+  isApiPreflightSatisfied,
+  resolveConfigRequirements,
+} from "../../framework/http/preflightPolicy.js";
+import {
   getEffectiveStatus,
   getResponseMessage,
 } from "../../support/api/response.assertions.js";
 import { buildScenarioUniqueId } from "../../support/api/users.data.js";
+import { executeTrackedUserCleanup } from "../../support/api/cleanupExecutor.js";
 import { applyAllureMetadata } from "../../reporters/allureRuntime.js";
 
 async function runApiPreflight(playwright) {
@@ -59,46 +64,20 @@ async function runApiPreflight(playwright) {
 }
 
 async function cleanupTrackedUsers(apiContext, apiHelpers) {
-  const logger = apiContext.getLogger();
-  const failures = [];
-
-  for (const user of [...apiContext.getCleanupUsers()].reverse()) {
-    try {
-      await apiHelpers.users.deleteAccount(
+  return executeTrackedUserCleanup({
+    users: apiContext.getCleanupUsers(),
+    logger: apiContext.getLogger(),
+    prefix: "[API_CLEANUP]",
+    deleteUser: (user) =>
+      apiHelpers.users.deleteAccount(
         {
           email: user.email,
           password: user.password,
         },
         { storeResponse: false },
-      );
-
-      logger?.info("Cleanup user deleted", {
-        email: user.email,
-      });
-    } catch (error) {
-      const failure = {
-        email: user.email,
-        error: String(error?.message || error),
-      };
-
-      failures.push(failure);
-      logger?.warn("Cleanup user delete failed", {
-        email: failure.email,
-        error: failure.error,
-      });
-    } finally {
-      apiContext.untrackCleanupUser(user.email);
-    }
-  }
-
-  if (failures.length > 0) {
-    logger?.warn("Tracked user cleanup completed with failures", {
-      count: failures.length,
-      emails: failures.map((failure) => failure.email),
-    });
-  }
-
-  return failures;
+      ),
+    untrackUser: (email) => apiContext.untrackCleanupUser(email),
+  });
 }
 
 export const test = base.extend({
@@ -106,6 +85,7 @@ export const test = base.extend({
     async ({ playwright }, use) => {
       let resolvedPreflight = null;
       let preflightPromise = null;
+      const { requireApi } = resolveConfigRequirements();
 
       async function ensure() {
         if (resolvedPreflight) {
@@ -113,8 +93,13 @@ export const test = base.extend({
         }
 
         // globalSetup already ran a successful preflight for this run.
-        if (process.env.API_PREFLIGHT_OK === "1") {
+        if (isApiPreflightSatisfied()) {
           resolvedPreflight = { ok: true, source: "globalSetup" };
+          return resolvedPreflight;
+        }
+
+        if (!requireApi) {
+          resolvedPreflight = { ok: true, source: "skip-policy" };
           return resolvedPreflight;
         }
 

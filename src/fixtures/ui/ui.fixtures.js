@@ -6,8 +6,8 @@ import { applyNetworkBlocking } from "./helpers/networkBlocker.js";
 import { createApiContext } from "../api/apiContext.js";
 import { createApiClient } from "../api/apiClient.js";
 import { createApiHelpers } from "../api/helpers/index.js";
-import { getEffectiveStatus } from "../../support/api/response.assertions.js";
 import { UserCleanupRegistry } from "../../support/shared/cleanupTracking.js";
+import { executeTrackedUserCleanup } from "../../support/api/cleanupExecutor.js";
 
 import {
   ContactUsPage,
@@ -50,74 +50,34 @@ function createUiContext({ logger, logFilePath, testInfo, cleanupRegistry }) {
 }
 
 async function cleanupTrackedUiUsers(uiContext, request, testInfo) {
-  if (uiContext.getCleanupUsers().length === 0) {
-    return [];
-  }
-
-  if (!config.apiBaseUrl) {
-    uiContext.logger?.warn("[UI_CLEANUP] Skipped: API_BASE_URL is missing");
-    return uiContext.getCleanupUsers().map((user) => ({
-      email: user.email,
-      error: "API_BASE_URL is missing",
-    }));
-  }
-
   const cleanupContext = createApiContext(request, config);
   cleanupContext.setLogger(uiContext.logger);
   const cleanupClient = createApiClient(cleanupContext, testInfo);
   const apiHelpers = createApiHelpers(cleanupClient);
-  const failures = [];
 
-  for (const user of [...uiContext.getCleanupUsers()].reverse()) {
-    try {
-      const response = await apiHelpers.users.deleteAccount(
+  return executeTrackedUserCleanup({
+    users: uiContext.getCleanupUsers(),
+    logger: uiContext.logger,
+    prefix: "[UI_CLEANUP]",
+    missingConfigMessage: !config.apiBaseUrl ? "API_BASE_URL is missing" : "",
+    deleteUser: (user) =>
+      apiHelpers.users.deleteAccount(
         {
           email: user.email,
           password: user.password,
         },
         { storeResponse: false },
-      );
-      const effectiveStatus = getEffectiveStatus(response);
-
-      if (effectiveStatus >= 200 && effectiveStatus < 300) {
-        uiContext.logger?.info("[UI_CLEANUP] User deleted", {
-          email: user.email,
-        });
-      } else if (effectiveStatus === 404) {
-        uiContext.logger?.info("[UI_CLEANUP] User already absent", {
-          email: user.email,
-        });
-      } else {
-        failures.push({
-          email: user.email,
-          error: `effectiveStatus=${effectiveStatus}`,
-        });
-        uiContext.logger?.warn("[UI_CLEANUP] Delete returned non-success", {
-          email: user.email,
-          effectiveStatus,
-        });
-      }
-    } catch (error) {
-      const failure = {
-        email: user.email,
-        error: String(error?.message || error),
-      };
-
-      failures.push(failure);
-      uiContext.logger?.warn("[UI_CLEANUP] Delete failed", failure);
-    } finally {
-      uiContext.untrackCleanupUser(user.email);
-
+      ),
+    untrackUser: (email) => uiContext.untrackCleanupUser(email),
+    onUserProcessed: async (user) => {
       if (uiContext.state.register.user?.email === user.email) {
         uiContext.state.register.meta = {
           ...(uiContext.state.register.meta || {}),
           cleanupPending: false,
         };
       }
-    }
-  }
-
-  return failures;
+    },
+  });
 }
 
 export const test = base.extend({

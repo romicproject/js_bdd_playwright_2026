@@ -98,7 +98,6 @@ Add new methods at `createProductsHelpers`, `createUsersHelpers`, or `createBran
   - `@smoke` for fast confidence checks
   - `@critical` for the smallest business-critical UI journey set
   - `@regression` for broader functional coverage
-  - `@workflow` for cross-step or end-to-end flows
   - `@mock` for scenario-safe API mock runs
 - Use one outcome tag when relevant:
   - `@positive` for success paths

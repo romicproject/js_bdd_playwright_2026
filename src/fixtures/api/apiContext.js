@@ -122,10 +122,6 @@ export function createApiContext(request, config) {
       });
     },
 
-    getCleanupUsers() {
-      return this.state.users.cleanup;
-    },
-
     getLastRequest() {
       return this.state.diagnostics.lastRequest;
     },
@@ -176,6 +172,7 @@ export function createApiContext(request, config) {
 
     setLogger(logger) {
       this.state.logs.logger = logger;
+      cleanupRegistry.logger = logger;
     },
 
     getLogFilePath() {
@@ -206,12 +203,6 @@ export function createApiContext(request, config) {
 
     // The context is created per test, so explicit reset/legacy alias support
     // is no longer needed as part of the public surface.
-  };
-
-  // Inject logger reference into registry after context creation
-  context.setLogger = (logger) => {
-    context.state.logs.logger = logger;
-    cleanupRegistry.logger = logger;
   };
 
   return context;

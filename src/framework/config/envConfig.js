@@ -162,7 +162,7 @@ export function validateConfig(options = {}) {
     .map(([key]) => key);
 
   if (missing.length > 0) {
-    throw new Error(`Missing required config: ${missing.join(", ")}`);
+    throw new Error(`[CONFIG] Missing required config: ${missing.join(", ")}`);
   }
 
   return {

@@ -43,7 +43,9 @@ export class HomePage extends BasePage {
       await navLink.click({ timeout: 3000 });
     } catch {
       if (!href)
-        throw new Error(`Missing href for top navigation link "${name}"`);
+        throw new Error(
+          `[UI_PAGE] Missing href for top navigation link "${name}"`,
+        );
       await this.goto(href);
     }
 

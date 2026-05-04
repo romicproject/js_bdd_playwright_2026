@@ -183,7 +183,7 @@ export function assertSchema(body, validateSchemaFn, schema, options = {}) {
 
   if (requiredKey && safeBody[requiredKey] === undefined) {
     throw new Error(
-      `Expected response to include '${requiredKey}' but it was missing. Response received: ${JSON.stringify(safeBody)}`,
+      `[RESPONSE] Expected response to include '${requiredKey}' but it was missing. Response received: ${JSON.stringify(safeBody)}`,
     );
   }
 
@@ -199,7 +199,7 @@ export function assertSchema(body, validateSchemaFn, schema, options = {}) {
     }
 
     throw new Error(
-      `Schema validation failed.\nErrors:\n${errors}\n\nResponse preview:\n${JSON.stringify(preview, null, 2)}`,
+      `[RESPONSE] Schema validation failed.\nErrors:\n${errors}\n\nResponse preview:\n${JSON.stringify(preview, null, 2)}`,
     );
   }
 
