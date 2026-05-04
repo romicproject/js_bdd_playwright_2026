@@ -50,6 +50,99 @@ If a dependency points upward in the stack, it is usually a signal that responsi
 
 ---
 
+## Framework-level patterns
+
+### API Preflight Policy (shared module)
+
+The `src/framework/http/preflightPolicy.js` module centralizes logic for determining whether API preflight is required or should be skipped based on lane and environment configuration.
+
+**Why it exists:**
+
+- Preflight logic was duplicated in both `globalSetup.js` and `apiAvailability` fixture
+- Single source of truth reduces maintenance burden and prevents drift
+
+**How it's used:**
+
+- `globalSetup.js` calls `resolveConfigRequirements()` during worker startup
+- `apiAvailability` fixture calls `shouldSkipApiPreflight()` to determine auto-enforcement
+- Lane metadata (e.g., `TEST_LANE=api-mock`) is used to decide behavior
+
+**Key function:**
+
+```js
+// Returns true if preflight should be skipped based on lane/env
+shouldSkipApiPreflight(); // checks TEST_LANE prefix, API_MOCK_ENABLED, API_SKIP_PREFLIGHT
+```
+
+### User Cleanup Registry (shared pattern)
+
+The `src/support/shared/cleanupTracking.js` `UserCleanupRegistry` class provides a centralized tracker for users that need cleanup.
+
+**Why it exists:**
+
+- Previously, API and UI contexts maintained parallel cleanup tracking logic
+- Single registry ensures consistency between API-initiated and UI-initiated test cleanup
+
+**How it's used:**
+
+- Both `apiContext` and `uiContext` fixtures inject a `UserCleanupRegistry` instance
+- `trackCleanupUser(email, password, source)` registers a user for deletion
+- `getAll()` returns tracked users for teardown phases
+- Logging is automatically attached when registry is created with a logger
+
+**Example:**
+
+```js
+// In apiContext
+const cleanupRegistry = new UserCleanupRegistry(logger);
+context.trackCleanupUser(email, password); // delegates to registry.track(email, password, "api")
+
+// In uiContext
+const cleanupRegistry = new UserCleanupRegistry(logger);
+uiContext.trackCleanupUser(user); // delegates to registry.track(user.email, user.password, "ui")
+```
+
+### Lane Metadata Requirements
+
+All lanes in `tools/run-lane.mjs` must specify metadata that controls test filtering and environment behavior:
+
+- **Domain lanes** (`products`, `brands`, `users`, `workflow`): Must set `TEST_LANE=api-domain`
+  - Ensures config validation knows to require API but not UI
+- **Mock lanes** (e.g., `api-mock`): Must set `TEST_LANE=api-mock` + `API_MOCK_ENABLED=true`
+  - Signals to preflight logic that mocks are enabled
+- **Live lanes** (e.g., `api-live-smoke`): Must set `TEST_LANE=api-live-smoke`
+  - Signals that live API is required; mocks should not be used
+- **UI lanes**: Must set `TEST_LANE=ui-critical` or `ui-regression`
+  - Signals that UI is primary; API config may not be present
+
+### Error Message Standardization
+
+Error messages across the framework should include a **prefix** indicating their source layer:
+
+**Prefix convention:**
+
+- `[API_FIXTURE]` — errors thrown from API fixtures
+- `[UI_FIXTURE]` — errors thrown from UI fixtures
+- `[API_CLEANUP]` — errors during API cleanup operations
+- `[UI_CLEANUP]` — errors during UI cleanup operations
+- `[PREFLIGHT]` — errors during API preflight initialization
+- `[CONFIG]` — configuration validation errors
+- `[VALIDATION]` — schema or data validation errors
+
+**Example:**
+
+```js
+throw new Error(`[API_FIXTURE] TEST_USER_PASSWORD not configured`);
+throw new Error(
+  `[UI_CLEANUP] Delete returned non-success: effectiveStatus=${status}`,
+);
+throw new Error(`[PREFLIGHT] API health check failed: ${error.message}`);
+```
+
+**Benefit:** Makes debugging easier by immediately identifying which layer/phase an error originated from.
+
+---
+
 ## Working rules
 
 ### 1. Keep steps thin

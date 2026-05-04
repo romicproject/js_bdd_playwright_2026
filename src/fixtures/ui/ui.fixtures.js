@@ -7,6 +7,7 @@ import { createApiContext } from "../api/apiContext.js";
 import { createApiClient } from "../api/apiClient.js";
 import { createApiHelpers } from "../api/helpers/index.js";
 import { getEffectiveStatus } from "../../support/api/response.assertions.js";
+import { UserCleanupRegistry } from "../../support/shared/cleanupTracking.js";
 
 import {
   ContactUsPage,
@@ -17,7 +18,7 @@ import {
 } from "../../ui/pages/index.js";
 import { applyAllureMetadata } from "../../reporters/allureRuntime.js";
 
-function createUiContext({ logger, logFilePath, testInfo }) {
+function createUiContext({ logger, logFilePath, testInfo, cleanupRegistry }) {
   return {
     logger,
     logFilePath,
@@ -29,33 +30,21 @@ function createUiContext({ logger, logFilePath, testInfo }) {
     },
     state: {
       register: {},
-      cleanup: {
-        users: [],
-      },
     },
     getCleanupUsers() {
-      return this.state.cleanup.users;
+      return cleanupRegistry.getAll();
     },
     trackCleanupUser(user) {
       if (!user?.email || !user?.password) return;
-
-      const alreadyTracked = this.getCleanupUsers().some(
-        (entry) =>
-          entry.email === user.email && entry.password === user.password,
-      );
-
-      if (!alreadyTracked) {
-        this.getCleanupUsers().push({
-          email: user.email,
-          password: user.password,
-        });
-      }
+      cleanupRegistry.track(user.email, user.password, "ui");
+      this.logger?.debug("[UI] User cleanup tracked", { email: user.email });
     },
     untrackCleanupUser(email) {
-      if (!email) return;
-      this.state.cleanup.users = this.getCleanupUsers().filter(
-        (entry) => entry.email !== email,
-      );
+      cleanupRegistry.untrack(email, "ui");
+      this.logger?.debug("[UI] User cleanup untracked", { email });
+    },
+    _getCleanupRegistry() {
+      return cleanupRegistry;
     },
   };
 }
@@ -66,9 +55,7 @@ async function cleanupTrackedUiUsers(uiContext, request, testInfo) {
   }
 
   if (!config.apiBaseUrl) {
-    uiContext.logger?.warn(
-      "UI cleanup skipped because API_BASE_URL is missing",
-    );
+    uiContext.logger?.warn("[UI_CLEANUP] Skipped: API_BASE_URL is missing");
     return uiContext.getCleanupUsers().map((user) => ({
       email: user.email,
       error: "API_BASE_URL is missing",
@@ -93,11 +80,11 @@ async function cleanupTrackedUiUsers(uiContext, request, testInfo) {
       const effectiveStatus = getEffectiveStatus(response);
 
       if (effectiveStatus >= 200 && effectiveStatus < 300) {
-        uiContext.logger?.info("UI cleanup user deleted", {
+        uiContext.logger?.info("[UI_CLEANUP] User deleted", {
           email: user.email,
         });
       } else if (effectiveStatus === 404) {
-        uiContext.logger?.info("UI cleanup user already absent", {
+        uiContext.logger?.info("[UI_CLEANUP] User already absent", {
           email: user.email,
         });
       } else {
@@ -105,7 +92,7 @@ async function cleanupTrackedUiUsers(uiContext, request, testInfo) {
           email: user.email,
           error: `effectiveStatus=${effectiveStatus}`,
         });
-        uiContext.logger?.warn("UI cleanup user delete returned non-success", {
+        uiContext.logger?.warn("[UI_CLEANUP] Delete returned non-success", {
           email: user.email,
           effectiveStatus,
         });
@@ -117,7 +104,7 @@ async function cleanupTrackedUiUsers(uiContext, request, testInfo) {
       };
 
       failures.push(failure);
-      uiContext.logger?.warn("UI cleanup user delete failed", failure);
+      uiContext.logger?.warn("[UI_CLEANUP] Delete failed", failure);
     } finally {
       uiContext.untrackCleanupUser(user.email);
 
@@ -174,10 +161,12 @@ export const test = base.extend({
       feature,
     });
 
+    const cleanupRegistry = new UserCleanupRegistry(logger);
     const uiContext = createUiContext({
       logger,
       logFilePath,
       testInfo,
+      cleanupRegistry,
     });
 
     await use(uiContext);
@@ -208,7 +197,7 @@ export const test = base.extend({
 
       if (config.apiCleanup.failOnError) {
         throw new Error(
-          `UI tracked-user cleanup failed for ${failures.length} user(s): ${failures
+          `[UI_CLEANUP] Tracked-user cleanup failed for ${failures.length} user(s): ${failures
             .map((failure) => `${failure.email} (${failure.error})`)
             .join("; ")}`,
         );

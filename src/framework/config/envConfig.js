@@ -9,7 +9,7 @@ const ENV = process.env.ENV || "dev";
 const validEnvironments = ["dev", "staging", "prod"];
 if (!validEnvironments.includes(ENV)) {
   throw new Error(
-    `Invalid environment: ${ENV}. Must be one of: ${validEnvironments.join(", ")}`,
+    `[CONFIG] Invalid environment: ${ENV}. Must be one of: ${validEnvironments.join(", ")}`,
   );
 }
 
@@ -24,7 +24,7 @@ const result = hasEnvFile
 
 if (hasEnvFile && result.error) {
   throw new Error(
-    `Failed to load environment config from ${envPath}: ${result.error.message}`,
+    `[CONFIG] Failed to load environment config from ${envPath}: ${result.error.message}`,
   );
 }
 
@@ -122,7 +122,9 @@ function requireValue(envName, value) {
     return value;
   }
 
-  throw new Error(`${envName} is required in environment configuration`);
+  throw new Error(
+    `[CONFIG] ${envName} is required in environment configuration`,
+  );
 }
 
 export function requireApiConfig() {
