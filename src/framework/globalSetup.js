@@ -78,7 +78,7 @@ async function runApiPreflight() {
     }
 
     throw new Error(
-      `API preflight failed for ${fullUrl}. http=${response.status()} effective=${effectiveStatus} message="${getResponseMessage(preflightResult)}"`,
+      `[PREFLIGHT] API health check failed for ${fullUrl}. http=${response.status()} effective=${effectiveStatus} message="${getResponseMessage(preflightResult)}"`,
     );
   } finally {
     await requestContext.dispose();

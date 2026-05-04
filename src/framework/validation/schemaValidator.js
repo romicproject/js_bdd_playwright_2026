@@ -23,7 +23,7 @@ export function validateSchema(data, schema, options = {}) {
 
     if (throwOnError) {
       throw new Error(
-        `Schema validation failed: ${errors.map((error) => error.message).join(", ")}`,
+        `[VALIDATION] Schema validation failed: ${errors.map((error) => error.message).join(", ")}`,
       );
     }
 

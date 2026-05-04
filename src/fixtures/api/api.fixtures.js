@@ -51,7 +51,7 @@ async function runApiPreflight(playwright) {
     }
 
     throw new Error(
-      `API preflight failed for ${fullUrl}. http=${response.status()} effective=${effectiveStatus} message="${getResponseMessage(preflightResult)}"`,
+      `[PREFLIGHT] API health check failed for ${fullUrl}. http=${response.status()} effective=${effectiveStatus} message="${getResponseMessage(preflightResult)}"`,
     );
   } finally {
     await requestContext.dispose();
@@ -213,7 +213,7 @@ export const test = base.extend({
 
       if (config.apiCleanup.failOnError) {
         throw new Error(
-          `Tracked user cleanup failed for ${failures.length} user(s): ${failures
+          `[API_CLEANUP] Tracked user cleanup failed for ${failures.length} user(s): ${failures
             .map((failure) => `${failure.email} (${failure.error})`)
             .join("; ")}`,
         );

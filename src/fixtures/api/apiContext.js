@@ -1,7 +1,10 @@
 // fixtures/api/apiContext.js
+import { UserCleanupRegistry } from "../../support/shared/cleanupTracking.js";
+
 export function createApiContext(request, config) {
   const defaultMockProfile = config?.apiMock?.profile || "";
   const USER_STATE_KEYS = ["created", "existing", "saved"];
+  const cleanupRegistry = new UserCleanupRegistry();
 
   const context = {
     request,
@@ -28,7 +31,6 @@ export function createApiContext(request, config) {
           email: null,
           password: null,
         },
-        cleanup: [],
       },
       scenario: {
         timestamp: null,
@@ -92,7 +94,7 @@ export function createApiContext(request, config) {
     getUser(key) {
       const user = this.state.users[key];
       if (!user || !USER_STATE_KEYS.includes(key)) {
-        throw new Error(`Unknown apiContext user state: ${key}`);
+        throw new Error(`[API_FIXTURE] Unknown user state key: ${key} (valid: ${USER_STATE_KEYS.join(", ")})`);
       }
       return user;
     },
@@ -182,27 +184,32 @@ export function createApiContext(request, config) {
       this.state.logs.logFilePath = logFilePath;
     },
 
+    getCleanupUsers() {
+      return cleanupRegistry.getAll();
+    },
+
     trackCleanupUser(email, password) {
-      if (!email || !password) return;
-
-      const alreadyTracked = this.getCleanupUsers().some(
-        (user) => user.email === email && user.password === password,
-      );
-
-      if (!alreadyTracked) {
-        this.getCleanupUsers().push({ email, password });
-      }
+      cleanupRegistry.track(email, password, "api");
+      this.getLogger()?.debug("[API] User cleanup tracked", { email });
     },
 
     untrackCleanupUser(email) {
-      if (!email) return;
-      this.state.users.cleanup = this.state.users.cleanup.filter(
-        (user) => user.email !== email,
-      );
+      cleanupRegistry.untrack(email, "api");
+      this.getLogger()?.debug("[API] User cleanup untracked", { email });
+    },
+
+    _getCleanupRegistry() {
+      return cleanupRegistry;
     },
 
     // The context is created per test, so explicit reset/legacy alias support
     // is no longer needed as part of the public surface.
+  };
+
+  // Inject logger reference into registry after context creation
+  context.setLogger = (logger) => {
+    context.state.logs.logger = logger;
+    cleanupRegistry.logger = logger;
   };
 
   return context;
