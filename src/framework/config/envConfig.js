@@ -122,7 +122,9 @@ function requireValue(envName, value) {
     return value;
   }
 
-  throw new Error(`[CONFIG] ${envName} is required in environment configuration`);
+  throw new Error(
+    `[CONFIG] ${envName} is required in environment configuration`,
+  );
 }
 
 export function requireApiConfig() {

@@ -16,10 +16,13 @@ export class UserCleanupRegistry {
    */
   track(email, password, source = "unknown") {
     if (!email || !password) {
-      this.logger?.debug("[UserCleanupRegistry] Skipping track: missing email or password", {
-        email,
-        source,
-      });
+      this.logger?.debug(
+        "[UserCleanupRegistry] Skipping track: missing email or password",
+        {
+          email,
+          source,
+        },
+      );
       return;
     }
 
@@ -73,7 +76,9 @@ export class UserCleanupRegistry {
     const count = this.users.length;
     this.users = [];
     if (count > 0) {
-      this.logger?.debug("[UserCleanupRegistry] Registry cleared", { cleared: count });
+      this.logger?.debug("[UserCleanupRegistry] Registry cleared", {
+        cleared: count,
+      });
     }
   }
 

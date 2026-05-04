@@ -94,7 +94,9 @@ export function createApiContext(request, config) {
     getUser(key) {
       const user = this.state.users[key];
       if (!user || !USER_STATE_KEYS.includes(key)) {
-        throw new Error(`[API_FIXTURE] Unknown user state key: ${key} (valid: ${USER_STATE_KEYS.join(", ")})`);
+        throw new Error(
+          `[API_FIXTURE] Unknown user state key: ${key} (valid: ${USER_STATE_KEYS.join(", ")})`,
+        );
       }
       return user;
     },

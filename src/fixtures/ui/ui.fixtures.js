@@ -55,9 +55,7 @@ async function cleanupTrackedUiUsers(uiContext, request, testInfo) {
   }
 
   if (!config.apiBaseUrl) {
-    uiContext.logger?.warn(
-      "[UI_CLEANUP] Skipped: API_BASE_URL is missing",
-    );
+    uiContext.logger?.warn("[UI_CLEANUP] Skipped: API_BASE_URL is missing");
     return uiContext.getCleanupUsers().map((user) => ({
       email: user.email,
       error: "API_BASE_URL is missing",
