@@ -8,6 +8,7 @@ import { startTestLogging } from "../shared/testLogging.js";
 import { buildScenarioUniqueId } from "../../support/api/users.data.js";
 import { applyAllureMetadata } from "../../reporters/allureRuntime.js";
 import { runApiPreflight } from "../../framework/http/apiPreflight.js";
+import { shouldSkipLiveApiPreflight } from "../../framework/http/preflightPolicy.js";
 import { cleanupTrackedUsers } from "../../support/api/cleanupUsers.js";
 
 export const test = base.extend({
@@ -18,6 +19,17 @@ export const test = base.extend({
 
       async function ensure() {
         if (resolvedPreflight) {
+          return resolvedPreflight;
+        }
+
+        if (
+          shouldSkipLiveApiPreflight({
+            testLane: process.env.TEST_LANE,
+            apiMockEnabled: process.env.API_MOCK_ENABLED,
+            apiSkipPreflight: process.env.API_SKIP_PREFLIGHT,
+          })
+        ) {
+          resolvedPreflight = { ok: true, source: "fixture-skip" };
           return resolvedPreflight;
         }
 
@@ -44,9 +56,11 @@ export const test = base.extend({
         return preflightPromise;
       }
 
+      await ensure();
+
       await use({ ensure });
     },
-    { scope: "worker" },
+    { scope: "worker", auto: true },
   ],
 
   apiContext: async ({ request }, use, testInfo) => {

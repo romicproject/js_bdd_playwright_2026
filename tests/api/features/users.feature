@@ -59,6 +59,13 @@ Feature: User Account Management API
     Then the response status should be 400
     And the response message should indicate "missing parameter"
 
+  @regression @positive
+  Scenario: Get existing user detail
+    Given a user exists with email "detail.{unique}@test.com"
+    When I get user detail by the saved user email
+    Then the response status should be 200
+    And the response should match user detail schema
+
   @smoke @positive
   Scenario: Delete user account successfully
     Given a user exists with email "todelete.{unique}@test.com"
@@ -68,3 +75,4 @@ Feature: User Account Management API
 
     When I get user detail by the saved user email
     Then the response status should be 404
+  And the response message should indicate "account not found"

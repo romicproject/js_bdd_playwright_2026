@@ -31,10 +31,26 @@ const lanes = {
     env: { ENV: "prod" },
     grep: "@regression",
   },
-  products: { env: { ENV: "dev" }, grep: "@products" },
-  brands: { env: { ENV: "dev" }, grep: "@brands" },
-  users: { env: { ENV: "dev" }, grep: "@users" },
-  workflow: { env: { ENV: "dev" }, grep: "@workflow" },
+  products: {
+    env: { ENV: "dev", TEST_LANE: "api-domain" },
+    project: projects.api,
+    grep: "@products",
+  },
+  brands: {
+    env: { ENV: "dev", TEST_LANE: "api-domain" },
+    project: projects.api,
+    grep: "@brands",
+  },
+  users: {
+    env: { ENV: "dev", TEST_LANE: "api-domain" },
+    project: projects.api,
+    grep: "@users",
+  },
+  workflow: {
+    env: { ENV: "dev", TEST_LANE: "api-domain" },
+    project: projects.api,
+    grep: "@workflow",
+  },
   positive: { env: { ENV: "dev" }, grep: "@positive" },
   negative: { env: { ENV: "dev" }, grep: "@negative" },
   "api-live-smoke": {

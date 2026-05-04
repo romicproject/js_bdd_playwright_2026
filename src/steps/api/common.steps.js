@@ -12,6 +12,7 @@ import {
   loginSuccessSchema,
   userCreatedSchema,
 } from "../../schemas/user.schema.js";
+import { userDetailSchema } from "../../schemas/userDetail.schema.js";
 import {
   expectEffectiveStatus,
   expectHttpStatus,
@@ -73,6 +74,16 @@ Then(
     });
   },
 );
+
+Then("the response should match user detail schema", async ({ apiContext }) => {
+  const body = getResponseBody(apiContext);
+
+  assertSchema(body, validateSchema, userDetailSchema, {
+    requiredKey: "user",
+    previewOmitKeys: ["user"],
+    logger: apiContext.getLogger(),
+  });
+});
 
 Then(
   "the response message should indicate {string}",

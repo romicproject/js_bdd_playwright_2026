@@ -7,45 +7,18 @@
 import { request as playwrightRequest } from "@playwright/test";
 import { config, validateConfig } from "./config/envConfig.js";
 import { runApiPreflight } from "./http/apiPreflight.js";
+import {
+  resolveConfigRequirements,
+  shouldRunLiveApiPreflight,
+} from "./http/preflightPolicy.js";
 
 function parseBoolean(value) {
   return value === "true" || value === "1";
 }
 
-/**
- * Decide which configuration keys are mandatory for this run.
- * Heuristics:
- *  - TEST_LANE starting with "ui-"   -> UI required, API optional
- *  - TEST_LANE starting with "api-"  -> API required, UI optional
- *  - otherwise                       -> both required (default test run)
- *
- * `API_MOCK_ENABLED=true` always skips live API preflight (below).
- */
-function resolveConfigRequirements() {
-  const lane = String(process.env.TEST_LANE || "")
-    .trim()
-    .toLowerCase();
-
-  if (lane.startsWith("ui-")) {
-    return { requireApi: false, requireUi: true };
-  }
-
-  if (lane.startsWith("api-")) {
-    return { requireApi: true, requireUi: false };
-  }
-
-  return { requireApi: true, requireUi: true };
-}
-
-function shouldRunApiPreflight(requireApi) {
-  if (!requireApi) return false;
-  if (parseBoolean(process.env.API_MOCK_ENABLED)) return false;
-  if (parseBoolean(process.env.API_SKIP_PREFLIGHT)) return false;
-  return true;
-}
-
 export default async function globalSetup() {
-  const { requireApi, requireUi } = resolveConfigRequirements();
+  const lane = process.env.TEST_LANE || "";
+  const { requireApi, requireUi } = resolveConfigRequirements(lane);
 
   // Fail fast if env is misconfigured for this lane.
   const validated = validateConfig({ requireApi, requireUi });
@@ -59,7 +32,14 @@ export default async function globalSetup() {
   ].join(" | ");
   console.log(summary);
 
-  if (shouldRunApiPreflight(requireApi)) {
+  if (
+    shouldRunLiveApiPreflight({
+      requireApi,
+      testLane: lane,
+      apiMockEnabled: process.env.API_MOCK_ENABLED,
+      apiSkipPreflight: process.env.API_SKIP_PREFLIGHT,
+    })
+  ) {
     const result = await runApiPreflight({
       requestFactory: playwrightRequest,
       apiBaseUrl: config.apiBaseUrl,

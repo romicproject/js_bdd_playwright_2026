@@ -39,11 +39,18 @@ Given(
 Given(
   "a user exists with email {string}",
   async ({ apiContext, apiHelpers }, email) => {
+    const configuredPassword = apiContext?.config?.testUser?.password;
+    if (!configuredPassword) {
+      throw new Error(
+        "TEST_USER_PASSWORD is required for step: a user exists with email {string}",
+      );
+    }
+
     await ensureUserExists(
       { apiContext, apiHelpers },
       {
         email,
-        password: "Delete123!",
+        password: configuredPassword,
         saveAsCurrent: true,
       },
     );

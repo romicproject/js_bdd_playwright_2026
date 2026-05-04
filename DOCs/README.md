@@ -78,8 +78,10 @@ Add new methods at `createProductsHelpers`, `createUsersHelpers`, or `createBran
 
 - `src/framework/globalSetup.js` runs **once per Playwright process** (before workers start).
 - It validates required config keys (`API_BASE_URL`, `BASE_URL`) based on the active lane - fail fast before any test starts.
-- It performs the API live preflight (`/productsList`) a single time and signals workers via `API_PREFLIGHT_OK=1` so they skip the duplicate check.
-- Preflight is skipped automatically when:
+- It performs the API live preflight (`/productsList`) a single time and signals workers via `API_PREFLIGHT_OK=1` so they skip duplicate live checks.
+- `src/fixtures/api/api.fixtures.js` also enforces API preflight automatically at worker scope (`apiAvailability` with `auto: true`) for API runs.
+- The step `Given the API is available` remains available, but is no longer required to trigger preflight.
+- Preflight is skipped automatically (both in global setup and fixture enforcement) when:
   - `TEST_LANE` starts with `ui-`
   - `API_MOCK_ENABLED=true`
   - `API_SKIP_PREFLIGHT=1` (escape hatch for local runs when the live API is down)
@@ -98,7 +100,6 @@ Add new methods at `createProductsHelpers`, `createUsersHelpers`, or `createBran
   - `@smoke` for fast confidence checks
   - `@critical` for the smallest business-critical UI journey set
   - `@regression` for broader functional coverage
-  - `@workflow` for cross-step or end-to-end flows
   - `@mock` for scenario-safe API mock runs
 - Use one outcome tag when relevant:
   - `@positive` for success paths
