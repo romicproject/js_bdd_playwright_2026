@@ -9,9 +9,7 @@ export { getAttachAllureEnabled };
  * Controls whether API client emits request/response flow logs.
  * Source of truth: LOG_LEVEL (+ optional VERBOSE_LOGGING/DEBUG_MODE aliases)
  */
-export function shouldLog() {
-  return isDebugLoggingEnabled();
-}
+export const shouldLog = isDebugLoggingEnabled;
 
 export function getLogger(apiContext) {
   if (typeof apiContext?.getLogger === "function") {

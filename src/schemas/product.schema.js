@@ -40,8 +40,3 @@ export const productSchema = z.object({
     }),
   }),
 });
-
-/**
- * Schema for partial validation (when some fields may be missing)
- */
-export const partialProductSchema = productSchema.partial();

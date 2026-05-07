@@ -68,7 +68,7 @@ When("I get all brands", async ({ apiContext, apiHelpers }) => {
 Then("the response should contain brands", async ({ apiContext }) => {
   const body = getResponseBody(apiContext);
 
-  assertSchema(body, validateSchema, brandListSchema, {
+  assertSchema(body, brandListSchema, {
     requiredKey: "brands",
     previewOmitKeys: ["brands"],
     logger: apiContext.getLogger(),

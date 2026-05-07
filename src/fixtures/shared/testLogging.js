@@ -95,7 +95,7 @@ async function removeFileAndEmptyParents(filePath, rootDir) {
 export function startTestLogging(testInfo, { kind }) {
   const feature = inferFeatureFromTestInfo(testInfo);
   const projectName = testInfo.project?.name || "";
-  const baseDir = String(env("LOG_DIR", "out/logs"));
+  const baseDir = String(getEnv("LOG_DIR", "out/logs"));
 
   const logFilePath = buildTestLogPath({
     baseDir,

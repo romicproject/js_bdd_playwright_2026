@@ -1,4 +1,5 @@
 import crypto from "node:crypto";
+import { getEnv } from "../../framework/env.js";
 
 export const DEFAULT_USER_FIELDS = {
   name: "Test User",
@@ -21,8 +22,6 @@ function generateMobileNumber() {
   const suffix = crypto.randomInt(100_000_000, 1_000_000_000);
   return `5${suffix}`;
 }
-
-import { getEnv } from "../../framework/env.js";
 
 function sanitizeIdPart(value, fallback = "na") {
   const normalized = String(value ?? "")
@@ -49,7 +48,7 @@ function randomIdPart(length = 8) {
 
 export function buildScenarioUniqueId(identity = {}) {
   const timestamp = toIndex(identity.timestamp, Date.now());
-  const runId = sanitizeIdPart(identity.runId ?? env("LOG_RUN_ID", "local"));
+  const runId = sanitizeIdPart(identity.runId ?? getEnv("LOG_RUN_ID", "local"));
   const workerIndex = toIndex(identity.workerIndex, 0);
   const parallelIndex = toIndex(identity.parallelIndex, 0);
   const retry = toIndex(identity.retry, 0);

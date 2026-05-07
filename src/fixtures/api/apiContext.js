@@ -1,9 +1,10 @@
 // fixtures/api/apiContext.js
 import { UserCleanupRegistry } from "../../support/shared/cleanupTracking.js";
 
+const USER_STATE_KEYS = ["created", "existing", "saved"];
+
 export function createApiContext(request, config) {
   const defaultMockProfile = config?.apiMock?.profile || "";
-  const USER_STATE_KEYS = ["created", "existing", "saved"];
   const cleanupRegistry = new UserCleanupRegistry();
 
   const context = {
@@ -147,6 +148,10 @@ export function createApiContext(request, config) {
       this.state.scenario.startTime = startTime;
     },
 
+    getScenarioStartTime() {
+      return this.state.scenario.startTime;
+    },
+
     getLogger() {
       return this.state.logs.logger;
     },
@@ -164,8 +169,17 @@ export function createApiContext(request, config) {
       return cleanupRegistry.getAll();
     },
 
-    trackCleanupUser(email, password) {
-      cleanupRegistry.track(email, password, "api");
+    trackCleanupUser(emailOrUser, password) {
+      // Accept both (email, password) and (user object) forms for compatibility
+      const email = typeof emailOrUser === "string" ? emailOrUser : emailOrUser?.email;
+      const pwd = typeof emailOrUser === "string" ? password : emailOrUser?.password;
+      
+      if (!email || !pwd) {
+        this.getLogger()?.debug("[API] trackCleanupUser: skipping, missing email or password");
+        return;
+      }
+      
+      cleanupRegistry.track(email, pwd, "api");
       this.getLogger()?.debug("[API] User cleanup tracked", { email });
     },
 

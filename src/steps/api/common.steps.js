@@ -1,7 +1,6 @@
 // src/steps/api/common.steps.js
 import { createBdd } from "playwright-bdd";
 import { test } from "../../fixtures/api/api.fixtures.js";
-import { validateSchema } from "../../framework/validation/schemaValidator.js";
 import {
   badRequestSchema,
   notFoundSchema,
@@ -66,7 +65,7 @@ Then(
   async ({ apiContext }) => {
     const body = getResponseBody(apiContext);
 
-    assertSchema(body, validateSchema, productListSchema, {
+    assertSchema(body, productListSchema, {
       requiredKey: "products",
       previewOmitKeys: ["products"],
       logger: apiContext.getLogger(),
@@ -111,7 +110,7 @@ Then(
     const entry = MESSAGE_TYPES[messageType];
     const body = getResponseBody(apiContext);
     if (entry?.schema) {
-      assertSchema(body, validateSchema, entry.schema, {
+      assertSchema(body, entry.schema, {
         logger: apiContext.getLogger(),
       });
     }

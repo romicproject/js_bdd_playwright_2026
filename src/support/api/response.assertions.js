@@ -1,4 +1,5 @@
 import { expect } from "@playwright/test";
+import { validateSchema } from "../../framework/validation/schemaValidator.js";
 
 /**
  * AutomationExercise API often returns HTTP 200 with a business code in body.responseCode.
@@ -169,8 +170,8 @@ export function expectMessageType(apiContext, messageType, messageMap) {
  * - options.requiredKey: if present, asserts that body has that key (e.g. "products", "brands")
  * - options.previewOmitKeys: keys to omit in preview (useful for big arrays)
  */
-export function assertSchema(body, validateSchemaFn, schema, options = {}) {
-  const { requiredKey, previewOmitKeys = [], logger } = options;
+export function assertSchema(body, schema, options = {}) {
+  const { requiredKey, previewOmitKeys = [] } = options;
 
   const safeBody = body ?? {};
 
@@ -181,7 +182,7 @@ export function assertSchema(body, validateSchemaFn, schema, options = {}) {
   }
 
   // Suppress internal logging - assertSchema throws a comprehensive error anyway
-  const validation = validateSchemaFn(safeBody, schema, { logger: null });
+  const validation = validateSchema(safeBody, schema, { logger: null });
 
   if (!validation.valid) {
     const errors = JSON.stringify(validation.errors || [], null, 2);

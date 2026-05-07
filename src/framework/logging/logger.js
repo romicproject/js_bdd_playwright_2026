@@ -4,6 +4,7 @@ import path from "node:path";
 const LEVELS = { debug: 10, info: 20, warn: 30, error: 40 };
 
 import { getEnv, parseBoolean } from "../env.js";
+import { ensureDir } from "../utils.js";
 
 function toBool(v, fallback) {
   if (v == null) return fallback;
@@ -32,10 +33,6 @@ function colorize(level, s) {
   if (level === "warn") return `${red}${s}${reset}`;
   if (level === "info") return `${green}${s}${reset}`;
   return `${cyan}${s}${reset}`;
-}
-
-function ensureDir(dir) {
-  fs.mkdirSync(dir, { recursive: true });
 }
 
 export function getAttachAllureEnabled() {
@@ -81,7 +78,7 @@ export function createLogger({ filePath, testId }) {
   // Display threshold can never be lower than record threshold.
   const consoleThreshold = Math.max(minLevel, consoleMinLevel());
 
-  const fmt = String(env("LOG_FORMAT", "pretty")).toLowerCase();
+  const fmt = String(getEnv("LOG_FORMAT", "pretty")).toLowerCase();
   const formatLine =
     fmt === "jsonl"
       ? (rec) => JSON.stringify(rec)

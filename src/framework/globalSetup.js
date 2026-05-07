@@ -12,6 +12,7 @@ import {
   markApiPreflightSatisfied,
   resolveConfigRequirements,
   shouldRunApiPreflight,
+  API_PREFLIGHT_ENDPOINT,
 } from "./http/preflightPolicy.js";
 import {
   getEffectiveStatus,
@@ -19,7 +20,7 @@ import {
 } from "../support/api/response.assertions.js";
 
 async function runApiPreflight() {
-  const fullUrl = joinUrl(config.apiBaseUrl, "/productsList");
+  const fullUrl = joinUrl(config.apiBaseUrl, API_PREFLIGHT_ENDPOINT);
   const requestContext = await playwrightRequest.newContext({
     extraHTTPHeaders: {
       Accept: "application/json",

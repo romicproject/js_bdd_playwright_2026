@@ -1,5 +1,8 @@
 import { parseBoolean } from "../env.js";
 
+// Preflight health check endpoint (consistent across globalSetup and api.fixtures)
+export const API_PREFLIGHT_ENDPOINT = "/productsList";
+
 export function resolveConfigRequirements() {
   const lane = String(process.env.TEST_LANE || "")
     .trim()
