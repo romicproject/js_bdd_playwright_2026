@@ -5,7 +5,14 @@ const productsListBody = {
   products: [
     buildMockProduct(1, "Blue Top", "Rs. 500", "Polo", "Tops", "Women"),
     buildMockProduct(2, "Men Tshirt", "Rs. 400", "H&M", "Tshirts", "Men"),
-    buildMockProduct(3, "Sleeveless Dress", "Rs. 1000", "Madame", "Dress", "Women"),
+    buildMockProduct(
+      3,
+      "Sleeveless Dress",
+      "Rs. 1000",
+      "Madame",
+      "Dress",
+      "Women",
+    ),
   ],
 };
 

@@ -171,14 +171,18 @@ export function createApiContext(request, config) {
 
     trackCleanupUser(emailOrUser, password) {
       // Accept both (email, password) and (user object) forms for compatibility
-      const email = typeof emailOrUser === "string" ? emailOrUser : emailOrUser?.email;
-      const pwd = typeof emailOrUser === "string" ? password : emailOrUser?.password;
-      
+      const email =
+        typeof emailOrUser === "string" ? emailOrUser : emailOrUser?.email;
+      const pwd =
+        typeof emailOrUser === "string" ? password : emailOrUser?.password;
+
       if (!email || !pwd) {
-        this.getLogger()?.debug("[API] trackCleanupUser: skipping, missing email or password");
+        this.getLogger()?.debug(
+          "[API] trackCleanupUser: skipping, missing email or password",
+        );
         return;
       }
-      
+
       cleanupRegistry.track(email, pwd, "api");
       this.getLogger()?.debug("[API] User cleanup tracked", { email });
     },

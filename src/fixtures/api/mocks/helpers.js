@@ -3,7 +3,14 @@
  * Mock data helpers for consistent structure across profiles
  */
 
-export function buildMockProduct(id, name, price, brand, categoryName, userType) {
+export function buildMockProduct(
+  id,
+  name,
+  price,
+  brand,
+  categoryName,
+  userType,
+) {
   return {
     id,
     name,
