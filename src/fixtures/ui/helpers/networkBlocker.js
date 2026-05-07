@@ -1,14 +1,12 @@
 // src/fixtures/ui/helpers/networkBlocker.js
-function isTruthy(v) {
-  return String(v ?? "").toLowerCase() === "true" || String(v ?? "") === "1";
-}
+import { getEnv, parseBoolean } from "../../../framework/env.js";
 
-function env(name, fallback) {
-  return process.env[name] ?? fallback;
+function isTruthy(v) {
+  return parseBoolean(v ?? "");
 }
 
 function getDefaultAllowedHosts() {
-  const baseUrl = env("BASE_URL", "");
+  const baseUrl = getEnv("BASE_URL", "");
 
   try {
     return [new URL(baseUrl).hostname];
@@ -51,9 +49,9 @@ function shouldBlockByHost(urlStr, allowedHostsSet, patterns) {
  * Keep this pure-ish: no testInfo, no logger dependencies.
  */
 export async function applyNetworkBlocking(context, options = {}) {
-  const enabled = options.enabled ?? isTruthy(env("UI_BLOCK_ADS", "true"));
+  const enabled = options.enabled ?? isTruthy(getEnv("UI_BLOCK_ADS", "true"));
   const blockResources =
-    options.blockResources ?? isTruthy(env("UI_BLOCK_RESOURCES", "false"));
+    options.blockResources ?? isTruthy(getEnv("UI_BLOCK_RESOURCES", "false"));
 
   if (!enabled && !blockResources)
     return { enabled: false, blockResources: false };

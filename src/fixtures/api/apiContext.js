@@ -115,13 +115,6 @@ export function createApiContext(request, config) {
       return user;
     },
 
-    clearUser(key) {
-      return this.updateUser(key, {
-        email: null,
-        password: null,
-      });
-    },
-
     getLastRequest() {
       return this.state.diagnostics.lastRequest;
     },
@@ -130,20 +123,12 @@ export function createApiContext(request, config) {
       this.state.diagnostics.lastRequest = lastRequest;
     },
 
-    getLastError() {
-      return this.state.diagnostics.lastError;
-    },
-
     setLastError(lastError) {
       this.state.diagnostics.lastError = lastError;
     },
 
     clearLastError() {
       this.state.diagnostics.lastError = null;
-    },
-
-    getScenarioTimestamp() {
-      return this.state.scenario.timestamp;
     },
 
     setScenarioTimestamp(timestamp) {
@@ -158,10 +143,6 @@ export function createApiContext(request, config) {
       this.state.scenario.uniqueId = uniqueId;
     },
 
-    getScenarioStartTime() {
-      return this.state.scenario.startTime;
-    },
-
     setScenarioStartTime(startTime) {
       this.state.scenario.startTime = startTime;
     },
@@ -173,10 +154,6 @@ export function createApiContext(request, config) {
     setLogger(logger) {
       this.state.logs.logger = logger;
       cleanupRegistry.logger = logger;
-    },
-
-    getLogFilePath() {
-      return this.state.logs.logFilePath;
     },
 
     setLogFilePath(logFilePath) {

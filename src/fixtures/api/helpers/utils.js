@@ -3,7 +3,11 @@ export const FORM_HEADERS = {
   "Content-Type": "application/x-www-form-urlencoded",
 };
 
-export function buildForm(data = {}) {
+/**
+ * Convert data object to URL-encoded form body string.
+ * Used for form-encoded POST requests.
+ */
+export function formBody(data = {}) {
   const form = new URLSearchParams();
 
   Object.entries(data).forEach(([key, value]) => {
@@ -12,11 +16,7 @@ export function buildForm(data = {}) {
     }
   });
 
-  return form;
-}
-
-export function formBody(data = {}) {
-  return buildForm(data).toString();
+  return form.toString();
 }
 
 export function buildSearchParams(searchTerm) {

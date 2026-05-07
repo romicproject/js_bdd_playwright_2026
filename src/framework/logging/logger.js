@@ -3,9 +3,7 @@ import path from "node:path";
 
 const LEVELS = { debug: 10, info: 20, warn: 30, error: 40 };
 
-function env(name, fallback) {
-  return process.env[name] ?? fallback;
-}
+import { getEnv, parseBoolean } from "../env.js";
 
 function toBool(v, fallback) {
   if (v == null) return fallback;
@@ -13,7 +11,7 @@ function toBool(v, fallback) {
 }
 
 function shouldColor() {
-  const mode = String(env("LOG_COLOR", "auto")).toLowerCase();
+  const mode = String(getEnv("LOG_COLOR", "auto")).toLowerCase();
   if (mode === "true") return true;
   if (mode === "false") return false;
   const isCI = Boolean(process.env.CI);
@@ -41,18 +39,18 @@ function ensureDir(dir) {
 }
 
 export function getAttachAllureEnabled() {
-  return toBool(env("LOG_ATTACH_ALLURE", "true"), true);
+  return toBool(getEnv("LOG_ATTACH_ALLURE", "true"), true);
 }
 
 function getLogLevelName() {
-  const fromEnv = String(env("LOG_LEVEL", "info")).toLowerCase();
+  const fromEnv = String(getEnv("LOG_LEVEL", "info")).toLowerCase();
   if (LEVELS[fromEnv] != null) {
     return fromEnv;
   }
 
   if (
-    toBool(env("VERBOSE_LOGGING", null), false) ||
-    toBool(env("DEBUG_MODE", null), false)
+    toBool(getEnv("VERBOSE_LOGGING", null), false) ||
+    toBool(getEnv("DEBUG_MODE", null), false)
   ) {
     return "debug";
   }
@@ -65,11 +63,11 @@ export function isDebugLoggingEnabled() {
 }
 
 function shouldConsole() {
-  return toBool(env("LOG_CONSOLE", "true"), true);
+  return toBool(getEnv("LOG_CONSOLE", "true"), true);
 }
 
 function consoleMinLevel() {
-  const levelName = String(env("LOG_CONSOLE_LEVEL", "info")).toLowerCase();
+  const levelName = String(getEnv("LOG_CONSOLE_LEVEL", "info")).toLowerCase();
   return LEVELS[levelName] ?? LEVELS.info;
 }
 

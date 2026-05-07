@@ -2,12 +2,10 @@ import fs from "node:fs";
 import path from "node:path";
 import { config } from "../framework/config/envConfig.js";
 
-function env(name, fallback) {
-  return process.env[name] ?? fallback;
-}
+import { getEnv } from "../framework/env.js";
 
 function envFlag(name, fallback = false) {
-  const value = env(name, fallback ? "true" : "false");
+  const value = getEnv(name, fallback ? "true" : "false");
   return value === true || value === "true" || value === "1";
 }
 

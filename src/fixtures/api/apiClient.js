@@ -10,10 +10,7 @@ import { joinUrl } from "../../framework/http/url.js";
 import { hasHeader, isFormLike } from "../../framework/http/headers.js";
 import { resolveApiMockResponse } from "./mocks/index.js";
 
-function envNum(name, fallback) {
-  const n = Number(process.env[name]);
-  return Number.isFinite(n) ? n : fallback;
-}
+import { getEnvNumber } from "../../framework/env.js";
 
 function safeJson(v) {
   try {
@@ -48,7 +45,7 @@ export function createApiClient(apiContext, testInfo) {
   const { request, config } = apiContext;
   const log = getLogger(apiContext);
 
-  const MAX_BODY = envNum("LOG_API_MAX_BODY", 50_000);
+  const MAX_BODY = getEnvNumber("LOG_API_MAX_BODY", 50_000);
 
   async function _makeRequest(method, url, options = {}) {
     const start = Date.now();

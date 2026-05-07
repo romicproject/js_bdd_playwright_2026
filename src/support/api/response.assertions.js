@@ -40,13 +40,6 @@ export function getResponseArrayField(apiContext, field) {
   return Array.isArray(value) ? value : [];
 }
 
-export function getResponseObjectField(apiContext, field) {
-  const value = getResponseBody(apiContext)[field];
-  return value && typeof value === "object" && !Array.isArray(value)
-    ? value
-    : {};
-}
-
 export function expectArrayFieldHasItems(apiContext, field, options = {}) {
   const { min = 1, message } = options;
   const items = getResponseArrayField(apiContext, field);

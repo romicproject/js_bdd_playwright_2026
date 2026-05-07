@@ -39,9 +39,7 @@ function parseIntSafe(value, fallback) {
 /**
  * Parse boolean from string
  */
-function parseBoolean(value) {
-  return value === "true" || value === "1";
-}
+import { parseBoolean } from "../env.js";
 
 function resolveRetryCount() {
   const lane = String(process.env.TEST_LANE || "")

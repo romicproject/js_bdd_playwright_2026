@@ -49,7 +49,7 @@ test("rewind response", async ({ apiHelpers, apiContext }) => {
 
 ## Helper utils
 
-- `fixtures/api/helpers/utils.js` provides `buildForm`, `formBody`, `FORM_HEADERS`, and `buildSearchParams` so helpers reuse consistent form encoding and headers.
+- `fixtures/api/helpers/utils.js` provides `formBody`, `FORM_HEADERS`, and `buildSearchParams` so helpers reuse consistent form encoding and headers.
 - When you add new helpers, reuse these utilities to keep payload formatting uniform and avoid duplication.
 
 ## Extending helpers

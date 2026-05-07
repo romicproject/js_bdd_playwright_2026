@@ -10,9 +10,7 @@ import {
   inferFeatureFromTestInfo,
 } from "../../logging/paths.js";
 
-function env(name, fallback) {
-  return process.env[name] ?? fallback;
-}
+import { getEnv } from "../../framework/env.js";
 
 function didTestNeedDiagnostics(testInfo) {
   const expectedStatus = testInfo.expectedStatus || "passed";
@@ -34,7 +32,7 @@ function shouldAttachExecutionLog(testInfo) {
     return true;
   }
 
-  const attachMode = String(env("LOG_ATTACH_MODE", "fail")).toLowerCase();
+  const attachMode = String(getEnv("LOG_ATTACH_MODE", "fail")).toLowerCase();
   if (attachMode === "always") {
     return true;
   }
@@ -55,7 +53,7 @@ function shouldKeepExecutionLog(testInfo) {
     return true;
   }
 
-  const keepMode = String(env("LOG_KEEP_MODE", "fail")).toLowerCase();
+  const keepMode = String(getEnv("LOG_KEEP_MODE", "fail")).toLowerCase();
   if (keepMode === "always") {
     return true;
   }

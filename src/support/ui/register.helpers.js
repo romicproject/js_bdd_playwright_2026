@@ -1,4 +1,4 @@
-import { buildScenarioUniqueId } from "../api/users.data.js";
+import { buildScenarioUniqueId } from "../../support/api/users.data.js";
 
 export function buildUniqueUser(identity = {}) {
   const uniqueId = buildScenarioUniqueId(identity);

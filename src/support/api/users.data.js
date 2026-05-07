@@ -22,9 +22,7 @@ function generateMobileNumber() {
   return `5${suffix}`;
 }
 
-function env(name, fallback) {
-  return process.env[name] ?? fallback;
-}
+import { getEnv } from "../../framework/env.js";
 
 function sanitizeIdPart(value, fallback = "na") {
   const normalized = String(value ?? "")
