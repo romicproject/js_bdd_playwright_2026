@@ -17,11 +17,3 @@ export const productListSchema = z.object({
     invalid_type_error: "Products must be an array",
   }),
 });
-
-/**
- * Schema for search with no results (empty products array is valid)
- */
-export const emptyProductListSchema = z.object({
-  responseCode: z.number(),
-  products: z.array(productSchema).length(0, "Products array should be empty"),
-});

@@ -1,6 +1,7 @@
-function parseBoolean(value) {
-  return value === "true" || value === "1";
-}
+import { parseBoolean } from "../env.js";
+
+// Preflight health check endpoint (consistent across globalSetup and api.fixtures)
+export const API_PREFLIGHT_ENDPOINT = "/productsList";
 
 export function resolveConfigRequirements() {
   const lane = String(process.env.TEST_LANE || "")
@@ -18,15 +19,11 @@ export function resolveConfigRequirements() {
   return { requireApi: true, requireUi: true };
 }
 
-export function shouldSkipApiPreflight(requireApi) {
-  if (!requireApi) return true;
-  if (parseBoolean(process.env.API_MOCK_ENABLED)) return true;
-  if (parseBoolean(process.env.API_SKIP_PREFLIGHT)) return true;
-  return false;
-}
-
 export function shouldRunApiPreflight(requireApi) {
-  return !shouldSkipApiPreflight(requireApi);
+  if (!requireApi) return false;
+  if (parseBoolean(process.env.API_MOCK_ENABLED)) return false;
+  if (parseBoolean(process.env.API_SKIP_PREFLIGHT)) return false;
+  return true;
 }
 
 export function isApiPreflightSatisfied() {

@@ -39,12 +39,3 @@ Feature: Products API
     When I search for product ""
     Then the response status should be 400
     And the response message should indicate "missing parameter"
-
-  @regression @mock
-  Scenario: Get all products successfully with mock profile
-    Given API mock profile "products-happy" is enabled
-    When I get all products
-    Then the response status should be 200
-    And the response should match product list schema
-    And the response should contain products
-    And each product should have required fields

@@ -1,9 +1,10 @@
 // fixtures/api/apiContext.js
 import { UserCleanupRegistry } from "../../support/shared/cleanupTracking.js";
 
+const USER_STATE_KEYS = ["created", "existing", "saved"];
+
 export function createApiContext(request, config) {
   const defaultMockProfile = config?.apiMock?.profile || "";
-  const USER_STATE_KEYS = ["created", "existing", "saved"];
   const cleanupRegistry = new UserCleanupRegistry();
 
   const context = {
@@ -115,13 +116,6 @@ export function createApiContext(request, config) {
       return user;
     },
 
-    clearUser(key) {
-      return this.updateUser(key, {
-        email: null,
-        password: null,
-      });
-    },
-
     getLastRequest() {
       return this.state.diagnostics.lastRequest;
     },
@@ -130,20 +124,12 @@ export function createApiContext(request, config) {
       this.state.diagnostics.lastRequest = lastRequest;
     },
 
-    getLastError() {
-      return this.state.diagnostics.lastError;
-    },
-
     setLastError(lastError) {
       this.state.diagnostics.lastError = lastError;
     },
 
     clearLastError() {
       this.state.diagnostics.lastError = null;
-    },
-
-    getScenarioTimestamp() {
-      return this.state.scenario.timestamp;
     },
 
     setScenarioTimestamp(timestamp) {
@@ -158,12 +144,12 @@ export function createApiContext(request, config) {
       this.state.scenario.uniqueId = uniqueId;
     },
 
-    getScenarioStartTime() {
-      return this.state.scenario.startTime;
-    },
-
     setScenarioStartTime(startTime) {
       this.state.scenario.startTime = startTime;
+    },
+
+    getScenarioStartTime() {
+      return this.state.scenario.startTime;
     },
 
     getLogger() {
@@ -175,10 +161,6 @@ export function createApiContext(request, config) {
       cleanupRegistry.logger = logger;
     },
 
-    getLogFilePath() {
-      return this.state.logs.logFilePath;
-    },
-
     setLogFilePath(logFilePath) {
       this.state.logs.logFilePath = logFilePath;
     },
@@ -187,8 +169,21 @@ export function createApiContext(request, config) {
       return cleanupRegistry.getAll();
     },
 
-    trackCleanupUser(email, password) {
-      cleanupRegistry.track(email, password, "api");
+    trackCleanupUser(emailOrUser, password) {
+      // Accept both (email, password) and (user object) forms for compatibility
+      const email =
+        typeof emailOrUser === "string" ? emailOrUser : emailOrUser?.email;
+      const pwd =
+        typeof emailOrUser === "string" ? password : emailOrUser?.password;
+
+      if (!email || !pwd) {
+        this.getLogger()?.debug(
+          "[API] trackCleanupUser: skipping, missing email or password",
+        );
+        return;
+      }
+
+      cleanupRegistry.track(email, pwd, "api");
       this.getLogger()?.debug("[API] User cleanup tracked", { email });
     },
 

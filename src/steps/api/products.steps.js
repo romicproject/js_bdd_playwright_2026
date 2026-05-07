@@ -2,7 +2,6 @@
 import { createBdd } from "playwright-bdd";
 import { expect } from "@playwright/test";
 import { test } from "../../fixtures/api/api.fixtures.js";
-import { validateSchema } from "../../framework/validation/schemaValidator.js";
 import { brandListSchema } from "../../schemas/brandList.schema.js";
 import {
   assertSchema,
@@ -69,7 +68,7 @@ When("I get all brands", async ({ apiContext, apiHelpers }) => {
 Then("the response should contain brands", async ({ apiContext }) => {
   const body = getResponseBody(apiContext);
 
-  assertSchema(body, validateSchema, brandListSchema, {
+  assertSchema(body, brandListSchema, {
     requiredKey: "brands",
     previewOmitKeys: ["brands"],
     logger: apiContext.getLogger(),

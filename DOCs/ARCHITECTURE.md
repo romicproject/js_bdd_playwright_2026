@@ -64,14 +64,14 @@ The `src/framework/http/preflightPolicy.js` module centralizes logic for determi
 **How it's used:**
 
 - `globalSetup.js` calls `resolveConfigRequirements()` during worker startup
-- `apiAvailability` fixture calls `shouldSkipApiPreflight()` to determine auto-enforcement
+- `apiAvailability` fixture calls `shouldRunApiPreflight()` to determine if preflight is needed
 - Lane metadata (e.g., `TEST_LANE=api-mock`) is used to decide behavior
 
 **Key function:**
 
 ```js
-// Returns true if preflight should be skipped based on lane/env
-shouldSkipApiPreflight(); // checks TEST_LANE prefix, API_MOCK_ENABLED, API_SKIP_PREFLIGHT
+// Returns true if API preflight health check should run
+shouldRunApiPreflight(requireApi); // checks requireApi flag, API_MOCK_ENABLED, API_SKIP_PREFLIGHT
 ```
 
 ### User Cleanup Registry (shared pattern)

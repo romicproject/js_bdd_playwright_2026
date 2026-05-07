@@ -1,5 +1,5 @@
 // fixtures/api/helpers/products.helpers.js
-import { buildForm, buildSearchParams, FORM_HEADERS } from "./utils.js";
+import { formBody, buildSearchParams, FORM_HEADERS } from "./utils.js";
 
 export function createProductsHelpers(apiClient) {
   async function getAllProductsList(options = {}) {
@@ -10,7 +10,7 @@ export function createProductsHelpers(apiClient) {
     // Keep empty-term tests pointed at the real search contract instead of
     // silently downgrading them to "get all products".
     if (typeof searchTerm === "string" && searchTerm.length === 0) {
-      return apiClient.post("/searchProduct", buildForm({}).toString(), {
+      return apiClient.post("/searchProduct", formBody({}), {
         ...options,
         headers: { ...FORM_HEADERS, ...(options.headers || {}) },
       });
@@ -32,7 +32,7 @@ export function createProductsHelpers(apiClient) {
     if (isMethodNotSupported) {
       return apiClient.post(
         "/searchProduct",
-        buildForm({ search_product: searchTerm }).toString(),
+        formBody({ search_product: searchTerm }),
         {
           ...options,
           headers: { ...FORM_HEADERS, ...(options.headers || {}) },

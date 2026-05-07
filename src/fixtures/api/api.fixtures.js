@@ -9,6 +9,7 @@ import { joinUrl } from "../../framework/http/url.js";
 import {
   isApiPreflightSatisfied,
   resolveConfigRequirements,
+  API_PREFLIGHT_ENDPOINT,
 } from "../../framework/http/preflightPolicy.js";
 import {
   getEffectiveStatus,
@@ -20,7 +21,7 @@ import { applyAllureMetadata } from "../../reporters/allureRuntime.js";
 
 async function runApiPreflight(playwright) {
   const { apiBaseUrl } = requireApiConfig();
-  const fullUrl = joinUrl(apiBaseUrl, "/productsList");
+  const fullUrl = joinUrl(apiBaseUrl, API_PREFLIGHT_ENDPOINT);
   const requestContext = await playwright.request.newContext({
     extraHTTPHeaders: {
       Accept: "application/json",

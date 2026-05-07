@@ -6,7 +6,7 @@ Feature: Brands API
   I want to retrieve the list of brands
   So that I can display them in my application
 
-  @regression @positive
+  @smoke @positive
   Scenario: Get all brands
     When I get all brands
     Then the response status should be 200

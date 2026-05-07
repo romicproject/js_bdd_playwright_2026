@@ -1,23 +1,18 @@
 import { buildUserPayload } from "../../../../support/api/users.data.js";
-
-function mockProduct(id, name, price, brand, categoryName, userType) {
-  return {
-    id,
-    name,
-    price,
-    brand,
-    category: {
-      usertype: { usertype: userType },
-      category: categoryName,
-    },
-  };
-}
+import { buildMockProduct } from "../helpers.js";
 
 const MOCK_PRODUCTS = [
-  mockProduct(1, "Blue Top", "Rs. 500", "Polo", "Tops", "Women"),
-  mockProduct(2, "Men Tshirt", "Rs. 400", "H&M", "Tshirts", "Men"),
-  mockProduct(3, "Sleeveless Dress", "Rs. 1000", "Madame", "Dress", "Women"),
-  mockProduct(
+  buildMockProduct(1, "Blue Top", "Rs. 500", "Polo", "Tops", "Women"),
+  buildMockProduct(2, "Men Tshirt", "Rs. 400", "H&M", "Tshirts", "Men"),
+  buildMockProduct(
+    3,
+    "Sleeveless Dress",
+    "Rs. 1000",
+    "Madame",
+    "Dress",
+    "Women",
+  ),
+  buildMockProduct(
     4,
     "T-shirt & Jeans Combo",
     "Rs. 1200",

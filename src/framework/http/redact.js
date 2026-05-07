@@ -15,6 +15,10 @@ const REDACT_HEADERS = new Set([
   "x-api-key",
 ]);
 
+/**
+ * Internal helper: redact sensitive keys at any depth in object tree.
+ * Also used by schemaValidator for safe error logging.
+ */
 export function redactSensitiveDeep(value) {
   if (value === null || value === undefined) return value;
   if (typeof value === "string") return value;
@@ -32,7 +36,8 @@ export function redactSensitiveDeep(value) {
   return value;
 }
 
-export function getHeaderValue(headers, headerName) {
+// Private: lookup helper for redactBodyForLogs
+function getHeaderValue(headers, headerName) {
   for (const [k, v] of Object.entries(headers || {})) {
     if (String(k).toLowerCase() === String(headerName).toLowerCase()) {
       return String(v);
@@ -41,6 +46,9 @@ export function getHeaderValue(headers, headerName) {
   return "";
 }
 
+/**
+ * PUBLIC API: Redact sensitive keys from URL query params.
+ */
 export function redactUrl(fullUrl) {
   try {
     const u = new URL(fullUrl);
@@ -55,6 +63,9 @@ export function redactUrl(fullUrl) {
   }
 }
 
+/**
+ * PUBLIC API: Redact sensitive HTTP headers (token, cookie, etc).
+ */
 export function redactHeaders(headers) {
   const out = {};
   for (const [k, v] of Object.entries(headers || {})) {
@@ -63,8 +74,8 @@ export function redactHeaders(headers) {
   return out;
 }
 
-// Minimal: only shallow object redaction for request payload logging.
-export function redactBodyShallow(data) {
+// Private: minimal redaction for request payload logging
+function redactBodyShallow(data) {
   if (!data || typeof data !== "object" || Array.isArray(data)) return data;
   const out = {};
   for (const [k, v] of Object.entries(data)) {
@@ -73,6 +84,7 @@ export function redactBodyShallow(data) {
   return out;
 }
 
+// Private: redact form-encoded strings
 function redactFormEncodedString(s) {
   try {
     const params = new URLSearchParams(String(s));
@@ -87,6 +99,7 @@ function redactFormEncodedString(s) {
   }
 }
 
+// Private: redact form params
 function redactFormParams(params) {
   const out = new URLSearchParams(params);
   for (const key of out.keys()) {
@@ -97,6 +110,10 @@ function redactFormParams(params) {
   return out;
 }
 
+/**
+ * PUBLIC API: Redact request body based on Content-Type.
+ * Handles form-encoded and JSON data.
+ */
 export function redactBodyForLogs(data, headers) {
   if (data instanceof URLSearchParams) {
     return redactFormParams(data).toString();
@@ -113,6 +130,10 @@ export function redactBodyForLogs(data, headers) {
   return redactBodyShallow(data);
 }
 
+/**
+ * PUBLIC API: Truncate body to max length for logging.
+ * Prevents log bloat for large responses.
+ */
 export function limitBody(body, maxLen, safeJson) {
   const s = typeof body === "string" ? body : safeJson(body);
   if (s.length <= maxLen) return s;

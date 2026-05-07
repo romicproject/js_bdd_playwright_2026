@@ -2,17 +2,12 @@ import fs from "node:fs";
 import path from "node:path";
 import { config } from "../framework/config/envConfig.js";
 
-function env(name, fallback) {
-  return process.env[name] ?? fallback;
-}
+import { getEnv } from "../framework/env.js";
+import { ensureDir } from "../framework/utils.js";
 
 function envFlag(name, fallback = false) {
-  const value = env(name, fallback ? "true" : "false");
+  const value = getEnv(name, fallback ? "true" : "false");
   return value === true || value === "true" || value === "1";
-}
-
-function ensureDir(dir) {
-  fs.mkdirSync(dir, { recursive: true });
 }
 
 function resolveProjectName(test, result) {
@@ -203,7 +198,7 @@ export default class SuiteMetricsReporter {
     };
 
     const outputFile = String(
-      env("SUITE_METRICS_FILE", "out/test-results/suite-metrics.json"),
+      getEnv("SUITE_METRICS_FILE", "out/test-results/suite-metrics.json"),
     );
     ensureDir(path.dirname(outputFile));
     fs.writeFileSync(outputFile, JSON.stringify(metrics, null, 2), "utf8");
