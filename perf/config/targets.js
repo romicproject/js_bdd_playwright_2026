@@ -1,4 +1,8 @@
-import { config, requireApiConfig, requireUiConfig } from "../../src/framework/config/envConfig.js";
+import {
+  config,
+  requireApiConfig,
+  requireUiConfig,
+} from "../../src/framework/config/envConfig.js";
 
 export function resolvePerfConfig() {
   // Use centralized config from envConfig instead of duplicating env lookups.

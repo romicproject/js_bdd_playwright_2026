@@ -168,6 +168,7 @@ This project uses a file-based logger with optional console output. Two separate
 #### Recommended profiles
 
 **Local development:**
+
 ```ini
 LOG_LEVEL=debug
 LOG_FORMAT=pretty
@@ -178,6 +179,7 @@ LOG_ATTACH_ALLURE=false
 ```
 
 **CI environment:**
+
 ```ini
 LOG_LEVEL=info
 LOG_FORMAT=jsonl
