@@ -4,6 +4,9 @@ Feature: User Account Management API
   I want to manage user accounts
   So that users can register, login, and delete their accounts
 
+  # Note: Passwords in feature files are test data only, not production secrets.
+  # These are used for automated testing against test environments.
+
   @smoke @positive
   Scenario: Create new user account successfully
     When I create a user with:

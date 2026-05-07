@@ -5,64 +5,14 @@ import { createApiContext } from "./apiContext.js";
 import { createApiClient } from "./apiClient.js";
 import { createApiHelpers } from "./helpers/index.js";
 import { startTestLogging } from "../shared/testLogging.js";
-import { joinUrl } from "../../framework/http/url.js";
 import {
   isApiPreflightSatisfied,
   resolveConfigRequirements,
-  API_PREFLIGHT_ENDPOINT,
+  runApiPreflight,
 } from "../../framework/http/preflightPolicy.js";
-import {
-  getEffectiveStatus,
-  getResponseMessage,
-} from "../../support/api/response.assertions.js";
 import { buildScenarioUniqueId } from "../../support/api/users.data.js";
 import { executeTrackedUserCleanup } from "../../support/api/cleanupExecutor.js";
 import { applyAllureMetadata } from "../../reporters/allureRuntime.js";
-
-async function runApiPreflight(playwright) {
-  const { apiBaseUrl } = requireApiConfig();
-  const fullUrl = joinUrl(apiBaseUrl, API_PREFLIGHT_ENDPOINT);
-  const requestContext = await playwright.request.newContext({
-    extraHTTPHeaders: {
-      Accept: "application/json",
-      ...(config.apiKey && { "X-API-Key": config.apiKey }),
-    },
-    ignoreHTTPSErrors: !config.isProduction,
-  });
-
-  try {
-    const response = await requestContext.get(fullUrl, {
-      timeout: config.timeout?.request,
-    });
-
-    let body;
-    try {
-      body = await response.json();
-    } catch {
-      body = await response.text();
-    }
-
-    const preflightResult = {
-      status: response.status(),
-      body,
-    };
-    const effectiveStatus = getEffectiveStatus(preflightResult);
-
-    if (effectiveStatus >= 200 && effectiveStatus < 300) {
-      return {
-        ok: true,
-        checkedUrl: fullUrl,
-        effectiveStatus,
-      };
-    }
-
-    throw new Error(
-      `[PREFLIGHT] API health check failed for ${fullUrl}. http=${response.status()} effective=${effectiveStatus} message="${getResponseMessage(preflightResult)}"`,
-    );
-  } finally {
-    await requestContext.dispose();
-  }
-}
 
 async function cleanupTrackedUsers(apiContext, apiHelpers) {
   return executeTrackedUserCleanup({
@@ -105,9 +55,14 @@ export const test = base.extend({
         }
 
         if (!preflightPromise) {
-          preflightPromise = runApiPreflight(playwright).then((result) => {
-            resolvedPreflight = result;
-            return result;
+          preflightPromise = runApiPreflight({
+            apiBaseUrl: requireApiConfig().apiBaseUrl,
+            requestTimeout: config.timeout?.request,
+            apiKey: config.apiKey,
+            ignoreHTTPSErrors: !config.isProduction,
+          }).then((result) => {
+            resolvedPreflight = { ok: true, ...result };
+            return resolvedPreflight;
           });
         }
 

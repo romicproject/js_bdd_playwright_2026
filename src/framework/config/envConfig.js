@@ -1,6 +1,7 @@
 import dotenv from "dotenv";
 import path from "path";
 import fs from "node:fs";
+import { parseBoolean, getEnvNumber } from "../env.js";
 
 // Determine environment (default: dev)
 const ENV = process.env.ENV || "dev";
@@ -28,35 +29,22 @@ if (hasEnvFile && result.error) {
   );
 }
 
-/**
- * Parse integer from string, with fallback
- */
-function parseIntSafe(value, fallback) {
-  const num = Number(value);
-  return Number.isFinite(num) ? Math.trunc(num) : fallback;
-}
-
-/**
- * Parse boolean from string
- */
-import { parseBoolean } from "../env.js";
-
 function resolveRetryCount() {
   const lane = String(process.env.TEST_LANE || "")
     .trim()
     .toLowerCase();
-  const defaultRetries = parseIntSafe(process.env.RETRY_FAILED_TESTS, 0);
+  const defaultRetries = getEnvNumber("RETRY_FAILED_TESTS", 0);
 
   switch (lane) {
     case "api-mock":
-      return parseIntSafe(process.env.RETRY_API_MOCK, 0);
+      return getEnvNumber("RETRY_API_MOCK", 0);
     case "api-live-smoke":
     case "api-live-regression":
-      return parseIntSafe(process.env.RETRY_API_LIVE, defaultRetries);
+      return getEnvNumber("RETRY_API_LIVE", defaultRetries);
     case "ui-critical":
-      return parseIntSafe(process.env.RETRY_UI_CRITICAL, 1);
+      return getEnvNumber("RETRY_UI_CRITICAL", 1);
     case "ui-regression":
-      return parseIntSafe(process.env.RETRY_UI_REGRESSION, 1);
+      return getEnvNumber("RETRY_UI_REGRESSION", 1);
     default:
       return defaultRetries;
   }
@@ -78,8 +66,8 @@ export const config = {
 
   // Timeouts
   timeout: {
-    request: parseIntSafe(process.env.REQUEST_TIMEOUT, 10000),
-    global: parseIntSafe(process.env.GLOBAL_TIMEOUT, 30000),
+    request: getEnvNumber("REQUEST_TIMEOUT", 10000),
+    global: getEnvNumber("GLOBAL_TIMEOUT", 30000),
   },
 
   // Test user (for scenarios that require an existing user)

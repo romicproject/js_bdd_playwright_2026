@@ -1,4 +1,5 @@
-// logging/paths.js
+// src/framework/logging/paths.js
+// Test log path construction utilities
 import path from "node:path";
 
 function sanitize(s) {

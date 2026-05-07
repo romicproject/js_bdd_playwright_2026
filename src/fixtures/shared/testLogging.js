@@ -8,7 +8,7 @@ import {
 import {
   buildTestLogPath,
   inferFeatureFromTestInfo,
-} from "../../logging/paths.js";
+} from "../../framework/logging/paths.js";
 
 import { getEnv } from "../../framework/env.js";
 

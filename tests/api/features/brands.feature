@@ -12,3 +12,10 @@ Feature: Brands API
     Then the response status should be 200
     And the response should contain brands
     And each brand should have required fields
+
+  @regression @positive
+  Scenario: Brands response contains all required fields
+    When I get all brands
+    Then the response status should be 200
+    And the response should contain brands
+    And each brand should have required fields

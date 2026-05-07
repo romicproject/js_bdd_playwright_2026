@@ -1,16 +1,7 @@
 // src/steps/api/common.steps.js
 import { createBdd } from "playwright-bdd";
 import { test } from "../../fixtures/api/api.fixtures.js";
-import {
-  badRequestSchema,
-  notFoundSchema,
-} from "../../schemas/error.schema.js";
 import { productListSchema } from "../../schemas/productList.schema.js";
-import {
-  deleteSuccessSchema,
-  loginSuccessSchema,
-  userCreatedSchema,
-} from "../../schemas/user.schema.js";
 import {
   expectEffectiveStatus,
   expectHttpStatus,
@@ -18,6 +9,10 @@ import {
   assertSchema,
   getResponseBody,
 } from "../../support/api/response.assertions.js";
+import {
+  MESSAGE_TYPE_REGISTRY,
+  MESSAGE_TYPE_PATTERNS,
+} from "../../support/api/messageTypes.js";
 
 const { Before, Given, Then } = createBdd(test);
 
@@ -63,9 +58,7 @@ Then(
 Then(
   "the response should match product list schema",
   async ({ apiContext }) => {
-    const body = getResponseBody(apiContext);
-
-    assertSchema(body, productListSchema, {
+    assertSchema(getResponseBody(apiContext), productListSchema, {
       requiredKey: "products",
       previewOmitKeys: ["products"],
       logger: apiContext.getLogger(),
@@ -76,51 +69,15 @@ Then(
 Then(
   "the response message should indicate {string}",
   async ({ apiContext }, messageType) => {
-    const MESSAGE_TYPES = {
-      "account created": {
-        pattern: /successfully subscribed|user created|account created/i,
-        schema: userCreatedSchema,
-      },
-      "successful login": {
-        pattern: /login successful|user exists|success/i,
-        schema: loginSuccessSchema,
-      },
-      "email already exists": {
-        pattern: /email already exists|already exist/i,
-        schema: badRequestSchema,
-      },
-      "user not found": {
-        pattern: /user not found|not exist/i,
-        schema: notFoundSchema,
-      },
-      "missing parameter": {
-        pattern: /missing|required/i,
-        schema: badRequestSchema,
-      },
-      "account deleted": {
-        pattern: /account deleted|deleted/i,
-        schema: deleteSuccessSchema,
-      },
-      "account not found": {
-        pattern: /account.*not found|not exist/i,
-        schema: notFoundSchema,
-      },
-    };
-
-    const entry = MESSAGE_TYPES[messageType];
+    const entry = MESSAGE_TYPE_REGISTRY[messageType];
     const body = getResponseBody(apiContext);
+
     if (entry?.schema) {
       assertSchema(body, entry.schema, {
         logger: apiContext.getLogger(),
       });
     }
 
-    expectMessageType(
-      apiContext,
-      messageType,
-      Object.fromEntries(
-        Object.entries(MESSAGE_TYPES).map(([k, v]) => [k, v.pattern]),
-      ),
-    );
+    expectMessageType(apiContext, messageType, MESSAGE_TYPE_PATTERNS);
   },
 );
