@@ -1,13 +1,14 @@
 // support/schemas/user.schema.js
 import { z } from "zod";
 import { zStatusCode, zStr } from "./helpers.js";
+import { apiSuccessResponse, COMMON_PATTERNS } from "./registry.js";
 
 /**
  * Schema for user creation success
  */
 export const userCreatedSchema = z.object({
   responseCode: zStatusCode(201),
-  message: zStr("Message"),
+  message: COMMON_PATTERNS.message,
 });
 
 /**
@@ -15,7 +16,7 @@ export const userCreatedSchema = z.object({
  */
 export const loginSuccessSchema = z.object({
   responseCode: zStatusCode(200),
-  message: zStr("Message"),
+  message: COMMON_PATTERNS.message,
 });
 
 /**
@@ -23,5 +24,5 @@ export const loginSuccessSchema = z.object({
  */
 export const deleteSuccessSchema = z.object({
   responseCode: zStatusCode(200),
-  message: zStr("Message"),
+  message: COMMON_PATTERNS.message,
 });

@@ -1,18 +1,13 @@
 // support/schemas/brandList.schema.js
 import { z } from "zod";
+import { zArr } from "./helpers.js";
 import { brandSchema } from "./brand.schema.js";
+import { COMMON_PATTERNS } from "./registry.js";
 
 /**
  * Schema for a list of brands
  */
 export const brandListSchema = z.object({
-  responseCode: z.number({
-    required_error: "Response code is required",
-    invalid_type_error: "Response code must be a number",
-  }),
-
-  brands: z.array(brandSchema, {
-    required_error: "Brands array is required",
-    invalid_type_error: "Brands must be an array",
-  }),
+  responseCode: COMMON_PATTERNS.responseCode,
+  brands: zArr(brandSchema),
 });

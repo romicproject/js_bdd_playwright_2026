@@ -1,5 +1,6 @@
 import { expect } from "@playwright/test";
 import { BasePage } from "./BasePage.js";
+import { config } from "../../framework/config/envConfig.js";
 
 export class ProductsPage extends BasePage {
   allProductsHeading() {
@@ -65,7 +66,7 @@ export class ProductsPage extends BasePage {
 
   async assertSearchResultsContain(term) {
     const resultsHeadingVisible = await this.searchedProductsHeading()
-      .isVisible({ timeout: 5000 })
+      .isVisible({ timeout: config.timeout.elementVisibilityExtended })
       .catch(() => false);
 
     if (!resultsHeadingVisible) {
