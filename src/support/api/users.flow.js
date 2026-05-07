@@ -8,6 +8,26 @@ function requireUserField(apiContext, userKey, field) {
   return value;
 }
 
+/**
+ * Resolve email from template, with smart fallback to existing/saved user.
+ *
+ * Logic:
+ * - If emailTemplate contains {unique} AND an "existing" user is already set,
+ *   return the existing user's email (for reuse across multiple steps)
+ * - Otherwise, resolve template placeholders like {unique} normally
+ *
+ * This allows scenarios to reuse the same email across multiple operations
+ * without repeating the template in each step.
+ *
+ * Example:
+ *   Given a user exists with email "duplicate.{unique}@test.com"  ← sets "existing"
+ *   When I create a user with:
+ *     | email | duplicate.{unique}@test.com |  ← reuses existing email
+ *
+ * @param {object} apiContext - API context with user state
+ * @param {string} emailTemplate - Email template, possibly with {unique} placeholder
+ * @returns {string} Resolved email
+ */
 function resolveTrackedEmail(apiContext, emailTemplate) {
   const raw = String(emailTemplate ?? "");
   const resolved = apiContext.resolveTemplate(raw);

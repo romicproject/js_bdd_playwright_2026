@@ -143,6 +143,90 @@ throw new Error(`[PREFLIGHT] API health check failed: ${error.message}`);
 
 ---
 
+## Logging & Reporting
+
+### Logging strategy
+
+This project uses a file-based logger with optional console output. Two separate thresholds control behavior:
+
+- **`LOG_LEVEL`** = recording threshold (what gets written to log files)
+- **`LOG_CONSOLE_LEVEL`** = display threshold (what appears in console, only when `LOG_CONSOLE=true`)
+
+**Key rule:** `LOG_CONSOLE_LEVEL` cannot force logs at lower thresholds to appear. E.g., if `LOG_LEVEL=info`, debug logs are not generated at all.
+
+#### Supported environment variables
+
+- `LOG_LEVEL`: `debug | info | warn | error` (file threshold, default: `info`)
+- `LOG_CONSOLE`: `true | false` (enable console output, default: `false`)
+- `LOG_CONSOLE_LEVEL`: `debug | info | warn | error` (console threshold, default: `warn`)
+- `LOG_FORMAT`: `pretty | jsonl` (file format, default: `pretty`)
+- `LOG_COLOR`: `auto | true | false` (console colors, default: `auto`)
+- `LOG_DIR`: output directory (default: `out/logs`)
+- `LOG_API_MAX_BODY`: max bytes for API body dumps (default: `20000`)
+- `LOG_ATTACH_ALLURE`: attach `execution.log` to Allure results (default: `true`)
+
+#### Recommended profiles
+
+**Local development:**
+
+```ini
+LOG_LEVEL=debug
+LOG_FORMAT=pretty
+LOG_COLOR=true
+LOG_CONSOLE=true
+LOG_CONSOLE_LEVEL=warn
+LOG_ATTACH_ALLURE=false
+```
+
+**CI environment:**
+
+```ini
+LOG_LEVEL=info
+LOG_FORMAT=jsonl
+LOG_COLOR=false
+LOG_CONSOLE=true
+LOG_CONSOLE_LEVEL=warn
+LOG_ATTACH_ALLURE=true
+```
+
+### Allure reporting
+
+This project can publish test results to Allure Reports in addition to Playwright HTML reports.
+
+**Workflow:**
+
+1. Test execution writes raw Allure results to `out/allure-results`
+2. Reporter metadata includes environment, run ID, lane, and defect categories
+3. Generate report: `npm run report:allure:generate`
+4. Open report: `npm run report:allure:open`
+5. Serve live from raw results: `npm run report:allure:serve`
+
+**Allure history:**
+
+- Stored in `out/allure-history/history.jsonl` (Allure 3 format)
+- Accumulates across runs automatically
+- Reset with `npm run report:allure:new-run` before a fresh trend baseline
+
+**Cleanup notes:**
+
+- `clean:light` preserves Allure artifacts (keeps local history)
+- `clean` removes all Allure files (resets history)
+- `clean:all` includes `node_modules` reset
+
+### Suite metrics
+
+Each functional test run generates `out/test-results/suite-metrics.json` with:
+
+- Total passed/failed counts
+- Flaky test detection
+- Retry summaries
+- Cleanup-affected scenarios
+- Slowest tests ranked by duration
+
+This enables trend analysis and quality gate integration without relying on external dashboards.
+
+---
+
 ## Working rules
 
 ### 1. Keep steps thin
