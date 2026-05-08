@@ -1,4 +1,5 @@
 import { BasePage } from "./BasePage.js";
+import { config } from "../../framework/config/envConfig.js";
 import { expect } from "@playwright/test";
 
 export class HomePage extends BasePage {
@@ -23,7 +24,7 @@ export class HomePage extends BasePage {
     await signupLoginLink.scrollIntoViewIfNeeded();
 
     try {
-      await signupLoginLink.click({ timeout: 3000 });
+      await signupLoginLink.click({ timeout: config.timeout.loadState });
     } catch {
       await this.goto("/login");
     }
@@ -40,7 +41,7 @@ export class HomePage extends BasePage {
     await navLink.scrollIntoViewIfNeeded();
 
     try {
-      await navLink.click({ timeout: 3000 });
+      await navLink.click({ timeout: config.timeout.loadState });
     } catch {
       if (!href)
         throw new Error(

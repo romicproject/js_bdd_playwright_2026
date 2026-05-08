@@ -1,13 +1,12 @@
 // fixtures/ui/ui.fixtures.js
 import { test as base } from "playwright-bdd";
 import { config, requireUiConfig } from "../../framework/config/envConfig.js";
-import { startTestLogging } from "../shared/testLogging.js";
 import { applyNetworkBlocking } from "./helpers/networkBlocker.js";
 import { createApiContext } from "../api/apiContext.js";
 import { createApiClient } from "../api/apiClient.js";
 import { createApiHelpers } from "../api/helpers/index.js";
-import { UserCleanupRegistry } from "../../support/shared/cleanupTracking.js";
 import { executeTrackedUserCleanup } from "../../support/api/cleanupExecutor.js";
+import { createCommonContext } from "../shared/contextFactory.js";
 
 import {
   ContactUsPage,
@@ -107,11 +106,14 @@ export const test = base.extend({
   uiContext: async ({}, use, testInfo) => {
     const startTime = Date.now();
     const { baseUrl } = requireUiConfig();
-    const { logger, logFilePath, attachExecutionLog, feature } =
-      startTestLogging(testInfo, {
-        kind: "UI",
-      });
 
+    // Use shared factory to create common context structure
+    const commonContext = createCommonContext({
+      testInfo,
+      kind: "UI",
+    });
+
+    const { logger, attachExecutionLog, feature } = commonContext;
     logger.info(`Starting: ${testInfo.title}`);
     logger.debug(`Environment: ${config.env}`);
     logger.debug(`Base URL: ${baseUrl}`);
@@ -121,12 +123,11 @@ export const test = base.extend({
       feature,
     });
 
-    const cleanupRegistry = new UserCleanupRegistry(logger);
     const uiContext = createUiContext({
       logger,
-      logFilePath,
+      logFilePath: commonContext.logFilePath,
       testInfo,
-      cleanupRegistry,
+      cleanupRegistry: commonContext.cleanupRegistry,
     });
 
     await use(uiContext);

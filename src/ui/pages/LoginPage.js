@@ -1,5 +1,6 @@
 import { expect } from "@playwright/test";
 import { BasePage } from "./BasePage.js";
+import { config } from "../../framework/config/envConfig.js";
 
 export class LoginPage extends BasePage {
   signupForm() {
@@ -58,7 +59,7 @@ export class LoginPage extends BasePage {
       const signupButton = this.signupButton();
       await expect(signupButton).toBeVisible();
       await this.clickWithFallback(signupButton, {
-        timeout: 3000,
+        timeout: config.timeout.loadState,
         scroll: true,
         allowDomFallback: true,
       });

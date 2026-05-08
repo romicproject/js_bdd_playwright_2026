@@ -1,5 +1,6 @@
 import { expect } from "@playwright/test";
 import { BasePage } from "./BasePage.js";
+import { config } from "../../framework/config/envConfig.js";
 
 export class RegisterPage extends BasePage {
   titleMrRadio() {
@@ -86,11 +87,11 @@ export class RegisterPage extends BasePage {
     });
   }
 
-  async isVisible(locator, timeout = 1500) {
+  async isVisible(locator, timeout = config.timeout.elementVisibility) {
     return locator.isVisible({ timeout }).catch(() => false);
   }
 
-  async isLoggedInUiVisible(timeout = 1500) {
+  async isLoggedInUiVisible(timeout = config.timeout.elementVisibility) {
     const logoutVisible = await this.isVisible(this.logoutLink(), timeout);
     if (logoutVisible) return true;
 
@@ -99,7 +100,9 @@ export class RegisterPage extends BasePage {
 
   async settleHomePage() {
     await this.page
-      .waitForLoadState("domcontentloaded", { timeout: 3000 })
+      .waitForLoadState("domcontentloaded", {
+        timeout: config.timeout.loadState,
+      })
       .catch(() => {});
     await this.recoverFromVignette("/");
   }
@@ -169,7 +172,7 @@ export class RegisterPage extends BasePage {
     for (let attempt = 0; attempt < 3; attempt += 1) {
       if (attempt === 0) {
         await this.clickWithFallback(continueButton, {
-          timeout: 3000,
+          timeout: config.timeout.loadState,
           force: true,
           allowDomFallback: true,
         });
@@ -183,7 +186,9 @@ export class RegisterPage extends BasePage {
 
       const loggedInUiVisible = await this.isLoggedInUiVisible(2500);
       if (loggedInUiVisible) {
-        await expect(this.logoutLink()).toBeVisible({ timeout: 5000 });
+        await expect(this.logoutLink()).toBeVisible({
+          timeout: config.timeout.elementVisibilityExtended,
+        });
         return;
       }
 
@@ -197,7 +202,9 @@ export class RegisterPage extends BasePage {
     }
 
     await this.openHomeAndSettle();
-    await expect(this.logoutLink()).toBeVisible({ timeout: 7000 });
+    await expect(this.logoutLink()).toBeVisible({
+      timeout: config.timeout.elementVisibilityExtended + 2000,
+    });
   }
 
   logoutLink() {
@@ -209,7 +216,9 @@ export class RegisterPage extends BasePage {
       await this.openHomeAndSettle();
     }
 
-    await expect(this.logoutLink()).toBeVisible({ timeout: 7000 });
+    await expect(this.logoutLink()).toBeVisible({
+      timeout: config.timeout.elementVisibilityExtended + 2000,
+    });
 
     const loggedInVisible = await this.isVisible(this.loggedInAsAnyLink());
     if (loggedInVisible && name) {

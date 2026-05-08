@@ -4,13 +4,12 @@ import { config, requireApiConfig } from "../../framework/config/envConfig.js";
 import { createApiContext } from "./apiContext.js";
 import { createApiClient } from "./apiClient.js";
 import { createApiHelpers } from "./helpers/index.js";
-import { startTestLogging } from "../shared/testLogging.js";
+import { createCommonContext } from "../shared/contextFactory.js";
 import {
   isApiPreflightSatisfied,
   resolveConfigRequirements,
   runApiPreflight,
 } from "../../framework/http/preflightPolicy.js";
-import { buildScenarioUniqueId } from "../../support/api/users.data.js";
 import { executeTrackedUserCleanup } from "../../support/api/cleanupExecutor.js";
 import { applyAllureMetadata } from "../../reporters/allureRuntime.js";
 
@@ -76,32 +75,22 @@ export const test = base.extend({
 
   apiContext: async ({ request }, use, testInfo) => {
     const { apiBaseUrl } = requireApiConfig();
+
+    // Use shared factory to create common context structure
+    const commonContext = createCommonContext({
+      testInfo,
+      kind: "API",
+    });
+
+    // Create API-specific context
     const context = createApiContext(request, config);
-    const scenarioTimestamp = Date.now();
+    context.setScenarioStartTime(commonContext.scenarioTimestamp);
+    context.setScenarioTimestamp(commonContext.scenarioTimestamp);
+    context.setScenarioUniqueId(commonContext.scenarioUniqueId);
+    context.setLogger(commonContext.logger);
+    context.setLogFilePath(commonContext.logFilePath);
 
-    context.setScenarioStartTime(scenarioTimestamp);
-    context.setScenarioTimestamp(scenarioTimestamp);
-    context.setScenarioUniqueId(
-      buildScenarioUniqueId({
-        runId: process.env.LOG_RUN_ID,
-        workerIndex: testInfo.workerIndex,
-        parallelIndex: testInfo.parallelIndex,
-        retry: testInfo.retry,
-        timestamp: scenarioTimestamp,
-      }),
-    );
-
-    // derive kind from project.name
-    const projectName = testInfo.project?.name || "";
-    const kind = /api/i.test(projectName) ? "API" : "UI";
-
-    const { logger, logFilePath, attachExecutionLog, feature } =
-      startTestLogging(testInfo, { kind });
-
-    // expose logger/path on context
-    context.setLogger(logger);
-    context.setLogFilePath(logFilePath);
-
+    const { logger } = commonContext;
     logger.info(`Starting: ${testInfo.title}`);
     logger.debug(`Environment: ${config.env}`);
     logger.debug(`Base URL: ${apiBaseUrl}`);
@@ -109,8 +98,8 @@ export const test = base.extend({
     logger.debug(`API mock profile: ${context.mock.profile || "none"}`);
 
     await applyAllureMetadata(testInfo, {
-      kind,
-      feature,
+      kind: commonContext.kind,
+      feature: commonContext.feature,
       apiMockEnabled: context.mock.enabled,
       apiMockProfile: context.mock.profile || "none",
     });
@@ -125,7 +114,7 @@ export const test = base.extend({
     const duration = Date.now() - context.getScenarioStartTime();
     logger.info(`Completed in ${duration}ms | status=${testInfo.status}`);
 
-    await attachExecutionLog();
+    await commonContext.attachExecutionLog();
   },
 
   apiClient: async ({ apiContext }, use, testInfo) => {

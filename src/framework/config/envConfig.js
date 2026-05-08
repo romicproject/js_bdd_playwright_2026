@@ -64,10 +64,19 @@ export const config = {
   baseUrl: process.env.BASE_URL,
   apiBaseUrl: process.env.API_BASE_URL,
 
-  // Timeouts
+  // Timeouts (all in milliseconds, overridable via env vars)
   timeout: {
     request: getEnvNumber("REQUEST_TIMEOUT", 10000),
     global: getEnvNumber("GLOBAL_TIMEOUT", 30000),
+    navigation: getEnvNumber("TIMEOUT_NAVIGATION", 15000),
+    recoveryDom: getEnvNumber("TIMEOUT_RECOVERY_DOM", 2000),
+    click: getEnvNumber("TIMEOUT_CLICK", 3000),
+    elementVisibility: getEnvNumber("TIMEOUT_ELEMENT_VISIBILITY", 1500),
+    elementVisibilityExtended: getEnvNumber(
+      "TIMEOUT_ELEMENT_VISIBILITY_EXTENDED",
+      5000,
+    ),
+    loadState: getEnvNumber("TIMEOUT_LOAD_STATE", 3000),
   },
 
   // Test user (for scenarios that require an existing user)
