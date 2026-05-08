@@ -100,7 +100,9 @@ export class RegisterPage extends BasePage {
 
   async settleHomePage() {
     await this.page
-      .waitForLoadState("domcontentloaded", { timeout: config.timeout.loadState })
+      .waitForLoadState("domcontentloaded", {
+        timeout: config.timeout.loadState,
+      })
       .catch(() => {});
     await this.recoverFromVignette("/");
   }
@@ -184,7 +186,9 @@ export class RegisterPage extends BasePage {
 
       const loggedInUiVisible = await this.isLoggedInUiVisible(2500);
       if (loggedInUiVisible) {
-        await expect(this.logoutLink()).toBeVisible({ timeout: config.timeout.elementVisibilityExtended });
+        await expect(this.logoutLink()).toBeVisible({
+          timeout: config.timeout.elementVisibilityExtended,
+        });
         return;
       }
 
@@ -198,7 +202,9 @@ export class RegisterPage extends BasePage {
     }
 
     await this.openHomeAndSettle();
-    await expect(this.logoutLink()).toBeVisible({ timeout: config.timeout.elementVisibilityExtended + 2000 });
+    await expect(this.logoutLink()).toBeVisible({
+      timeout: config.timeout.elementVisibilityExtended + 2000,
+    });
   }
 
   logoutLink() {
@@ -210,7 +216,9 @@ export class RegisterPage extends BasePage {
       await this.openHomeAndSettle();
     }
 
-    await expect(this.logoutLink()).toBeVisible({ timeout: config.timeout.elementVisibilityExtended + 2000 });
+    await expect(this.logoutLink()).toBeVisible({
+      timeout: config.timeout.elementVisibilityExtended + 2000,
+    });
 
     const loggedInVisible = await this.isVisible(this.loggedInAsAnyLink());
     if (loggedInVisible && name) {

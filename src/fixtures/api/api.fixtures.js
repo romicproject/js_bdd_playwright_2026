@@ -97,7 +97,6 @@ export const test = base.extend({
     logger.debug(`API mock enabled: ${context.mock.enabled}`);
     logger.debug(`API mock profile: ${context.mock.profile || "none"}`);
 
-
     await applyAllureMetadata(testInfo, {
       kind: commonContext.kind,
       feature: commonContext.feature,
