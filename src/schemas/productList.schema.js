@@ -1,6 +1,6 @@
 // support/schemas/productList.schema.js
 import { z } from "zod";
-import { zArr, zNum } from "./helpers.js";
+import { zArr } from "./helpers.js";
 import { productSchema } from "./product.schema.js";
 import { COMMON_PATTERNS } from "./registry.js";
 

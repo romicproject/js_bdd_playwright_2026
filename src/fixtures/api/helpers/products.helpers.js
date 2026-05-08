@@ -1,4 +1,5 @@
 // fixtures/api/helpers/products.helpers.js
+// Consolidated catalog helpers (products + brands)
 import { formBody, buildSearchParams, FORM_HEADERS } from "./utils.js";
 
 export function createProductsHelpers(apiClient) {
@@ -42,8 +43,17 @@ export function createProductsHelpers(apiClient) {
 
     return getResponse;
   }
+
   return {
     getAllProductsList,
     searchProduct,
+  };
+}
+
+export function createBrandsHelpers(apiClient) {
+  return {
+    async getAllBrands() {
+      return apiClient.get("/brandsList");
+    },
   };
 }

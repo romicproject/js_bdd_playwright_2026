@@ -8,7 +8,7 @@ function safeUrlHost(value) {
   }
 }
 
-export function buildAllureEnvironmentInfo(config) {
+function buildAllureEnvironmentInfo(config) {
   return {
     ENV: config.env,
     TEST_LANE: config.retry?.lane || "default",
@@ -23,7 +23,7 @@ export function buildAllureEnvironmentInfo(config) {
   };
 }
 
-export function buildAllureCategories() {
+function buildAllureCategories() {
   return [
     {
       name: "Cleanup / teardown",

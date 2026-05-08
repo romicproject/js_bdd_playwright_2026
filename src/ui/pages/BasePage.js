@@ -78,10 +78,6 @@ export class BasePage {
     await expect(this.page).toHaveURL(expected);
   }
 
-  async expectTitle(expected) {
-    await expect(this.page).toHaveTitle(expected);
-  }
-
   async clickWithFallback(locator, options = {}) {
     const {
       timeout = config.timeout.click,
@@ -154,85 +150,5 @@ export class BasePage {
     throw new Error(
       `External site instability detected during ${contextMessage}: received Forbidden (403).`,
     );
-  }
-
-  // ========== Consolidated Helper Methods ==========
-
-  /**
-   * Get element by role and wait for it to be visible
-   * Reduces repetitive getByRole + visibility checks
-   */
-  async getByRoleAndWait(
-    role,
-    name,
-    timeout = config.timeout.elementVisibility,
-  ) {
-    const locator = this.page.getByRole(role, { name });
-    await locator.waitFor({ state: "visible", timeout });
-    return locator;
-  }
-
-  /**
-   * Click element and validate navigation to expected URL
-   * Combines click + URL validation in one method
-   */
-  async clickAndValidateNavigation(locator, expectedUrlPattern) {
-    await locator.click({ timeout: config.timeout.click });
-    await expect(this.page).toHaveURL(expectedUrlPattern, {
-      timeout: config.timeout.navigation,
-    });
-  }
-
-  /**
-   * Fill input field and validate value was set
-   * Ensures input is ready before and after typing
-   */
-  async fillAndValidate(locator, value) {
-    await locator.waitFor({ state: "attached", timeout: config.timeout.click });
-    await locator.fill(value);
-    await expect(locator).toHaveValue(value, {
-      timeout: config.timeout.elementVisibility,
-    });
-  }
-
-  /**
-   * Validate page URL and title match expected values
-   * Common assertion pattern
-   */
-  async expectUrlAndTitle(expectedUrl, expectedTitle) {
-    await expect(this.page).toHaveURL(expectedUrl, {
-      timeout: config.timeout.navigation,
-    });
-    await expect(this.page).toHaveTitle(expectedTitle, {
-      timeout: config.timeout.elementVisibility,
-    });
-  }
-
-  /**
-   * Check if element is visible with timeout, return boolean
-   * Safe visibility check without throwing
-   */
-  async isElementVisible(locator, timeout = config.timeout.elementVisibility) {
-    return locator.isVisible({ timeout }).catch(() => false);
-  }
-
-  /**
-   * Click element with retry logic for flaky interactions
-   * Useful for unstable third-party sites
-   */
-  async clickWithRetry(
-    locator,
-    maxAttempts = 3,
-    timeout = config.timeout.click,
-  ) {
-    for (let attempt = 0; attempt < maxAttempts; attempt++) {
-      try {
-        await locator.click({ timeout });
-        return;
-      } catch (error) {
-        if (attempt === maxAttempts - 1) throw error;
-        await this.page.waitForTimeout(config.timeout.loadState);
-      }
-    }
   }
 }

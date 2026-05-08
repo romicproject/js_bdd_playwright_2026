@@ -3,10 +3,6 @@ import { BasePage } from "./BasePage.js";
 import { config } from "../../framework/config/envConfig.js";
 
 export class RegisterPage extends BasePage {
-  titleMrRadio() {
-    return this.page.locator("#id_gender1");
-  }
-
   titleMrOption() {
     return this.page.getByRole("radio", { name: /^mr\.$/i });
   }
@@ -113,10 +109,9 @@ export class RegisterPage extends BasePage {
   }
 
   async ensureMrTitleSelected() {
-    const titleRadio = this.titleMrRadio();
-    if (await titleRadio.isChecked().catch(() => false)) return;
-
     const titleOption = this.titleMrOption();
+    if (await titleOption.isChecked().catch(() => false)) return;
+
     await expect(titleOption).toBeVisible();
 
     try {
@@ -125,7 +120,7 @@ export class RegisterPage extends BasePage {
       await titleOption.click({ force: true });
     }
 
-    await expect(titleRadio).toBeChecked();
+    await expect(titleOption).toBeChecked();
   }
 
   async assertOnAccountInfoPage() {

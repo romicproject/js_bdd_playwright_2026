@@ -153,7 +153,12 @@ function inferGateDefaultsFromInput(inputPath) {
   };
 }
 
-function resolveGates(args, inferredGates) {
+function resolveGateValue(cliValue, cliValueAlt, envValue, defaultValue) {
+  // Priority: CLI > environment > default
+  return number(cliValue ?? cliValueAlt ?? envValue, defaultValue);
+}
+
+function detectGateSource(args) {
   const hasCli =
     args.p95 != null ||
     args.p99 != null ||
@@ -164,21 +169,29 @@ function resolveGates(args, inferredGates) {
     process.env.PERF_P99_MS != null ||
     process.env.PERF_MIN_SUCCESS_RATE != null;
 
-  const source = hasCli ? "cli" : hasEnv ? "env" : "inferred";
+  return hasCli ? "cli" : hasEnv ? "env" : "inferred";
+}
+
+function resolveGates(args, inferredGates) {
+  const source = detectGateSource(args);
 
   return {
-    p95MaxMs: number(
-      args.p95 ?? process.env.PERF_P95_MS,
+    p95MaxMs: resolveGateValue(
+      args.p95,
+      null,
+      process.env.PERF_P95_MS,
       inferredGates.p95MaxMs,
     ),
-    p99MaxMs: number(
-      args.p99 ?? process.env.PERF_P99_MS,
+    p99MaxMs: resolveGateValue(
+      args.p99,
+      null,
+      process.env.PERF_P99_MS,
       inferredGates.p99MaxMs,
     ),
-    minSuccessRate: number(
-      args.minSuccessRate ??
-        args["min-success-rate"] ??
-        process.env.PERF_MIN_SUCCESS_RATE,
+    minSuccessRate: resolveGateValue(
+      args.minSuccessRate,
+      args["min-success-rate"],
+      process.env.PERF_MIN_SUCCESS_RATE,
       inferredGates.minSuccessRate,
     ),
     profile: inferredGates.profile,

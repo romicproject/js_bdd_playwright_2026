@@ -1,7 +1,7 @@
 // support/schemas/brandList.schema.js
 import { z } from "zod";
 import { zArr } from "./helpers.js";
-import { brandSchema } from "./brand.schema.js";
+import { brandSchema } from "./registry.js";
 import { COMMON_PATTERNS } from "./registry.js";
 
 /**

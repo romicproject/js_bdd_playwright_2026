@@ -1,6 +1,6 @@
 import { buildScenarioUniqueId } from "../../support/api/users.data.js";
 
-export function buildUniqueUser(identity = {}) {
+function buildUniqueUser(identity = {}) {
   const uniqueId = buildScenarioUniqueId(identity);
   const emailPrefix = "ui.register";
 
@@ -18,15 +18,6 @@ export function buildUniqueUser(identity = {}) {
   };
 }
 
-export function buildRegisterUserMeta() {
-  return {
-    createdAt: new Date().toISOString(),
-    scenarioTag: "@register",
-    sourceFeature: "register-user.feature",
-    cleanupPending: true,
-  };
-}
-
 export async function openSignupLogin({ homePage, loginPage }) {
   await homePage.open();
   await homePage.clickSignupLogin();
@@ -41,7 +32,12 @@ export async function createAccountWithUniqueUser({
 }) {
   const user = buildUniqueUser(uiContext.testIdentity);
   uiContext.state.register.user = user;
-  uiContext.state.register.meta = buildRegisterUserMeta();
+  uiContext.state.register.meta = {
+    createdAt: new Date().toISOString(),
+    scenarioTag: "@register",
+    sourceFeature: "register-user.feature",
+    cleanupPending: true,
+  };
   uiContext.trackCleanupUser(user);
 
   uiContext.logger?.info("Register test user prepared", {

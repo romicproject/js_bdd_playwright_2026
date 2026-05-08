@@ -1,9 +1,7 @@
-import { resolveProductsHappyMock } from "./profiles/products.mock.js";
-import { resolveContractDefaultMock } from "./profiles/contract.mock.js";
+import { resolveContractDefaultMock } from "./handlers/index.js";
 
 const PROFILE_RESOLVERS = {
   "contract-default": resolveContractDefaultMock,
-  "products-happy": resolveProductsHappyMock,
 };
 
 function getParsedUrl(fullUrl) {

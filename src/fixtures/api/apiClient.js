@@ -8,7 +8,7 @@ import {
 import { shouldLog, attachJson, getLogger } from "./client/reporter.js";
 import { joinUrl } from "../../framework/http/url.js";
 import { hasHeader, isFormLike } from "../../framework/http/headers.js";
-import { resolveApiMockResponse } from "./mocks/index.js";
+import { resolveApiMockResponse } from "./mocks/registry.js";
 
 import { getEnvNumber } from "../../framework/env.js";
 

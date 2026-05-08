@@ -1,13 +1,10 @@
 import { parseBoolean } from "../env.js";
 import { joinUrl } from "./url.js";
+import { getEffectiveStatus, getResponseMessage } from "./response.js";
 import { request as playwrightRequest } from "@playwright/test";
-import {
-  getEffectiveStatus,
-  getResponseMessage,
-} from "../../support/api/response.assertions.js";
 
 // Preflight health check endpoint (consistent across globalSetup and api.fixtures)
-export const API_PREFLIGHT_ENDPOINT = "/productsList";
+const API_PREFLIGHT_ENDPOINT = "/productsList";
 
 export function resolveConfigRequirements() {
   const lane = String(process.env.TEST_LANE || "")
