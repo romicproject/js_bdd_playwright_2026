@@ -155,10 +155,7 @@ function inferGateDefaultsFromInput(inputPath) {
 
 function resolveGateValue(cliValue, cliValueAlt, envValue, defaultValue) {
   // Priority: CLI > environment > default
-  return number(
-    cliValue ?? cliValueAlt ?? envValue,
-    defaultValue,
-  );
+  return number(cliValue ?? cliValueAlt ?? envValue, defaultValue);
 }
 
 function detectGateSource(args) {

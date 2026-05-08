@@ -171,7 +171,12 @@ export function handleDeleteAccount(apiContext, requestData, pathname, method) {
   });
 }
 
-export function handleGetUserDetail(apiContext, pathname, searchParams, method) {
+export function handleGetUserDetail(
+  apiContext,
+  pathname,
+  searchParams,
+  method,
+) {
   if (method !== "GET" || !/\/getuserdetailbyemail$/i.test(pathname)) {
     return null;
   }

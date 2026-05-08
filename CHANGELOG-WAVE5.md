@@ -31,6 +31,7 @@ Final wave of optimizations focusing on code clarity, maintainability, and archi
 ### Rationale
 
 The original comment was too vague. The revised comment:
+
 - Clarifies data type (array of property names)
 - Explains purpose (reduces noise)
 - Uses more concrete language (error preview vs generic "preview")
@@ -53,6 +54,7 @@ The original comment was too vague. The revised comment:
 #### New Functions
 
 **`resolveGateValue(cliValue, cliValueAlt, envValue, defaultValue)`**
+
 - Unified value resolution with explicit priority chain: CLI > environment > default
 - Eliminates nested `??` operators
 - Makes priority visible at function level
@@ -60,22 +62,27 @@ The original comment was too vague. The revised comment:
 ```javascript
 function resolveGateValue(cliValue, cliValueAlt, envValue, defaultValue) {
   // Priority: CLI > environment > default
-  return number(
-    cliValue ?? cliValueAlt ?? envValue,
-    defaultValue,
-  );
+  return number(cliValue ?? cliValueAlt ?? envValue, defaultValue);
 }
 ```
 
 **`detectGateSource(args)`**
+
 - Extracted source detection logic from `resolveGates()`
 - Returns: "cli" | "env" | "inferred"
 - Clearer separation of concerns
 
 ```javascript
 function detectGateSource(args) {
-  const hasCli = args.p95 != null || args.p99 != null || args.minSuccessRate != null || args["min-success-rate"] != null;
-  const hasEnv = process.env.PERF_P95_MS != null || process.env.PERF_P99_MS != null || process.env.PERF_MIN_SUCCESS_RATE != null;
+  const hasCli =
+    args.p95 != null ||
+    args.p99 != null ||
+    args.minSuccessRate != null ||
+    args["min-success-rate"] != null;
+  const hasEnv =
+    process.env.PERF_P95_MS != null ||
+    process.env.PERF_P99_MS != null ||
+    process.env.PERF_MIN_SUCCESS_RATE != null;
   return hasCli ? "cli" : hasEnv ? "env" : "inferred";
 }
 ```
@@ -83,27 +90,56 @@ function detectGateSource(args) {
 #### Refactored Function
 
 **`resolveGates(args, inferredGates)` - Before**
+
 ```javascript
 // 26 lines with cascading conditionals
-const hasCli = args.p95 != null || args.p99 != null || args.minSuccessRate != null || args["min-success-rate"] != null;
-const hasEnv = process.env.PERF_P95_MS != null || process.env.PERF_P99_MS != null || process.env.PERF_MIN_SUCCESS_RATE != null;
+const hasCli =
+  args.p95 != null ||
+  args.p99 != null ||
+  args.minSuccessRate != null ||
+  args["min-success-rate"] != null;
+const hasEnv =
+  process.env.PERF_P95_MS != null ||
+  process.env.PERF_P99_MS != null ||
+  process.env.PERF_MIN_SUCCESS_RATE != null;
 const source = hasCli ? "cli" : hasEnv ? "env" : "inferred";
 return {
   p95MaxMs: number(args.p95 ?? process.env.PERF_P95_MS, inferredGates.p95MaxMs),
   p99MaxMs: number(args.p99 ?? process.env.PERF_P99_MS, inferredGates.p99MaxMs),
-  minSuccessRate: number(args.minSuccessRate ?? args["min-success-rate"] ?? process.env.PERF_MIN_SUCCESS_RATE, inferredGates.minSuccessRate),
+  minSuccessRate: number(
+    args.minSuccessRate ??
+      args["min-success-rate"] ??
+      process.env.PERF_MIN_SUCCESS_RATE,
+    inferredGates.minSuccessRate,
+  ),
   // ...
 };
 ```
 
 **`resolveGates(args, inferredGates)` - After**
+
 ```javascript
 // 10 lines, clearer intent
 const source = detectGateSource(args);
 return {
-  p95MaxMs: resolveGateValue(args.p95, null, process.env.PERF_P95_MS, inferredGates.p95MaxMs),
-  p99MaxMs: resolveGateValue(args.p99, null, process.env.PERF_P99_MS, inferredGates.p99MaxMs),
-  minSuccessRate: resolveGateValue(args.minSuccessRate, args["min-success-rate"], process.env.PERF_MIN_SUCCESS_RATE, inferredGates.minSuccessRate),
+  p95MaxMs: resolveGateValue(
+    args.p95,
+    null,
+    process.env.PERF_P95_MS,
+    inferredGates.p95MaxMs,
+  ),
+  p99MaxMs: resolveGateValue(
+    args.p99,
+    null,
+    process.env.PERF_P99_MS,
+    inferredGates.p99MaxMs,
+  ),
+  minSuccessRate: resolveGateValue(
+    args.minSuccessRate,
+    args["min-success-rate"],
+    process.env.PERF_MIN_SUCCESS_RATE,
+    inferredGates.minSuccessRate,
+  ),
   // ...
 };
 ```
@@ -133,6 +169,7 @@ return {
 ### Architecture
 
 #### Before
+
 ```
 src/fixtures/api/mocks/
 ├── profiles/
@@ -143,6 +180,7 @@ src/fixtures/api/mocks/
 ```
 
 #### After
+
 ```
 src/fixtures/api/mocks/
 ├── handlers/
@@ -158,6 +196,7 @@ src/fixtures/api/mocks/
 ### Files Created
 
 **`src/fixtures/api/mocks/handlers/products.handler.js`** (121 lines)
+
 - Consolidated catalog operations
 - Exports: `handleProductsCatalog(method, pathname, searchParams, requestData)`
 - Handles:
@@ -166,6 +205,7 @@ src/fixtures/api/mocks/
   - GET/POST /searchproduct
 
 **`src/fixtures/api/mocks/handlers/accounts.handler.js`** (199 lines)
+
 - User account operations
 - Exports:
   - `handleCreateAccount(apiContext, requestData, pathname, method)`
@@ -178,6 +218,7 @@ src/fixtures/api/mocks/
   - User payload building
 
 **`src/fixtures/api/mocks/handlers/index.js`** (25 lines)
+
 - Orchestrator: `resolveContractDefaultMock()`
 - Composes all handlers
 - Maintains single responsibility
@@ -185,6 +226,7 @@ src/fixtures/api/mocks/
 ### Files Modified
 
 **`src/fixtures/api/mocks/registry.js`**
+
 ```javascript
 // BEFORE
 import { resolveProductsHappyMock } from "./profiles/products.mock.js";
@@ -195,6 +237,7 @@ import { resolveContractDefaultMock } from "./handlers/index.js";
 ```
 
 **`src/fixtures/api/mocks/profiles/contract.mock.js`**
+
 ```javascript
 // BEFORE: 307 lines of implementation
 
@@ -205,12 +248,12 @@ export { resolveContractDefaultMock } from "../handlers/index.js";
 
 ### Separation of Concerns
 
-| Domain | File | Responsibility | Lines |
-|--------|------|-----------------|-------|
-| Product Catalog | products.handler.js | Products + brands + search | 121 |
-| User Accounts | accounts.handler.js | Create, login, delete, details | 199 |
-| Orchestration | handlers/index.js | Route requests to handlers | 25 |
-| Backward Compat | profiles/contract.mock.js | Re-export (legacy support) | 2 |
+| Domain          | File                      | Responsibility                 | Lines |
+| --------------- | ------------------------- | ------------------------------ | ----- |
+| Product Catalog | products.handler.js       | Products + brands + search     | 121   |
+| User Accounts   | accounts.handler.js       | Create, login, delete, details | 199   |
+| Orchestration   | handlers/index.js         | Route requests to handlers     | 25    |
+| Backward Compat | profiles/contract.mock.js | Re-export (legacy support)     | 2     |
 
 ### Benefits
 
@@ -223,12 +266,13 @@ export { resolveContractDefaultMock } from "../handlers/index.js";
 ### Validation
 
 ✅ Imports correctly wired:
-  - apiClient.js → registry.js → handlers/index.js → product & accounts handlers
-✅ Backward compatibility maintained
-  - contract.mock.js still exports same function
-  - No breaking changes for external consumers
-✅ ESLint: 0 errors
-✅ All mock functionality preserved
+
+- apiClient.js → registry.js → handlers/index.js → product & accounts handlers
+  ✅ Backward compatibility maintained
+- contract.mock.js still exports same function
+- No breaking changes for external consumers
+  ✅ ESLint: 0 errors
+  ✅ All mock functionality preserved
 
 ---
 
@@ -236,24 +280,24 @@ export { resolveContractDefaultMock } from "../handlers/index.js";
 
 ### Files Summary
 
-| Metric | Wave 1 | Wave 2 | Wave 3 | Wave 4 | Wave 5 | Total |
-|--------|--------|--------|--------|--------|--------|-------|
-| Files modified | 6 | 8 | 5 | 10 | 5 | **34** |
-| Files deleted | - | - | 2 | 2 | - | **4** |
-| Files added | 2 | - | 1 | 2 | 3 | **8** |
-| Lines removed | ~30 | ~110 | ~40 | ~15 | ~10 | **~205** |
+| Metric         | Wave 1 | Wave 2 | Wave 3 | Wave 4 | Wave 5 | Total    |
+| -------------- | ------ | ------ | ------ | ------ | ------ | -------- |
+| Files modified | 6      | 8      | 5      | 10     | 5      | **34**   |
+| Files deleted  | -      | -      | 2      | 2      | -      | **4**    |
+| Files added    | 2      | -      | 1      | 2      | 3      | **8**    |
+| Lines removed  | ~30    | ~110   | ~40    | ~15    | ~10    | **~205** |
 
 ### Quality Metrics
 
-| Metric | Before | After | Improvement |
-|--------|--------|-------|-------------|
-| ESLint errors | 0 | 0 | ✅ Maintained |
-| Test passing | 7/7 | 7/7 | ✅ Maintained |
-| Code coverage | Unchanged | Unchanged | ✅ Maintained |
-| Cyclomatic complexity | High | Medium | ⬇️ -25% |
-| Dead code lines | ~200+ | ~0 | ⬇️ -100% |
-| Architecture violations | 1 | 0 | ✅ Fixed |
-| Duplicate scenarios | 2 | 1 | ⬇️ -50% |
+| Metric                  | Before    | After     | Improvement   |
+| ----------------------- | --------- | --------- | ------------- |
+| ESLint errors           | 0         | 0         | ✅ Maintained |
+| Test passing            | 7/7       | 7/7       | ✅ Maintained |
+| Code coverage           | Unchanged | Unchanged | ✅ Maintained |
+| Cyclomatic complexity   | High      | Medium    | ⬇️ -25%       |
+| Dead code lines         | ~200+     | ~0        | ⬇️ -100%      |
+| Architecture violations | 1         | 0         | ✅ Fixed      |
+| Duplicate scenarios     | 2         | 1         | ⬇️ -50%       |
 
 ### Health Score
 
@@ -267,16 +311,19 @@ export { resolveContractDefaultMock } from "../handlers/index.js";
 ### Test Suites Validated
 
 ✅ **API Mock Tests** (`test:api:mock`)
+
 - Tests: 5/5 passed
 - Coverage: Product list, search, brand list, account creation, login, deletion, user details
 - Performance: 9.4s total
 
 ✅ **Brands Tests** (`test:brands`)
+
 - Tests: 2/2 passed (includes new compacted scenario)
 - Coverage: Brand retrieval + mock scenario
 - Performance: 7.2s total
 
 ✅ **Linting**
+
 - ESLint: 0 errors
 - All modified files: Clean
 
@@ -284,7 +331,7 @@ export { resolveContractDefaultMock } from "../handlers/index.js";
 
 ✅ No regressions detected  
 ✅ All existing tests still pass  
-✅ All existing functionality preserved  
+✅ All existing functionality preserved
 
 ---
 
@@ -293,6 +340,7 @@ export { resolveContractDefaultMock } from "../handlers/index.js";
 ### For Consumers
 
 **No changes required.** All optimizations are backward compatible:
+
 - Response assertions API unchanged
 - Mock profile resolution unchanged
 - Gate configuration behavior unchanged
@@ -307,6 +355,7 @@ If adding new mock handlers:
 4. Register in `resolveContractDefaultMock()`
 
 Example:
+
 ```javascript
 // src/fixtures/api/mocks/handlers/custom.handler.js
 export function handleCustomEndpoint(method, pathname, ...) {
@@ -330,17 +379,18 @@ export function resolveContractDefaultMock(...) {
 
 ## Risk Assessment
 
-| Optimization | Risk Level | Mitigation | Status |
-|--------------|-----------|-----------|--------|
-| Comment cleanup | Negligible | Documentation-only | ✅ Safe |
-| Gate extraction | Low | Covered by perf tests | ✅ Validated |
-| Handler split | Low | Full mock test suite | ✅ Validated |
+| Optimization    | Risk Level | Mitigation            | Status       |
+| --------------- | ---------- | --------------------- | ------------ |
+| Comment cleanup | Negligible | Documentation-only    | ✅ Safe      |
+| Gate extraction | Low        | Covered by perf tests | ✅ Validated |
+| Handler split   | Low        | Full mock test suite  | ✅ Validated |
 
 ---
 
 ## Commits/Changes
 
 All changes committed to git:
+
 - 34 files modified
 - 4 files deleted
 - 8 files added
@@ -372,6 +422,7 @@ Potential next optimizations (not included in this wave):
 ## Conclusion
 
 Wave 5 successfully completed final optimizations across three areas:
+
 1. **Documentation clarity** - Comment precision improved
 2. **Code clarity** - Gate resolution logic simplified
 3. **Architecture** - Mock handlers properly modularized

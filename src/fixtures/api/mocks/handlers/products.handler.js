@@ -84,7 +84,12 @@ function searchProducts(searchTerm) {
   });
 }
 
-export function handleProductsCatalog(method, pathname, searchParams, requestData) {
+export function handleProductsCatalog(
+  method,
+  pathname,
+  searchParams,
+  requestData,
+) {
   if (method === "GET" && /\/productslist$/i.test(pathname)) {
     return jsonResponse(200, {
       responseCode: 200,

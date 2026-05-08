@@ -1,4 +1,7 @@
-export { getEffectiveStatus, getResponseMessage } from "../../framework/http/response.js";
+export {
+  getEffectiveStatus,
+  getResponseMessage,
+} from "../../framework/http/response.js";
 
 export function requireResponse(apiContext) {
   const res = apiContext?.response;
