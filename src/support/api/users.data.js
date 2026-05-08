@@ -1,7 +1,7 @@
 import crypto from "node:crypto";
 import { getEnv } from "../../framework/env.js";
 
-export const DEFAULT_USER_FIELDS = {
+const DEFAULT_USER_FIELDS = {
   name: "Test User",
   title: "Mr",
   birth_date: "1",

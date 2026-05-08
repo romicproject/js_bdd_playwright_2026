@@ -1,4 +1,4 @@
-import { getEffectiveStatus } from "./response.assertions.js";
+import { getEffectiveStatus } from "../../framework/http/response.js";
 
 function toFailure(user, error) {
   return {

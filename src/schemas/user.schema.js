@@ -1,7 +1,7 @@
 // support/schemas/user.schema.js
 import { z } from "zod";
-import { zStatusCode, zStr } from "./helpers.js";
-import { apiSuccessResponse, COMMON_PATTERNS } from "./registry.js";
+import { zStatusCode } from "./helpers.js";
+import { COMMON_PATTERNS } from "./registry.js";
 
 /**
  * Schema for user creation success

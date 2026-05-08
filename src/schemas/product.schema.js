@@ -1,6 +1,6 @@
 // support/schemas/product.schema.js
 import { z } from "zod";
-import { zStr, zNum } from "./helpers.js";
+import { zStr } from "./helpers.js";
 import { COMMON_PATTERNS } from "./registry.js";
 
 /**

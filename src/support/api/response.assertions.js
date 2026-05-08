@@ -1,45 +1,20 @@
 import { expect } from "@playwright/test";
 import { validateSchema } from "../../framework/validation/schemaValidator.js";
+import {
+  getEffectiveStatus,
+  getResponseMessage,
+  requireResponse,
+  getResponseArrayField,
+} from "./response.accessors.js";
 
-/**
- * AutomationExercise API often returns HTTP 200 with a business code in body.responseCode.
- * This helper returns the "effective" status we assert on by default.
- */
-export function getEffectiveStatus(res) {
-  const body = res?.body || {};
-  const hasBodyCode =
-    body && typeof body === "object" && typeof body.responseCode === "number";
-
-  return hasBodyCode ? body.responseCode : res?.status;
-}
-
-/** Normalize message field(s) */
-export function getResponseMessage(res) {
-  const body = res?.body || {};
-  const msg = body?.message ?? body?.responseMessage ?? body?.response_message;
-  return String(msg ?? "");
-}
-
-export function requireResponse(apiContext) {
-  const res = apiContext?.response;
-
-  expect(
-    res,
-    "apiContext.response missing. Ensure a When-step executed an API call before asserting.",
-  ).toBeTruthy();
-
-  return res;
-}
-
-export function getResponseBody(apiContext) {
-  const body = requireResponse(apiContext)?.body;
-  return body && typeof body === "object" ? body : {};
-}
-
-export function getResponseArrayField(apiContext, field) {
-  const value = getResponseBody(apiContext)[field];
-  return Array.isArray(value) ? value : [];
-}
+// Re-export accessors so existing consumers don't need to change their imports
+export {
+  getEffectiveStatus,
+  getResponseMessage,
+  requireResponse,
+  getResponseBody,
+  getResponseArrayField,
+} from "./response.accessors.js";
 
 export function expectArrayFieldHasItems(apiContext, field, options = {}) {
   const { min = 1, message } = options;
@@ -165,10 +140,9 @@ export function expectMessageType(apiContext, messageType, messageMap) {
 
 /**
  * Generic JSON schema assertion.
- * - validateSchemaFn: your validator function (validateSchema)
  * - schema: JSON schema object
  * - options.requiredKey: if present, asserts that body has that key (e.g. "products", "brands")
- * - options.previewOmitKeys: keys to omit in preview (useful for big arrays)
+ * - options.previewOmitKeys: array of property names to omit from error preview (reduces noise in large responses)
  */
 export function assertSchema(body, schema, options = {}) {
   const { requiredKey, previewOmitKeys = [] } = options;
